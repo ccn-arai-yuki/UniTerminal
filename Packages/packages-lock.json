@@ -283,6 +283,12 @@
       },
       "url": "https://packages.unity.com"
     },
+    "jp.xeon.uni-terminal": {
+      "version": "file:jp.xeon.uni-terminal",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,
