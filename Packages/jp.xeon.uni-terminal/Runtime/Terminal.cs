@@ -6,6 +6,7 @@ using Xeon.UniTerminal.BuiltInCommands;
 using Xeon.UniTerminal.Completion;
 using Xeon.UniTerminal.Execution;
 using Xeon.UniTerminal.Parsing;
+using Xeon.UniTerminal.UnityCommands;
 using UnityEngine;
 
 namespace Xeon.UniTerminal
@@ -80,6 +81,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public void RegisterBuiltInCommands()
         {
+            // ファイルシステムコマンド
             registry.RegisterCommand<EchoCommand>();
             registry.RegisterCommand<CatCommand>();
             registry.RegisterCommand<GrepCommand>();
@@ -87,6 +89,9 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<PwdCommand>();
             registry.RegisterCommand<CdCommand>();
             registry.RegisterCommand<LsCommand>();
+
+            // Unity固有コマンド
+            registry.RegisterCommand<HierarchyCommand>();
         }
 
         /// <summary>
