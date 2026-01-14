@@ -9,16 +9,16 @@ namespace Xeon.UniTerminal
     /// </summary>
     public class ListTextReader : IAsyncTextReader
     {
-        private readonly IReadOnlyList<string> _lines;
+        private readonly IReadOnlyList<string> lines;
 
         public ListTextReader(IReadOnlyList<string> lines)
         {
-            _lines = lines;
+            this.lines = lines;
         }
 
         public async IAsyncEnumerable<string> ReadLinesAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
-            foreach (var line in _lines)
+            foreach (var line in lines)
             {
                 ct.ThrowIfCancellationRequested();
                 yield return line;

@@ -10,13 +10,13 @@ namespace Xeon.UniTerminal
     /// </summary>
     public class CommandRegistry
     {
-        private readonly Dictionary<string, CommandMetadata> _commands;
+        private readonly Dictionary<string, CommandMetadata> commands;
 
-        public IReadOnlyDictionary<string, CommandMetadata> Commands => _commands;
+        public IReadOnlyDictionary<string, CommandMetadata> Commands => commands;
 
         public CommandRegistry()
         {
-            _commands = new Dictionary<string, CommandMetadata>(StringComparer.OrdinalIgnoreCase);
+            commands = new Dictionary<string, CommandMetadata>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -91,12 +91,12 @@ namespace Xeon.UniTerminal
                 options
             );
 
-            if (_commands.ContainsKey(metadata.CommandName))
+            if (commands.ContainsKey(metadata.CommandName))
             {
                 Debug.LogWarning($"Duplicate command name '{metadata.CommandName}' - using last registered ({type.FullName})");
             }
 
-            _commands[metadata.CommandName] = metadata;
+            commands[metadata.CommandName] = metadata;
         }
 
         private List<OptionMetadata> ExtractOptions(Type type)
@@ -145,7 +145,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public bool TryGetCommand(string commandName, out CommandMetadata metadata)
         {
-            return _commands.TryGetValue(commandName, out metadata);
+            return commands.TryGetValue(commandName, out metadata);
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public IEnumerable<string> GetCommandNames()
         {
-            return _commands.Keys;
+            return commands.Keys;
         }
 
         /// <summary>
@@ -165,12 +165,12 @@ namespace Xeon.UniTerminal
             sb.AppendLine("Available commands:");
             sb.AppendLine();
 
-            var sortedNames = new List<string>(_commands.Keys);
+            var sortedNames = new List<string>(commands.Keys);
             sortedNames.Sort(StringComparer.OrdinalIgnoreCase);
 
             foreach (var name in sortedNames)
             {
-                var meta = _commands[name];
+                var meta = commands[name];
                 sb.AppendLine($"  {meta.CommandName,-20} {meta.Description}");
             }
 

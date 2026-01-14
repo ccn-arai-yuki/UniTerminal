@@ -10,23 +10,23 @@ namespace Xeon.UniTerminal
     /// </summary>
     public class ListTextWriter : IAsyncTextWriter
     {
-        private readonly List<string> _lines = new List<string>();
-        private string _partial = "";
+        private readonly List<string> lines = new List<string>();
+        private string partial = "";
 
-        public IReadOnlyList<string> Lines => _lines;
+        public IReadOnlyList<string> Lines => lines;
 
         public Task WriteLineAsync(string line, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            _lines.Add(_partial + line);
-            _partial = "";
+            lines.Add(partial + line);
+            partial = "";
             return Task.CompletedTask;
         }
 
         public Task WriteAsync(string text, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            _partial += text;
+            partial += text;
             return Task.CompletedTask;
         }
 
@@ -35,17 +35,17 @@ namespace Xeon.UniTerminal
         /// </summary>
         public void Flush()
         {
-            if (!string.IsNullOrEmpty(_partial))
+            if (!string.IsNullOrEmpty(partial))
             {
-                _lines.Add(_partial);
-                _partial = "";
+                lines.Add(partial);
+                partial = "";
             }
         }
 
         public void Clear()
         {
-            _lines.Clear();
-            _partial = "";
+            lines.Clear();
+            partial = "";
         }
     }
 }

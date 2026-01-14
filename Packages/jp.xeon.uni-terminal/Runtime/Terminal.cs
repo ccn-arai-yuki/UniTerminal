@@ -15,32 +15,32 @@ namespace Xeon.UniTerminal
     /// </summary>
     public class Terminal
     {
-        private readonly CommandRegistry _registry;
-        private readonly Parser _parser;
-        private readonly Binder _binder;
-        private string _workingDirectory;
-        private string _previousWorkingDirectory;
-        private readonly string _homeDirectory;
+        private readonly CommandRegistry registry;
+        private readonly Parser parser;
+        private readonly Binder binder;
+        private string workingDirectory;
+        private string previousWorkingDirectory;
+        private readonly string homeDirectory;
 
         /// <summary>
         /// コマンドレジストリ。
         /// </summary>
-        public CommandRegistry Registry => _registry;
+        public CommandRegistry Registry => registry;
 
         /// <summary>
         /// 現在の作業ディレクトリ。
         /// </summary>
         public string WorkingDirectory
         {
-            get => _workingDirectory;
+            get => workingDirectory;
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                if (_workingDirectory != value)
+                if (workingDirectory != value)
                 {
-                    _previousWorkingDirectory = _workingDirectory;
-                    _workingDirectory = value;
+                    previousWorkingDirectory = workingDirectory;
+                    workingDirectory = value;
                 }
             }
         }
@@ -48,12 +48,12 @@ namespace Xeon.UniTerminal
         /// <summary>
         /// 前の作業ディレクトリ（cd - で使用）。
         /// </summary>
-        public string PreviousWorkingDirectory => _previousWorkingDirectory;
+        public string PreviousWorkingDirectory => previousWorkingDirectory;
 
         /// <summary>
         /// ホームディレクトリ。
         /// </summary>
-        public string HomeDirectory => _homeDirectory;
+        public string HomeDirectory => homeDirectory;
 
         /// <summary>
         /// 新しいTerminalインスタンスを作成します。
@@ -63,11 +63,11 @@ namespace Xeon.UniTerminal
         /// <param name="registerBuiltInCommands">組み込みコマンドを登録するかどうか。</param>
         public Terminal(string homeDirectory = null, string workingDirectory = null, bool registerBuiltInCommands = true)
         {
-            _homeDirectory = homeDirectory ?? Application.persistentDataPath;
-            _workingDirectory = workingDirectory ?? _homeDirectory;
-            _registry = new CommandRegistry();
-            _parser = new Parser();
-            _binder = new Binder(_registry);
+            this.homeDirectory = homeDirectory ?? Application.persistentDataPath;
+            this.workingDirectory = workingDirectory ?? this.homeDirectory;
+            registry = new CommandRegistry();
+            parser = new Parser();
+            binder = new Binder(registry);
 
             if (registerBuiltInCommands)
             {
@@ -80,13 +80,13 @@ namespace Xeon.UniTerminal
         /// </summary>
         public void RegisterBuiltInCommands()
         {
-            _registry.RegisterCommand<EchoCommand>();
-            _registry.RegisterCommand<CatCommand>();
-            _registry.RegisterCommand<GrepCommand>();
-            _registry.RegisterCommand<HelpCommand>();
-            _registry.RegisterCommand<PwdCommand>();
-            _registry.RegisterCommand<CdCommand>();
-            _registry.RegisterCommand<LsCommand>();
+            registry.RegisterCommand<EchoCommand>();
+            registry.RegisterCommand<CatCommand>();
+            registry.RegisterCommand<GrepCommand>();
+            registry.RegisterCommand<HelpCommand>();
+            registry.RegisterCommand<PwdCommand>();
+            registry.RegisterCommand<CdCommand>();
+            registry.RegisterCommand<LsCommand>();
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace Xeon.UniTerminal
         /// <returns>候補を含む補完結果。</returns>
         public CompletionResult GetCompletions(string input)
         {
-            var engine = new CompletionEngine(_registry, _workingDirectory, _homeDirectory);
+            var engine = new CompletionEngine(registry, workingDirectory, homeDirectory);
             return engine.GetCompletions(input);
         }
 
@@ -124,21 +124,21 @@ namespace Xeon.UniTerminal
             try
             {
                 // パース
-                var parsed = _parser.Parse(input);
+                var parsed = parser.Parse(input);
                 if (parsed.IsEmpty)
                 {
                     return ExitCode.Success;
                 }
 
                 // バインド
-                var bound = _binder.Bind(parsed.Pipeline);
+                var bound = binder.Bind(parsed.Pipeline);
 
                 // 実行
                 var executor = new PipelineExecutor(
-                    _workingDirectory,
-                    _homeDirectory,
-                    _registry,
-                    _previousWorkingDirectory,
+                    workingDirectory,
+                    homeDirectory,
+                    registry,
+                    previousWorkingDirectory,
                     path => WorkingDirectory = path);
                 var result = await executor.ExecuteAsync(bound, stdin, stdout, stderr, ct);
 

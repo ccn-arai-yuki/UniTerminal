@@ -10,7 +10,7 @@ namespace Xeon.UniTerminal
     /// </summary>
     public class FileTextWriter : IAsyncTextWriter, System.IDisposable
     {
-        private readonly StreamWriter _writer;
+        private readonly StreamWriter writer;
 
         public FileTextWriter(string filePath, bool append = false)
         {
@@ -19,26 +19,26 @@ namespace Xeon.UniTerminal
                 append ? FileMode.Append : FileMode.Create,
                 FileAccess.Write,
                 FileShare.Read);
-            _writer = new StreamWriter(stream, Encoding.UTF8);
+            writer = new StreamWriter(stream, Encoding.UTF8);
         }
 
         public async Task WriteLineAsync(string line, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            await _writer.WriteLineAsync(line);
-            await _writer.FlushAsync();
+            await writer.WriteLineAsync(line);
+            await writer.FlushAsync();
         }
 
         public async Task WriteAsync(string text, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            await _writer.WriteAsync(text);
-            await _writer.FlushAsync();
+            await writer.WriteAsync(text);
+            await writer.FlushAsync();
         }
 
         public void Dispose()
         {
-            _writer?.Dispose();
+            writer?.Dispose();
         }
     }
 }

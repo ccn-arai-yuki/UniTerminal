@@ -12,11 +12,11 @@ namespace Xeon.UniTerminal.Execution
     /// </summary>
     public class PipelineExecutor
     {
-        private string _workingDirectory;
-        private readonly string _homeDirectory;
-        private readonly CommandRegistry _registry;
-        private string _previousWorkingDirectory;
-        private readonly Action<string> _changeWorkingDirectoryCallback;
+        private string workingDirectory;
+        private readonly string homeDirectory;
+        private readonly CommandRegistry registry;
+        private string previousWorkingDirectory;
+        private readonly Action<string> changeWorkingDirectoryCallback;
 
         public PipelineExecutor(
             string workingDirectory,
@@ -25,11 +25,11 @@ namespace Xeon.UniTerminal.Execution
             string previousWorkingDirectory = null,
             Action<string> changeWorkingDirectoryCallback = null)
         {
-            _workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
-            _homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
-            _registry = registry;
-            _previousWorkingDirectory = previousWorkingDirectory;
-            _changeWorkingDirectoryCallback = changeWorkingDirectoryCallback;
+            this.workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
+            this.homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
+            this.registry = registry;
+            this.previousWorkingDirectory = previousWorkingDirectory;
+            this.changeWorkingDirectoryCallback = changeWorkingDirectoryCallback;
         }
 
         /// <summary>
@@ -37,9 +37,9 @@ namespace Xeon.UniTerminal.Execution
         /// </summary>
         private void ChangeWorkingDirectory(string newPath)
         {
-            _previousWorkingDirectory = _workingDirectory;
-            _workingDirectory = newPath;
-            _changeWorkingDirectoryCallback?.Invoke(newPath);
+            previousWorkingDirectory = workingDirectory;
+            workingDirectory = newPath;
+            changeWorkingDirectoryCallback?.Invoke(newPath);
         }
 
         /// <summary>
@@ -83,8 +83,8 @@ namespace Xeon.UniTerminal.Execution
                     {
                         var stdinPath = PathUtility.ResolvePath(
                             boundCmd.Redirections.StdinPath,
-                            _workingDirectory,
-                            _homeDirectory);
+                            workingDirectory,
+                            homeDirectory);
 
                         if (!System.IO.File.Exists(stdinPath))
                         {
@@ -103,8 +103,8 @@ namespace Xeon.UniTerminal.Execution
                     {
                         var stdoutPath = PathUtility.ResolvePath(
                             boundCmd.Redirections.StdoutPath,
-                            _workingDirectory,
-                            _homeDirectory);
+                            workingDirectory,
+                            homeDirectory);
 
                         var fileWriter = new FileTextWriter(
                             stdoutPath,
@@ -128,11 +128,11 @@ namespace Xeon.UniTerminal.Execution
                         cmdStdin,
                         cmdStdout,
                         stderr,
-                        _workingDirectory,
-                        _homeDirectory,
+                        workingDirectory,
+                        homeDirectory,
                         boundCmd.PositionalArguments,
-                        _registry,
-                        _previousWorkingDirectory,
+                        registry,
+                        previousWorkingDirectory,
                         ChangeWorkingDirectory);
 
                     // コマンドを実行

@@ -5,19 +5,19 @@ namespace Xeon.UniTerminal.Tests
 {
     public class TokenizerTests
     {
-        private Tokenizer _tokenizer;
+        private Tokenizer tokenizer;
 
         [SetUp]
         public void SetUp()
         {
-            _tokenizer = new Tokenizer();
+            tokenizer = new Tokenizer();
         }
 
         // TKN-001 単一スペース区切り
         [Test]
         public void Tokenize_SingleSpaceDelimiter_ReturnsCorrectTokens()
         {
-            var tokens = _tokenizer.Tokenize("echo a b");
+            var tokens = tokenizer.Tokenize("echo a b");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -29,7 +29,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_ConsecutiveSpaces_ReturnsCorrectTokens()
         {
-            var tokens = _tokenizer.Tokenize("echo  a   b");
+            var tokens = tokenizer.Tokenize("echo  a   b");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -41,7 +41,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_LeadingTrailingSpaces_ReturnsCorrectTokens()
         {
-            var tokens = _tokenizer.Tokenize("  echo a  ");
+            var tokens = tokenizer.Tokenize("  echo a  ");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -52,14 +52,14 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_TabCharacter_ThrowsParseException()
         {
-            Assert.Throws<ParseException>(() => _tokenizer.Tokenize("echo\ta"));
+            Assert.Throws<ParseException>(() => tokenizer.Tokenize("echo\ta"));
         }
 
         // TKN-020 ダブルクォート
         [Test]
         public void Tokenize_DoubleQuotes_ReturnsQuotedContent()
         {
-            var tokens = _tokenizer.Tokenize("echo \"a b\"");
+            var tokens = tokenizer.Tokenize("echo \"a b\"");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -71,7 +71,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_SingleQuotes_ReturnsQuotedContent()
         {
-            var tokens = _tokenizer.Tokenize("echo 'a b'");
+            var tokens = tokenizer.Tokenize("echo 'a b'");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -83,7 +83,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EmptyDoubleQuotes_ReturnsEmptyString()
         {
-            var tokens = _tokenizer.Tokenize("echo \"\"");
+            var tokens = tokenizer.Tokenize("echo \"\"");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -95,7 +95,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EmptySingleQuotes_ReturnsEmptyString()
         {
-            var tokens = _tokenizer.Tokenize("echo ''");
+            var tokens = tokenizer.Tokenize("echo ''");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -107,7 +107,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EscapeSpaceOutsideQuotes_ReturnsUnescaped()
         {
-            var tokens = _tokenizer.Tokenize(@"echo a\ b");
+            var tokens = tokenizer.Tokenize(@"echo a\ b");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -118,7 +118,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EscapeBackslashOutsideQuotes_ReturnsBackslash()
         {
-            var tokens = _tokenizer.Tokenize(@"echo a\\b");
+            var tokens = tokenizer.Tokenize(@"echo a\\b");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -129,7 +129,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EscapeQuoteInDoubleQuotes_ReturnsQuote()
         {
-            var tokens = _tokenizer.Tokenize("echo \"a\\\"b\"");
+            var tokens = tokenizer.Tokenize("echo \"a\\\"b\"");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -140,7 +140,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EscapeBackslashInDoubleQuotes_ReturnsBackslash()
         {
-            var tokens = _tokenizer.Tokenize("echo \"a\\\\b\"");
+            var tokens = tokenizer.Tokenize("echo \"a\\\\b\"");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -153,14 +153,14 @@ namespace Xeon.UniTerminal.Tests
         {
             // 'a\'b' - \'はエスケープされないため、'a\'は完全な文字列になり
             // その後にb'が続くが、これは閉じられていないクォート
-            Assert.Throws<ParseException>(() => _tokenizer.Tokenize("echo 'a\\'b'"));
+            Assert.Throws<ParseException>(() => tokenizer.Tokenize("echo 'a\\'b'"));
         }
 
         // TKN-040 \nは変換されない
         [Test]
         public void Tokenize_BackslashN_NotConverted()
         {
-            var tokens = _tokenizer.Tokenize(@"echo \n");
+            var tokens = tokenizer.Tokenize(@"echo \n");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -171,14 +171,14 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_UnclosedDoubleQuote_ThrowsParseException()
         {
-            Assert.Throws<ParseException>(() => _tokenizer.Tokenize("echo \"a"));
+            Assert.Throws<ParseException>(() => tokenizer.Tokenize("echo \"a"));
         }
 
         // TKN-060 パイプ演算子
         [Test]
         public void Tokenize_PipeOperator_ReturnsSeparateTokens()
         {
-            var tokens = _tokenizer.Tokenize("a|b");
+            var tokens = tokenizer.Tokenize("a|b");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("a", tokens[0].Value);
@@ -193,7 +193,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_RedirectOutOperator_ReturnsSeparateTokens()
         {
-            var tokens = _tokenizer.Tokenize("echo a>out.txt");
+            var tokens = tokenizer.Tokenize("echo a>out.txt");
 
             Assert.AreEqual(4, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -207,7 +207,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_RedirectAppendOperator_ReturnsSeparateTokens()
         {
-            var tokens = _tokenizer.Tokenize("echo a>>out.txt");
+            var tokens = tokenizer.Tokenize("echo a>>out.txt");
 
             Assert.AreEqual(4, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -221,7 +221,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EndOfOptionsMarker_ReturnsEndOfOptionsToken()
         {
-            var tokens = _tokenizer.Tokenize("cmd -- --notOption");
+            var tokens = tokenizer.Tokenize("cmd -- --notOption");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("cmd", tokens[0].Value);
@@ -236,28 +236,28 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_EmptyInput_ReturnsEmptyList()
         {
-            var tokens = _tokenizer.Tokenize("");
+            var tokens = tokenizer.Tokenize("");
             Assert.AreEqual(0, tokens.Count);
         }
 
         [Test]
         public void Tokenize_NullInput_ReturnsEmptyList()
         {
-            var tokens = _tokenizer.Tokenize(null);
+            var tokens = tokenizer.Tokenize(null);
             Assert.AreEqual(0, tokens.Count);
         }
 
         [Test]
         public void Tokenize_OnlySpaces_ReturnsEmptyList()
         {
-            var tokens = _tokenizer.Tokenize("   ");
+            var tokens = tokenizer.Tokenize("   ");
             Assert.AreEqual(0, tokens.Count);
         }
 
         [Test]
         public void Tokenize_MixedQuotes_ParsesCorrectly()
         {
-            var tokens = _tokenizer.Tokenize("echo \"a'b\" 'c\"d'");
+            var tokens = tokenizer.Tokenize("echo \"a'b\" 'c\"d'");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -268,7 +268,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_RedirectInOperator_ReturnsSeparateTokens()
         {
-            var tokens = _tokenizer.Tokenize("cat<in.txt");
+            var tokens = tokenizer.Tokenize("cat<in.txt");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("cat", tokens[0].Value);
@@ -280,7 +280,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_Unicode_PreservedAsIs()
         {
-            var tokens = _tokenizer.Tokenize("echo こんにちは 世界");
+            var tokens = tokenizer.Tokenize("echo こんにちは 世界");
 
             Assert.AreEqual(3, tokens.Count);
             Assert.AreEqual("echo", tokens[0].Value);
@@ -291,7 +291,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Tokenize_SpanIsCorrect()
         {
-            var tokens = _tokenizer.Tokenize("ab cd");
+            var tokens = tokenizer.Tokenize("ab cd");
 
             Assert.AreEqual(2, tokens.Count);
             Assert.AreEqual(0, tokens[0].Span.Start);

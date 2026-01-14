@@ -5,19 +5,19 @@ namespace Xeon.UniTerminal.Tests
 {
     public class ParserTests
     {
-        private Parser _parser;
+        private Parser parser;
 
         [SetUp]
         public void SetUp()
         {
-            _parser = new Parser();
+            parser = new Parser();
         }
 
         // PRS-001 単一コマンド
         [Test]
         public void Parse_SingleCommand_ReturnsCorrectStructure()
         {
-            var result = _parser.Parse("echo a b");
+            var result = parser.Parse("echo a b");
 
             Assert.IsFalse(result.IsEmpty);
             Assert.AreEqual(1, result.Pipeline.Commands.Count);
@@ -31,7 +31,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_EndOfOptions_TreatsFollowingAsPositional()
         {
-            var result = _parser.Parse("cmd -- --x -y");
+            var result = parser.Parse("cmd -- --x -y");
 
             Assert.AreEqual(1, result.Pipeline.Commands.Count);
             var cmd = result.Pipeline.Commands[0];
@@ -46,7 +46,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_TwoStagePipe_ReturnsTwoCommands()
         {
-            var result = _parser.Parse("a | b");
+            var result = parser.Parse("a | b");
 
             Assert.AreEqual(2, result.Pipeline.Commands.Count);
             Assert.AreEqual("a", result.Pipeline.Commands[0].CommandName);
@@ -57,7 +57,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_StdinRedirect_SetsStdinPath()
         {
-            var result = _parser.Parse("cat < in.txt");
+            var result = parser.Parse("cat < in.txt");
 
             Assert.AreEqual(1, result.Pipeline.Commands.Count);
             Assert.AreEqual("in.txt", result.Pipeline.Commands[0].Redirections.StdinPath);
@@ -67,7 +67,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_StdoutOverwrite_SetsStdoutPath()
         {
-            var result = _parser.Parse("echo a > out.txt");
+            var result = parser.Parse("echo a > out.txt");
 
             Assert.AreEqual(1, result.Pipeline.Commands.Count);
             Assert.AreEqual("out.txt", result.Pipeline.Commands[0].Redirections.StdoutPath);
@@ -78,7 +78,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_StdoutAppend_SetsAppendMode()
         {
-            var result = _parser.Parse("echo a >> out.txt");
+            var result = parser.Parse("echo a >> out.txt");
 
             Assert.AreEqual(1, result.Pipeline.Commands.Count);
             Assert.AreEqual("out.txt", result.Pipeline.Commands[0].Redirections.StdoutPath);
@@ -89,35 +89,35 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_RedirectOutFollowedByPipe_ThrowsParseException()
         {
-            Assert.Throws<ParseException>(() => _parser.Parse("echo a > out.txt | next"));
+            Assert.Throws<ParseException>(() => parser.Parse("echo a > out.txt | next"));
         }
 
         // PRS-041 ファイル名なしのリダイレクト
         [Test]
         public void Parse_RedirectOutWithoutFilename_ThrowsParseException()
         {
-            Assert.Throws<ParseException>(() => _parser.Parse("echo a >"));
+            Assert.Throws<ParseException>(() => parser.Parse("echo a >"));
         }
 
         // PRS-043 末尾パイプ
         [Test]
         public void Parse_TrailingPipe_ThrowsParseException()
         {
-            Assert.Throws<ParseException>(() => _parser.Parse("a |"));
+            Assert.Throws<ParseException>(() => parser.Parse("a |"));
         }
 
         // 追加テスト
         [Test]
         public void Parse_EmptyInput_ReturnsEmpty()
         {
-            var result = _parser.Parse("");
+            var result = parser.Parse("");
             Assert.IsTrue(result.IsEmpty);
         }
 
         [Test]
         public void Parse_LongOption_ParsedCorrectly()
         {
-            var result = _parser.Parse("cmd --verbose --name=value");
+            var result = parser.Parse("cmd --verbose --name=value");
 
             var cmd = result.Pipeline.Commands[0];
             Assert.AreEqual(2, cmd.Options.Count);
@@ -133,7 +133,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_ShortOption_ParsedCorrectly()
         {
-            var result = _parser.Parse("cmd -v -n=value");
+            var result = parser.Parse("cmd -v -n=value");
 
             var cmd = result.Pipeline.Commands[0];
             Assert.AreEqual(2, cmd.Options.Count);
@@ -146,7 +146,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_BundledShortOptions_ParsedAsSeparate()
         {
-            var result = _parser.Parse("cmd -abc");
+            var result = parser.Parse("cmd -abc");
 
             var cmd = result.Pipeline.Commands[0];
             Assert.AreEqual(3, cmd.Options.Count);
@@ -158,7 +158,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_MultiplePipes_ParsedCorrectly()
         {
-            var result = _parser.Parse("a | b | c");
+            var result = parser.Parse("a | b | c");
 
             Assert.AreEqual(3, result.Pipeline.Commands.Count);
             Assert.AreEqual("a", result.Pipeline.Commands[0].CommandName);
@@ -169,7 +169,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_StdinRedirectWithPipe_Allowed()
         {
-            var result = _parser.Parse("cat < in.txt | grep foo");
+            var result = parser.Parse("cat < in.txt | grep foo");
 
             Assert.AreEqual(2, result.Pipeline.Commands.Count);
             Assert.AreEqual("in.txt", result.Pipeline.Commands[0].Redirections.StdinPath);
@@ -179,7 +179,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_NegativeNumber_TreatedAsPositional()
         {
-            var result = _parser.Parse("cmd -5");
+            var result = parser.Parse("cmd -5");
 
             var cmd = result.Pipeline.Commands[0];
             Assert.AreEqual(0, cmd.Options.Count);
@@ -190,7 +190,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_QuotedOptionValue_ParsedCorrectly()
         {
-            var result = _parser.Parse("cmd --name=\"hello world\"");
+            var result = parser.Parse("cmd --name=\"hello world\"");
 
             var cmd = result.Pipeline.Commands[0];
             Assert.AreEqual(1, cmd.Options.Count);
@@ -201,13 +201,13 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Parse_LeadingPipe_ThrowsParseException()
         {
-            Assert.Throws<ParseException>(() => _parser.Parse("| cmd"));
+            Assert.Throws<ParseException>(() => parser.Parse("| cmd"));
         }
 
         [Test]
         public void Parse_EmptyOptionValue_ParsedAsEmptyString()
         {
-            var result = _parser.Parse("cmd --name=");
+            var result = parser.Parse("cmd --name=");
 
             var cmd = result.Pipeline.Commands[0];
             Assert.AreEqual(1, cmd.Options.Count);

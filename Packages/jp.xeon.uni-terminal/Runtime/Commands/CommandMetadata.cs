@@ -29,8 +29,8 @@ namespace Xeon.UniTerminal
         /// </summary>
         public IReadOnlyList<OptionMetadata> Options { get; }
 
-        private readonly Dictionary<string, OptionMetadata> _longNameMap;
-        private readonly Dictionary<string, OptionMetadata> _shortNameMap;
+        private readonly Dictionary<string, OptionMetadata> longNameMap;
+        private readonly Dictionary<string, OptionMetadata> shortNameMap;
 
         public CommandMetadata(
             string commandName,
@@ -43,15 +43,15 @@ namespace Xeon.UniTerminal
             CommandType = commandType;
             Options = options;
 
-            _longNameMap = new Dictionary<string, OptionMetadata>(StringComparer.OrdinalIgnoreCase);
-            _shortNameMap = new Dictionary<string, OptionMetadata>(StringComparer.OrdinalIgnoreCase);
+            longNameMap = new Dictionary<string, OptionMetadata>(StringComparer.OrdinalIgnoreCase);
+            shortNameMap = new Dictionary<string, OptionMetadata>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var opt in options)
             {
-                _longNameMap[opt.LongName] = opt;
+                longNameMap[opt.LongName] = opt;
                 if (!string.IsNullOrEmpty(opt.ShortName))
                 {
-                    _shortNameMap[opt.ShortName] = opt;
+                    shortNameMap[opt.ShortName] = opt;
                 }
             }
         }
@@ -61,7 +61,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public bool TryGetOptionByLongName(string longName, out OptionMetadata option)
         {
-            return _longNameMap.TryGetValue(longName, out option);
+            return longNameMap.TryGetValue(longName, out option);
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public bool TryGetOptionByShortName(string shortName, out OptionMetadata option)
         {
-            return _shortNameMap.TryGetValue(shortName, out option);
+            return shortNameMap.TryGetValue(shortName, out option);
         }
 
         /// <summary>

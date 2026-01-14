@@ -100,27 +100,27 @@ namespace Xeon.UniTerminal.Tests
 
     public class BinderTests
     {
-        private CommandRegistry _registry;
-        private Binder _binder;
-        private Parser _parser;
+        private CommandRegistry registry;
+        private Binder binder;
+        private Parser parser;
 
         [SetUp]
         public void SetUp()
         {
-            _registry = new CommandRegistry();
-            _registry.RegisterCommand<SelectCommand>();
-            _registry.RegisterCommand<TestGrepCommand>();
-            _registry.RegisterCommand<CmdCommand>();
-            _binder = new Binder(_registry);
-            _parser = new Parser();
+            registry = new CommandRegistry();
+            registry.RegisterCommand<SelectCommand>();
+            registry.RegisterCommand<TestGrepCommand>();
+            registry.RegisterCommand<CmdCommand>();
+            binder = new Binder(registry);
+            parser = new Parser();
         }
 
         // BND-010 不明なオプション（ロング）
         [Test]
         public void Bind_UnknownLongOption_ThrowsBindException()
         {
-            var parsed = _parser.Parse("select --unknown=1");
-            var ex = Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("select --unknown=1");
+            var ex = Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
             Assert.AreEqual("select", ex.CommandName);
             Assert.AreEqual(ExitCode.UsageError, ex.ExitCode);
         }
@@ -129,8 +129,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_RequiredOptionMissing_ThrowsBindException()
         {
-            var parsed = _parser.Parse("grep");
-            var ex = Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("grep");
+            var ex = Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
             Assert.AreEqual("grep", ex.CommandName);
             Assert.AreEqual(ExitCode.UsageError, ex.ExitCode);
         }
@@ -139,8 +139,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_BoolWithValue_ThrowsBindException()
         {
-            var parsed = _parser.Parse("select --verbose=true");
-            var ex = Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("select --verbose=true");
+            var ex = Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
             Assert.AreEqual(ExitCode.UsageError, ex.ExitCode);
         }
 
@@ -148,8 +148,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_BundledShortOptions_SetsAllTrue()
         {
-            var parsed = _parser.Parse("cmd -abc");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("cmd -abc");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (CmdCommand)bound.Commands[0].Command;
             Assert.IsTrue(cmd.A);
@@ -161,8 +161,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_ShortOptionWithSpaceValue_ParsedCorrectly()
         {
-            var parsed = _parser.Parse("cmd -n hello");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("cmd -n hello");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (CmdCommand)bound.Commands[0].Command;
             Assert.AreEqual("hello", cmd.Name);
@@ -172,8 +172,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_EnumCaseInsensitive_Converts()
         {
-            var parsed = _parser.Parse("select --mode=FAST");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("select --mode=FAST");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (SelectCommand)bound.Commands[0].Command;
             Assert.AreEqual(TestMode.Fast, cmd.Mode);
@@ -183,16 +183,16 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_NumericConversionFailure_ThrowsBindException()
         {
-            var parsed = _parser.Parse("select --count=abc");
-            Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("select --count=abc");
+            Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
         }
 
         // BND-080 リスト分割
         [Test]
         public void Bind_ListSplit_SplitsByComma()
         {
-            var parsed = _parser.Parse("select --targets=a,b,c");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("select --targets=a,b,c");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (SelectCommand)bound.Commands[0].Command;
             Assert.AreEqual(3, cmd.Targets.Count);
@@ -205,8 +205,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_ListQuoteProtection_TreatsAsOneElement()
         {
-            var parsed = _parser.Parse("select --targets=\"a,b\"");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("select --targets=\"a,b\"");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (SelectCommand)bound.Commands[0].Command;
             Assert.AreEqual(1, cmd.Targets.Count);
@@ -217,8 +217,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_ListEmptyValue_CreatesListWithEmptyString()
         {
-            var parsed = _parser.Parse("select --targets=");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("select --targets=");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (SelectCommand)bound.Commands[0].Command;
             Assert.AreEqual(1, cmd.Targets.Count);
@@ -229,16 +229,16 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_ListDuplicate_ThrowsBindException()
         {
-            var parsed = _parser.Parse("select --targets=a --targets=b");
-            Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("select --targets=a --targets=b");
+            Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
         }
 
         // BND-090 --はオプションパースを防止
         [Test]
         public void Bind_AfterEndOfOptions_TreatedAsPositional()
         {
-            var parsed = _parser.Parse("cmd -- --name=value");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("cmd -- --name=value");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (CmdCommand)bound.Commands[0].Command;
             Assert.IsNull(cmd.Name);
@@ -250,8 +250,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_CommandNotFound_ThrowsBindException()
         {
-            var parsed = _parser.Parse("noSuchCmd");
-            var ex = Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("noSuchCmd");
+            var ex = Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
             Assert.AreEqual("noSuchCmd", ex.CommandName);
             Assert.AreEqual(ExitCode.UsageError, ex.ExitCode);
         }
@@ -260,8 +260,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_LongOptionWithSpaceValue_ParsedCorrectly()
         {
-            var parsed = _parser.Parse("grep --pattern hello");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("grep --pattern hello");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (TestGrepCommand)bound.Commands[0].Command;
             Assert.AreEqual("hello", cmd.Pattern);
@@ -270,8 +270,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_MultiplePipelineCommands_AllBound()
         {
-            var parsed = _parser.Parse("grep --pattern=foo | cmd -a");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("grep --pattern=foo | cmd -a");
+            var bound = binder.Bind(parsed.Pipeline);
 
             Assert.AreEqual(2, bound.Commands.Count);
             Assert.AreEqual("grep", bound.Commands[0].Command.CommandName);
@@ -281,8 +281,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_ScalarDuplicate_LastWins()
         {
-            var parsed = _parser.Parse("cmd --count=1 --count=2");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("cmd --count=1 --count=2");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (CmdCommand)bound.Commands[0].Command;
             Assert.AreEqual(2, cmd.Count);
@@ -291,8 +291,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_BoolDuplicate_StaysTrue()
         {
-            var parsed = _parser.Parse("cmd -a -a");
-            var bound = _binder.Bind(parsed.Pipeline);
+            var parsed = parser.Parse("cmd -a -a");
+            var bound = binder.Bind(parsed.Pipeline);
 
             var cmd = (CmdCommand)bound.Commands[0].Command;
             Assert.IsTrue(cmd.A);
@@ -301,8 +301,8 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public void Bind_UnknownShortOption_ThrowsBindException()
         {
-            var parsed = _parser.Parse("select -x");
-            Assert.Throws<BindException>(() => _binder.Bind(parsed.Pipeline));
+            var parsed = parser.Parse("select -x");
+            Assert.Throws<BindException>(() => binder.Bind(parsed.Pipeline));
         }
     }
 }

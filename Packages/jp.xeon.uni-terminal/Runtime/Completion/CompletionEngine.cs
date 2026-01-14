@@ -79,15 +79,15 @@ namespace Xeon.UniTerminal.Completion
     /// </summary>
     public class CompletionEngine
     {
-        private readonly CommandRegistry _registry;
-        private readonly string _workingDirectory;
-        private readonly string _homeDirectory;
+        private readonly CommandRegistry registry;
+        private readonly string workingDirectory;
+        private readonly string homeDirectory;
 
         public CompletionEngine(CommandRegistry registry, string workingDirectory, string homeDirectory)
         {
-            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-            _workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
-            _homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
+            this.registry = registry ?? throw new ArgumentNullException(nameof(registry));
+            this.workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
+            this.homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
         }
 
         /// <summary>
@@ -217,11 +217,11 @@ namespace Xeon.UniTerminal.Completion
         {
             var candidates = new List<CompletionCandidate>();
 
-            foreach (var name in _registry.GetCommandNames())
+            foreach (var name in registry.GetCommandNames())
             {
                 if (name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (_registry.TryGetCommand(name, out var meta))
+                    if (registry.TryGetCommand(name, out var meta))
                     {
                         candidates.Add(new CompletionCandidate(
                             name,
@@ -241,7 +241,7 @@ namespace Xeon.UniTerminal.Completion
         {
             var candidates = new List<CompletionCandidate>();
 
-            if (string.IsNullOrEmpty(commandName) || !_registry.TryGetCommand(commandName, out var metadata))
+            if (string.IsNullOrEmpty(commandName) || !registry.TryGetCommand(commandName, out var metadata))
             {
                 return new CompletionResult(candidates, tokenStart, prefix.Length);
             }
@@ -290,15 +290,15 @@ namespace Xeon.UniTerminal.Completion
 
                 if (string.IsNullOrEmpty(prefix))
                 {
-                    basePath = _workingDirectory;
+                    basePath = workingDirectory;
                     searchPattern = "";
                 }
                 else if (prefix.StartsWith("~"))
                 {
                     // ホームディレクトリ展開
                     var expandedPath = prefix.Length == 1
-                        ? _homeDirectory
-                        : Path.Combine(_homeDirectory, prefix.Substring(2));
+                        ? homeDirectory
+                        : Path.Combine(homeDirectory, prefix.Substring(2));
 
                     if (Directory.Exists(expandedPath))
                     {
@@ -307,7 +307,7 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(expandedPath) ?? _homeDirectory;
+                        basePath = Path.GetDirectoryName(expandedPath) ?? homeDirectory;
                         searchPattern = Path.GetFileName(expandedPath);
                     }
                 }
@@ -320,13 +320,13 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(prefix) ?? _workingDirectory;
+                        basePath = Path.GetDirectoryName(prefix) ?? workingDirectory;
                         searchPattern = Path.GetFileName(prefix);
                     }
                 }
                 else
                 {
-                    var fullPath = Path.Combine(_workingDirectory, prefix);
+                    var fullPath = Path.Combine(workingDirectory, prefix);
                     if (Directory.Exists(fullPath))
                     {
                         basePath = fullPath;
@@ -336,7 +336,7 @@ namespace Xeon.UniTerminal.Completion
                     {
                         basePath = Path.GetDirectoryName(fullPath);
                         if (string.IsNullOrEmpty(basePath))
-                            basePath = _workingDirectory;
+                            basePath = workingDirectory;
                         searchPattern = Path.GetFileName(prefix);
                     }
                 }
@@ -393,8 +393,8 @@ namespace Xeon.UniTerminal.Completion
             }
             else if (prefix.StartsWith("~"))
             {
-                var relativeTohome = basePath.StartsWith(_homeDirectory)
-                    ? basePath.Substring(_homeDirectory.Length).TrimStart(Path.DirectorySeparatorChar)
+                var relativeTohome = basePath.StartsWith(homeDirectory)
+                    ? basePath.Substring(homeDirectory.Length).TrimStart(Path.DirectorySeparatorChar)
                     : "";
                 result = string.IsNullOrEmpty(relativeTohome)
                     ? $"~/{name}"
@@ -423,7 +423,7 @@ namespace Xeon.UniTerminal.Completion
         private CompletionResult GetCommandSpecificCompletions(string prefix, int tokenStart, CompletionAnalysis analysis)
         {
             if (string.IsNullOrEmpty(analysis.CommandName) ||
-                !_registry.TryGetCommand(analysis.CommandName, out var metadata))
+                !registry.TryGetCommand(analysis.CommandName, out var metadata))
             {
                 return new CompletionResult(new List<CompletionCandidate>(), tokenStart, prefix.Length);
             }
@@ -433,8 +433,8 @@ namespace Xeon.UniTerminal.Completion
                 "",  // full input not needed here
                 prefix,
                 analysis.TokenIndex,
-                _workingDirectory,
-                _homeDirectory);
+                workingDirectory,
+                homeDirectory);
 
             var candidates = new List<CompletionCandidate>();
             try

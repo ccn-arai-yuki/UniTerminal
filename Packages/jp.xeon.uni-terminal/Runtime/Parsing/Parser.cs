@@ -7,7 +7,7 @@ namespace Xeon.UniTerminal.Parsing
     /// </summary>
     public class Parser
     {
-        private readonly Tokenizer _tokenizer = new Tokenizer();
+        private readonly Tokenizer tokenizer = new Tokenizer();
 
         /// <summary>
         /// 入力文字列をParsedInput構造にパースします。
@@ -17,7 +17,7 @@ namespace Xeon.UniTerminal.Parsing
         /// <exception cref="ParseException">パースエラー時にスローされます。</exception>
         public ParsedInput Parse(string input)
         {
-            var tokens = _tokenizer.Tokenize(input);
+            var tokens = tokenizer.Tokenize(input);
             return ParseTokens(tokens);
         }
 

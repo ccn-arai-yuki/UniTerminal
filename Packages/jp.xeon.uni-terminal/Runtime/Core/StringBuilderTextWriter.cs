@@ -9,29 +9,29 @@ namespace Xeon.UniTerminal
     /// </summary>
     public class StringBuilderTextWriter : IAsyncTextWriter
     {
-        private readonly StringBuilder _builder;
+        private readonly StringBuilder builder;
 
         public StringBuilderTextWriter()
         {
-            _builder = new StringBuilder();
+            builder = new StringBuilder();
         }
 
         public StringBuilderTextWriter(StringBuilder builder)
         {
-            _builder = builder;
+            this.builder = builder;
         }
 
         public Task WriteLineAsync(string line, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            _builder.AppendLine(line);
+            builder.AppendLine(line);
             return Task.CompletedTask;
         }
 
         public Task WriteAsync(string text, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            _builder.Append(text);
+            builder.Append(text);
             return Task.CompletedTask;
         }
 
@@ -40,7 +40,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public override string ToString()
         {
-            return _builder.ToString();
+            return builder.ToString();
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Xeon.UniTerminal
         /// </summary>
         public void Clear()
         {
-            _builder.Clear();
+            builder.Clear();
         }
     }
 }

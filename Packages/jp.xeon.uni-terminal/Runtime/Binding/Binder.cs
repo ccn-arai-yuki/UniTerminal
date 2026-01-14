@@ -11,11 +11,11 @@ namespace Xeon.UniTerminal.Binding
     /// </summary>
     public class Binder
     {
-        private readonly CommandRegistry _registry;
+        private readonly CommandRegistry registry;
 
         public Binder(CommandRegistry registry)
         {
-            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+            this.registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
 
         /// <summary>
@@ -41,10 +41,10 @@ namespace Xeon.UniTerminal.Binding
         public BoundCommand BindCommand(ParsedCommand parsedCmd)
         {
             // コマンドを検索
-            if (!_registry.TryGetCommand(parsedCmd.CommandName, out var metadata))
+            if (!registry.TryGetCommand(parsedCmd.CommandName, out var metadata))
             {
                 throw new BindException(
-                    $"command not found: {parsedCmd.CommandName}\n\n{_registry.GenerateGlobalHelp()}",
+                    $"command not found: {parsedCmd.CommandName}\n\n{registry.GenerateGlobalHelp()}",
                     parsedCmd.CommandName);
             }
 
