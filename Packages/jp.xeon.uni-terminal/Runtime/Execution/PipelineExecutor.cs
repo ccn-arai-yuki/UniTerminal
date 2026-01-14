@@ -17,19 +17,28 @@ namespace Xeon.UniTerminal.Execution
         private readonly CommandRegistry registry;
         private string previousWorkingDirectory;
         private readonly Action<string> changeWorkingDirectoryCallback;
+        private readonly IReadOnlyList<string> commandHistory;
+        private readonly Action clearHistoryCallback;
+        private readonly Action<int> deleteHistoryEntryCallback;
 
         public PipelineExecutor(
             string workingDirectory,
             string homeDirectory,
             CommandRegistry registry = null,
             string previousWorkingDirectory = null,
-            Action<string> changeWorkingDirectoryCallback = null)
+            Action<string> changeWorkingDirectoryCallback = null,
+            IReadOnlyList<string> commandHistory = null,
+            Action clearHistoryCallback = null,
+            Action<int> deleteHistoryEntryCallback = null)
         {
             this.workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
             this.homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
             this.registry = registry;
             this.previousWorkingDirectory = previousWorkingDirectory;
             this.changeWorkingDirectoryCallback = changeWorkingDirectoryCallback;
+            this.commandHistory = commandHistory;
+            this.clearHistoryCallback = clearHistoryCallback;
+            this.deleteHistoryEntryCallback = deleteHistoryEntryCallback;
         }
 
         /// <summary>
@@ -133,7 +142,10 @@ namespace Xeon.UniTerminal.Execution
                         boundCmd.PositionalArguments,
                         registry,
                         previousWorkingDirectory,
-                        ChangeWorkingDirectory);
+                        ChangeWorkingDirectory,
+                        commandHistory,
+                        clearHistoryCallback,
+                        deleteHistoryEntryCallback);
 
                     // コマンドを実行
                     try

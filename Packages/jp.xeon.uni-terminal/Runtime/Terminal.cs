@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Xeon.UniTerminal.Binding;
@@ -22,6 +23,8 @@ namespace Xeon.UniTerminal
         private string workingDirectory;
         private string previousWorkingDirectory;
         private readonly string homeDirectory;
+        private readonly List<string> commandHistory;
+        private readonly int maxHistorySize;
 
         /// <summary>
         /// コマンドレジストリ。
@@ -57,15 +60,23 @@ namespace Xeon.UniTerminal
         public string HomeDirectory => homeDirectory;
 
         /// <summary>
+        /// コマンド履歴。
+        /// </summary>
+        public IReadOnlyList<string> CommandHistory => commandHistory;
+
+        /// <summary>
         /// 新しいTerminalインスタンスを作成します。
         /// </summary>
         /// <param name="homeDirectory">ホームディレクトリ（デフォルトはApplication.persistentDataPath）。</param>
         /// <param name="workingDirectory">初期作業ディレクトリ（デフォルトはホームディレクトリ）。</param>
         /// <param name="registerBuiltInCommands">組み込みコマンドを登録するかどうか。</param>
-        public Terminal(string homeDirectory = null, string workingDirectory = null, bool registerBuiltInCommands = true)
+        /// <param name="maxHistorySize">履歴の最大サイズ（デフォルトは1000）。</param>
+        public Terminal(string homeDirectory = null, string workingDirectory = null, bool registerBuiltInCommands = true, int maxHistorySize = 1000)
         {
             this.homeDirectory = homeDirectory ?? Application.persistentDataPath;
             this.workingDirectory = workingDirectory ?? this.homeDirectory;
+            this.maxHistorySize = maxHistorySize;
+            commandHistory = new List<string>();
             registry = new CommandRegistry();
             parser = new Parser();
             binder = new Binder(registry);
@@ -89,9 +100,55 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<PwdCommand>();
             registry.RegisterCommand<CdCommand>();
             registry.RegisterCommand<LsCommand>();
+            registry.RegisterCommand<HistoryCommand>();
+            registry.RegisterCommand<FindCommand>();
 
             // Unity固有コマンド
             registry.RegisterCommand<HierarchyCommand>();
+        }
+
+        /// <summary>
+        /// コマンドを履歴に追加します。
+        /// </summary>
+        /// <param name="command">追加するコマンド。</param>
+        public void AddHistory(string command)
+        {
+            if (string.IsNullOrWhiteSpace(command))
+                return;
+
+            // 直前と同じコマンドは追加しない
+            if (commandHistory.Count > 0 && commandHistory[commandHistory.Count - 1] == command)
+                return;
+
+            commandHistory.Add(command);
+
+            // 最大サイズを超えた場合、古いものを削除
+            while (commandHistory.Count > maxHistorySize)
+            {
+                commandHistory.RemoveAt(0);
+            }
+        }
+
+        /// <summary>
+        /// 履歴をクリアします。
+        /// </summary>
+        public void ClearHistory()
+        {
+            commandHistory.Clear();
+        }
+
+        /// <summary>
+        /// 指定番号の履歴を削除します。
+        /// </summary>
+        /// <param name="index">削除する履歴のインデックス（1ベース）。</param>
+        public void DeleteHistoryEntry(int index)
+        {
+            // 1ベースから0ベースに変換
+            int actualIndex = index - 1;
+            if (actualIndex >= 0 && actualIndex < commandHistory.Count)
+            {
+                commandHistory.RemoveAt(actualIndex);
+            }
         }
 
         /// <summary>
@@ -126,6 +183,9 @@ namespace Xeon.UniTerminal
                 return ExitCode.Success;
             }
 
+            // 履歴に追加
+            AddHistory(input);
+
             try
             {
                 // パース
@@ -144,7 +204,10 @@ namespace Xeon.UniTerminal
                     homeDirectory,
                     registry,
                     previousWorkingDirectory,
-                    path => WorkingDirectory = path);
+                    path => WorkingDirectory = path,
+                    commandHistory,
+                    ClearHistory,
+                    DeleteHistoryEntry);
                 var result = await executor.ExecuteAsync(bound, stdin, stdout, stderr, ct);
 
                 return result.ExitCode;

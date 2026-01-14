@@ -54,6 +54,21 @@ namespace Xeon.UniTerminal
         /// </summary>
         public CommandRegistry Registry { get; }
 
+        /// <summary>
+        /// コマンド履歴への参照。
+        /// </summary>
+        public IReadOnlyList<string> CommandHistory { get; }
+
+        /// <summary>
+        /// 履歴をクリアするコールバック。
+        /// </summary>
+        public Action ClearHistory { get; }
+
+        /// <summary>
+        /// 指定番号の履歴を削除するコールバック。
+        /// </summary>
+        public Action<int> DeleteHistoryEntry { get; }
+
         public CommandContext(
             IAsyncTextReader stdin,
             IAsyncTextWriter stdout,
@@ -63,7 +78,10 @@ namespace Xeon.UniTerminal
             IReadOnlyList<string> positionalArguments,
             CommandRegistry registry = null,
             string previousWorkingDirectory = null,
-            Action<string> changeWorkingDirectory = null)
+            Action<string> changeWorkingDirectory = null,
+            IReadOnlyList<string> commandHistory = null,
+            Action clearHistory = null,
+            Action<int> deleteHistoryEntry = null)
         {
             Stdin = stdin;
             Stdout = stdout;
@@ -74,6 +92,9 @@ namespace Xeon.UniTerminal
             Registry = registry;
             PreviousWorkingDirectory = previousWorkingDirectory;
             ChangeWorkingDirectory = changeWorkingDirectory;
+            CommandHistory = commandHistory ?? new List<string>();
+            ClearHistory = clearHistory;
+            DeleteHistoryEntry = deleteHistoryEntry;
         }
     }
 }
