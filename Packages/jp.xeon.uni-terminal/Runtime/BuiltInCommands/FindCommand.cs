@@ -235,13 +235,8 @@ namespace Xeon.UniTerminal.BuiltInCommands
 
         public IEnumerable<string> GetCompletions(CompletionContext context)
         {
-            // --type オプションの値補完
-            if (context.CurrentOption == "type")
-            {
-                yield return "f";
-                yield return "d";
-            }
             // パス補完はCompletionEngineで処理
+            yield break;
         }
     }
 }
