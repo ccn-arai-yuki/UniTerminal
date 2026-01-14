@@ -54,6 +54,9 @@ namespace Xeon.UniTerminal.Binding
             // 設定されたオプションを追跡（重複検出用）
             var setOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+            // スペース区切りで誤ってオプション値として解析された位置引数
+            var extraPositionalArgs = new List<string>();
+
             // オプションを処理
             for (int i = 0; i < parsedCmd.Options.Count; i++)
             {
@@ -92,9 +95,18 @@ namespace Xeon.UniTerminal.Binding
                 {
                     if (opt.HasValue)
                     {
-                        throw new BindException(
-                            $"boolean option --{optMeta.LongName} does not accept a value\n\n{metadata.GenerateHelp()}",
-                            parsedCmd.CommandName);
+                        // スペース区切りで解析された値は位置引数として扱う
+                        if (opt.IsValueSpaceSeparated)
+                        {
+                            extraPositionalArgs.Add(opt.RawValue);
+                        }
+                        else
+                        {
+                            // =構文で値が指定された場合はエラー
+                            throw new BindException(
+                                $"boolean option --{optMeta.LongName} does not accept a value\n\n{metadata.GenerateHelp()}",
+                                parsedCmd.CommandName);
+                        }
                     }
                     optMeta.SetValue(command, true);
                     setOptions.Add(optMeta.LongName);
@@ -142,10 +154,14 @@ namespace Xeon.UniTerminal.Binding
                 }
             }
 
+            // 位置引数を結合（extraPositionalArgsを先頭に追加）
+            var allPositionalArgs = new List<string>(extraPositionalArgs);
+            allPositionalArgs.AddRange(parsedCmd.PositionalArguments);
+
             return new BoundCommand(
                 command,
                 metadata,
-                parsedCmd.PositionalArguments,
+                allPositionalArgs,
                 parsedCmd.Redirections);
         }
 

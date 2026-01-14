@@ -19,6 +19,7 @@ namespace Xeon.UniTerminal
         private readonly Parser _parser;
         private readonly Binder _binder;
         private string _workingDirectory;
+        private string _previousWorkingDirectory;
         private readonly string _homeDirectory;
 
         /// <summary>
@@ -32,8 +33,22 @@ namespace Xeon.UniTerminal
         public string WorkingDirectory
         {
             get => _workingDirectory;
-            set => _workingDirectory = value ?? throw new ArgumentNullException(nameof(value));
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+                if (_workingDirectory != value)
+                {
+                    _previousWorkingDirectory = _workingDirectory;
+                    _workingDirectory = value;
+                }
+            }
         }
+
+        /// <summary>
+        /// 前の作業ディレクトリ（cd - で使用）。
+        /// </summary>
+        public string PreviousWorkingDirectory => _previousWorkingDirectory;
 
         /// <summary>
         /// ホームディレクトリ。
@@ -69,6 +84,9 @@ namespace Xeon.UniTerminal
             _registry.RegisterCommand<CatCommand>();
             _registry.RegisterCommand<GrepCommand>();
             _registry.RegisterCommand<HelpCommand>();
+            _registry.RegisterCommand<PwdCommand>();
+            _registry.RegisterCommand<CdCommand>();
+            _registry.RegisterCommand<LsCommand>();
         }
 
         /// <summary>
@@ -116,7 +134,12 @@ namespace Xeon.UniTerminal
                 var bound = _binder.Bind(parsed.Pipeline);
 
                 // 実行
-                var executor = new PipelineExecutor(_workingDirectory, _homeDirectory, _registry);
+                var executor = new PipelineExecutor(
+                    _workingDirectory,
+                    _homeDirectory,
+                    _registry,
+                    _previousWorkingDirectory,
+                    path => WorkingDirectory = path);
                 var result = await executor.ExecuteAsync(bound, stdin, stdout, stderr, ct);
 
                 return result.ExitCode;

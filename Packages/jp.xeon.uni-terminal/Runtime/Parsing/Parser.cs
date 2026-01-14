@@ -195,7 +195,7 @@ namespace Xeon.UniTerminal.Parsing
                                 !nextToken.Value.StartsWith("-"))
                             {
                                 opt = new ParsedOptionOccurrence(
-                                    opt.Name, true, nextToken.Value, true, nextToken.WasQuoted);
+                                    opt.Name, true, nextToken.Value, true, nextToken.WasQuoted, isValueSpaceSeparated: true);
                                 i++; // Skip the value token
                             }
                         }
@@ -218,7 +218,7 @@ namespace Xeon.UniTerminal.Parsing
                                 !nextToken.Value.StartsWith("-"))
                             {
                                 opts[0] = new ParsedOptionOccurrence(
-                                    opts[0].Name, false, nextToken.Value, true, nextToken.WasQuoted);
+                                    opts[0].Name, false, nextToken.Value, true, nextToken.WasQuoted, isValueSpaceSeparated: true);
                                 i++; // 値トークンをスキップ
                             }
                         }

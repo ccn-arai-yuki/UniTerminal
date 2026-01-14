@@ -63,13 +63,19 @@ namespace Xeon.UniTerminal.Parsing
         /// </summary>
         public bool WasQuoted { get; }
 
-        public ParsedOptionOccurrence(string name, bool isLong, string rawValue = null, bool hasValue = false, bool wasQuoted = false)
+        /// <summary>
+        /// 値がスペース区切りで解析されたかどうか（=構文ではなく）。
+        /// </summary>
+        public bool IsValueSpaceSeparated { get; }
+
+        public ParsedOptionOccurrence(string name, bool isLong, string rawValue = null, bool hasValue = false, bool wasQuoted = false, bool isValueSpaceSeparated = false)
         {
             Name = name;
             IsLong = isLong;
             RawValue = rawValue;
             HasValue = hasValue;
             WasQuoted = wasQuoted;
+            IsValueSpaceSeparated = isValueSpaceSeparated;
         }
 
         public override string ToString()

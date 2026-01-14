@@ -12,15 +12,34 @@ namespace Xeon.UniTerminal.Execution
     /// </summary>
     public class PipelineExecutor
     {
-        private readonly string _workingDirectory;
+        private string _workingDirectory;
         private readonly string _homeDirectory;
         private readonly CommandRegistry _registry;
+        private string _previousWorkingDirectory;
+        private readonly Action<string> _changeWorkingDirectoryCallback;
 
-        public PipelineExecutor(string workingDirectory, string homeDirectory, CommandRegistry registry = null)
+        public PipelineExecutor(
+            string workingDirectory,
+            string homeDirectory,
+            CommandRegistry registry = null,
+            string previousWorkingDirectory = null,
+            Action<string> changeWorkingDirectoryCallback = null)
         {
             _workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
             _homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
             _registry = registry;
+            _previousWorkingDirectory = previousWorkingDirectory;
+            _changeWorkingDirectoryCallback = changeWorkingDirectoryCallback;
+        }
+
+        /// <summary>
+        /// 作業ディレクトリを変更します（cdコマンドから呼び出される）。
+        /// </summary>
+        private void ChangeWorkingDirectory(string newPath)
+        {
+            _previousWorkingDirectory = _workingDirectory;
+            _workingDirectory = newPath;
+            _changeWorkingDirectoryCallback?.Invoke(newPath);
         }
 
         /// <summary>
@@ -112,7 +131,9 @@ namespace Xeon.UniTerminal.Execution
                         _workingDirectory,
                         _homeDirectory,
                         boundCmd.PositionalArguments,
-                        _registry);
+                        _registry,
+                        _previousWorkingDirectory,
+                        ChangeWorkingDirectory);
 
                     // コマンドを実行
                     try

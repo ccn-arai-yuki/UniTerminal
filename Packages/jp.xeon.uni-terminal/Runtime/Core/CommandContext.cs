@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Xeon.UniTerminal
@@ -29,9 +30,19 @@ namespace Xeon.UniTerminal
         public string WorkingDirectory { get; }
 
         /// <summary>
+        /// 前の作業ディレクトリ（cd - で使用）。
+        /// </summary>
+        public string PreviousWorkingDirectory { get; }
+
+        /// <summary>
         /// ホームディレクトリ（Application.persistentDataPath）。
         /// </summary>
         public string HomeDirectory { get; }
+
+        /// <summary>
+        /// 作業ディレクトリを変更するコールバック（cdコマンド専用）。
+        /// </summary>
+        public Action<string> ChangeWorkingDirectory { get; }
 
         /// <summary>
         /// コマンドに渡された位置引数。
@@ -50,7 +61,9 @@ namespace Xeon.UniTerminal
             string workingDirectory,
             string homeDirectory,
             IReadOnlyList<string> positionalArguments,
-            CommandRegistry registry = null)
+            CommandRegistry registry = null,
+            string previousWorkingDirectory = null,
+            Action<string> changeWorkingDirectory = null)
         {
             Stdin = stdin;
             Stdout = stdout;
@@ -59,6 +72,8 @@ namespace Xeon.UniTerminal
             HomeDirectory = homeDirectory;
             PositionalArguments = positionalArguments ?? new List<string>();
             Registry = registry;
+            PreviousWorkingDirectory = previousWorkingDirectory;
+            ChangeWorkingDirectory = changeWorkingDirectory;
         }
     }
 }
