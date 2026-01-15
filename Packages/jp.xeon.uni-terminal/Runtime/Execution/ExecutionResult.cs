@@ -3,7 +3,7 @@ namespace Xeon.UniTerminal.Execution
     /// <summary>
     /// パイプライン実行の結果。
     /// </summary>
-    public class ExecutionResult
+    public readonly struct ExecutionResult
     {
         /// <summary>
         /// パイプライン内の最後のコマンドからの終了コード。
@@ -20,6 +20,6 @@ namespace Xeon.UniTerminal.Execution
             ExitCode = exitCode;
         }
 
-        public static ExecutionResult Successful => new ExecutionResult(ExitCode.Success);
+        public static readonly ExecutionResult Successful = new ExecutionResult(ExitCode.Success);
     }
 }
