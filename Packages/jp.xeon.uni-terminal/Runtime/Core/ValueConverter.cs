@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Globalization;
 using UnityEngine;
+using Xeon.UniTerminal.UnityCommands;
 
 namespace Xeon.UniTerminal
 {
@@ -81,6 +83,17 @@ namespace Xeon.UniTerminal
             // LayerMask
             if (targetType == typeof(LayerMask))
                 return ParseLayerMask(value);
+
+            // Unity Object参照型
+            if (typeof(GameObject).IsAssignableFrom(targetType))
+                return ParseGameObjectReference(value);
+
+            if (typeof(Component).IsAssignableFrom(targetType))
+                return ParseComponentReference(value, targetType);
+
+            // Material（特殊対応）
+            if (targetType == typeof(Material))
+                return ParseMaterialReference(value);
 
             throw new NotSupportedException($"Cannot convert to type: {targetType.Name}");
         }
@@ -294,12 +307,162 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
+        /// パスからGameObject参照を解決します。
+        /// </summary>
+        private static GameObject ParseGameObjectReference(string value)
+        {
+            // null/none指定
+            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+                return null;
+
+            // パスで解決
+            var go = GameObjectPath.Resolve(value);
+            if (go == null)
+            {
+                throw new FormatException($"GameObject not found: {value}");
+            }
+            return go;
+        }
+
+        /// <summary>
+        /// パスからComponent参照を解決します。
+        /// </summary>
+        private static Component ParseComponentReference(string value, Type componentType)
+        {
+            // null/none指定
+            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+                return null;
+
+            // パス/コンポーネント形式 (例: /Player:Rigidbody)
+            var parts = value.Split(':');
+            if (parts.Length == 2)
+            {
+                var go = GameObjectPath.Resolve(parts[0]);
+                if (go == null)
+                {
+                    throw new FormatException($"GameObject not found: {parts[0]}");
+                }
+
+                var compType = TypeResolver.ResolveComponentType(parts[1]);
+                if (compType == null || !componentType.IsAssignableFrom(compType))
+                {
+                    throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {parts[1]}");
+                }
+
+                var comp = go.GetComponent(compType);
+                if (comp == null)
+                {
+                    throw new FormatException($"Component '{parts[1]}' not found on {parts[0]}");
+                }
+                return comp;
+            }
+
+            // パスのみの場合、そのGameObjectから指定型のコンポーネントを取得
+            var gameObject = GameObjectPath.Resolve(value);
+            if (gameObject == null)
+            {
+                throw new FormatException($"GameObject not found: {value}");
+            }
+
+            var component = gameObject.GetComponent(componentType);
+            if (component == null)
+            {
+                throw new FormatException($"Component '{componentType.Name}' not found on {value}");
+            }
+            return component;
+        }
+
+        /// <summary>
+        /// Material参照を解決します。
+        /// </summary>
+        private static Material ParseMaterialReference(string value)
+        {
+            // null/none指定
+            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+                return null;
+
+            // パス/コンポーネント形式でRendererから取得
+            // 例: /Cube:MeshRenderer.material または /Cube:MeshRenderer.materials[0]
+            if (value.Contains(":"))
+            {
+                var colonIdx = value.IndexOf(':');
+                var goPath = value.Substring(0, colonIdx);
+                var rest = value.Substring(colonIdx + 1);
+
+                var go = GameObjectPath.Resolve(goPath);
+                if (go == null)
+                {
+                    throw new FormatException($"GameObject not found: {goPath}");
+                }
+
+                // Renderer.material or Renderer.materials[n]
+                if (rest.Contains(".material"))
+                {
+                    var dotIdx = rest.IndexOf('.');
+                    var rendererTypeName = rest.Substring(0, dotIdx);
+                    var rendererType = TypeResolver.ResolveComponentType(rendererTypeName);
+
+                    if (rendererType == null || !typeof(Renderer).IsAssignableFrom(rendererType))
+                    {
+                        throw new FormatException($"'{rendererTypeName}' is not a Renderer type");
+                    }
+
+                    var renderer = go.GetComponent(rendererType) as Renderer;
+                    if (renderer == null)
+                    {
+                        throw new FormatException($"Renderer '{rendererTypeName}' not found on {goPath}");
+                    }
+
+                    // materials[n] 形式
+                    var propPart = rest.Substring(dotIdx + 1);
+                    if (propPart.StartsWith("materials["))
+                    {
+                        var indexStr = propPart.Substring(10, propPart.Length - 11);
+                        if (int.TryParse(indexStr, out int index) && index >= 0 && index < renderer.sharedMaterials.Length)
+                        {
+                            return renderer.sharedMaterials[index];
+                        }
+                        throw new FormatException($"Material index out of range: {index}");
+                    }
+
+                    // material 形式
+                    if (propPart == "material" || propPart == "sharedMaterial")
+                    {
+                        return renderer.sharedMaterial;
+                    }
+                }
+
+                throw new FormatException($"Invalid material reference format: {value}");
+            }
+
+            // 名前でリソースから検索（フォールバック）
+            var materials = Resources.FindObjectsOfTypeAll<Material>();
+            foreach (var mat in materials)
+            {
+                if (mat.name == value)
+                    return mat;
+            }
+
+            throw new FormatException($"Material not found: {value}");
+        }
+
+        /// <summary>
         /// 値を表示用文字列にフォーマットします。
         /// </summary>
         public static string Format(object value)
         {
             if (value == null)
                 return "(null)";
+
+            // 配列/リストの特別処理
+            if (value is Array array)
+            {
+                return FormatArray(array);
+            }
+            if (value is IList list && !(value is string))
+            {
+                return FormatList(list);
+            }
 
             return value switch
             {
@@ -317,9 +480,59 @@ namespace Xeon.UniTerminal
                 bool b => b.ToString().ToLowerInvariant(),
                 float f => f.ToString("F2", CultureInfo.InvariantCulture),
                 double d => d.ToString("F2", CultureInfo.InvariantCulture),
+                GameObject go => go != null ? $"<GameObject:{GameObjectPath.GetPath(go)}>" : "(null)",
+                Component comp => comp != null ? $"<{comp.GetType().Name}:{GameObjectPath.GetPath(comp.gameObject)}>" : "(null)",
                 UnityEngine.Object obj => obj != null ? $"\"{obj.name}\"" : "(null)",
                 _ => value.ToString()
             };
+        }
+
+        /// <summary>
+        /// 配列を表示用文字列にフォーマットします。
+        /// </summary>
+        private static string FormatArray(Array array)
+        {
+            if (array.Length == 0)
+                return "[]";
+
+            var elementType = array.GetType().GetElementType();
+            if (array.Length <= 5)
+            {
+                var elements = new string[array.Length];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    elements[i] = Format(array.GetValue(i));
+                }
+                return $"[{string.Join(", ", elements)}]";
+            }
+
+            return $"[{elementType.Name}[{array.Length}]]";
+        }
+
+        /// <summary>
+        /// リストを表示用文字列にフォーマットします。
+        /// </summary>
+        private static string FormatList(IList list)
+        {
+            if (list.Count == 0)
+                return "[]";
+
+            var listType = list.GetType();
+            var elementType = listType.IsGenericType
+                ? listType.GetGenericArguments()[0]
+                : typeof(object);
+
+            if (list.Count <= 5)
+            {
+                var elements = new string[list.Count];
+                for (int i = 0; i < list.Count; i++)
+                {
+                    elements[i] = Format(list[i]);
+                }
+                return $"[{string.Join(", ", elements)}]";
+            }
+
+            return $"[List<{elementType.Name}>[{list.Count}]]";
         }
     }
 }

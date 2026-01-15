@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -84,18 +86,19 @@ namespace Xeon.UniTerminal.UnityCommands
             foreach (var field in fields)
             {
                 ct.ThrowIfCancellationRequested();
+                var readOnly = field.IsInitOnly ? " [readonly]" : "";
+                var typeName = GetFriendlyTypeName(field.FieldType);
                 try
                 {
                     var value = field.GetValue(comp);
                     var valueStr = ValueConverter.Format(value);
-                    var readOnly = field.IsInitOnly ? " [readonly]" : "";
-                    var typeName = GetFriendlyTypeName(field.FieldType);
 
                     await context.Stdout.WriteLineAsync($"  {field.Name,-24} {typeName,-14} {valueStr}{readOnly}", ct);
                 }
                 catch
                 {
-                    // フィールド取得エラーは無視
+                    // フィールド取得エラーでも名前は表示
+                    await context.Stdout.WriteLineAsync($"  {field.Name,-24} {typeName,-14} (error){readOnly}", ct);
                 }
             }
 
@@ -107,18 +110,19 @@ namespace Xeon.UniTerminal.UnityCommands
             foreach (var prop in properties)
             {
                 ct.ThrowIfCancellationRequested();
+                var readOnly = !prop.CanWrite ? " [readonly]" : "";
+                var typeName = GetFriendlyTypeName(prop.PropertyType);
                 try
                 {
                     var value = prop.GetValue(comp);
                     var valueStr = ValueConverter.Format(value);
-                    var readOnly = !prop.CanWrite ? " [readonly]" : "";
-                    var typeName = GetFriendlyTypeName(prop.PropertyType);
 
                     await context.Stdout.WriteLineAsync($"  {prop.Name,-24} {typeName,-14} {valueStr}{readOnly}", ct);
                 }
                 catch
                 {
-                    // プロパティ取得エラーは無視
+                    // プロパティ取得エラーでも名前は表示
+                    await context.Stdout.WriteLineAsync($"  {prop.Name,-24} {typeName,-14} (error){readOnly}", ct);
                 }
             }
 
@@ -192,19 +196,28 @@ namespace Xeon.UniTerminal.UnityCommands
             var newValueStr = string.Join(" ", args.Skip(3)); // スペースを含む値に対応
             var type = comp.GetType();
 
+            // 配列インデックスを解析
+            var (baseName, arrayIndex) = ParseArrayIndex(propName);
+
 #if UNITY_EDITOR
             UnityEditor.Undo.RecordObject(comp, $"Set {propName}");
 #endif
 
             // フィールドを検索
-            var field = type.GetField(propName,
+            var field = type.GetField(baseName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (field != null)
             {
                 if (field.IsInitOnly)
                 {
-                    await context.Stderr.WriteLineAsync($"property: '{propName}' is read-only", ct);
+                    await context.Stderr.WriteLineAsync($"property: '{baseName}' is read-only", ct);
                     return ExitCode.RuntimeError;
+                }
+
+                // 配列要素の設定
+                if (arrayIndex.HasValue)
+                {
+                    return await SetArrayElementAsync(context, comp, type, field.GetValue(comp), field.FieldType, baseName, arrayIndex.Value, newValueStr, ct);
                 }
 
                 var oldValue = field.GetValue(comp);
@@ -227,13 +240,19 @@ namespace Xeon.UniTerminal.UnityCommands
             }
 
             // プロパティを検索
-            var prop = type.GetProperty(propName,
+            var prop = type.GetProperty(baseName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (prop != null)
             {
+                // 配列要素の設定（配列プロパティは読み取り専用でも要素は変更可能）
+                if (arrayIndex.HasValue && prop.CanRead)
+                {
+                    return await SetArrayElementAsync(context, comp, type, prop.GetValue(comp), prop.PropertyType, baseName, arrayIndex.Value, newValueStr, ct);
+                }
+
                 if (!prop.CanWrite)
                 {
-                    await context.Stderr.WriteLineAsync($"property: '{propName}' is read-only", ct);
+                    await context.Stderr.WriteLineAsync($"property: '{baseName}' is read-only", ct);
                     return ExitCode.RuntimeError;
                 }
 
@@ -256,7 +275,91 @@ namespace Xeon.UniTerminal.UnityCommands
                 }
             }
 
-            await context.Stderr.WriteLineAsync($"property: '{propName}': Property not found on {type.Name}", ct);
+            await context.Stderr.WriteLineAsync($"property: '{baseName}': Property not found on {type.Name}", ct);
+            return ExitCode.RuntimeError;
+        }
+
+        /// <summary>
+        /// 配列要素を設定します。
+        /// </summary>
+        private async Task<ExitCode> SetArrayElementAsync(
+            CommandContext context,
+            Component comp,
+            Type compType,
+            object arrayObj,
+            Type arrayType,
+            string memberName,
+            int index,
+            string newValueStr,
+            CancellationToken ct)
+        {
+            if (arrayObj == null)
+            {
+                await context.Stderr.WriteLineAsync($"property: '{memberName}' is null", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            // 配列の場合
+            if (arrayObj is Array array)
+            {
+                if (index < 0 || index >= array.Length)
+                {
+                    await context.Stderr.WriteLineAsync($"property: Index {index} out of range for '{memberName}' (length: {array.Length})", ct);
+                    return ExitCode.RuntimeError;
+                }
+
+                var elementType = arrayType.GetElementType() ?? typeof(object);
+                var oldValue = array.GetValue(index);
+
+                try
+                {
+                    var newValue = ValueConverter.Convert(newValueStr, elementType);
+                    array.SetValue(newValue, index);
+
+                    await context.Stdout.WriteLineAsync(
+                        $"{compType.Name}.{memberName}[{index}]: {ValueConverter.Format(oldValue)} -> {ValueConverter.Format(newValue)}", ct);
+                    return ExitCode.Success;
+                }
+                catch (Exception ex)
+                {
+                    await context.Stderr.WriteLineAsync(
+                        $"property: Cannot convert '{newValueStr}' to {elementType.Name}: {ex.Message}", ct);
+                    return ExitCode.UsageError;
+                }
+            }
+
+            // IListの場合
+            if (arrayObj is IList list)
+            {
+                if (index < 0 || index >= list.Count)
+                {
+                    await context.Stderr.WriteLineAsync($"property: Index {index} out of range for '{memberName}' (count: {list.Count})", ct);
+                    return ExitCode.RuntimeError;
+                }
+
+                var elementType = arrayType.IsGenericType
+                    ? arrayType.GetGenericArguments()[0]
+                    : typeof(object);
+                var oldValue = list[index];
+
+                try
+                {
+                    var newValue = ValueConverter.Convert(newValueStr, elementType);
+                    list[index] = newValue;
+
+                    await context.Stdout.WriteLineAsync(
+                        $"{compType.Name}.{memberName}[{index}]: {ValueConverter.Format(oldValue)} -> {ValueConverter.Format(newValue)}", ct);
+                    return ExitCode.Success;
+                }
+                catch (Exception ex)
+                {
+                    await context.Stderr.WriteLineAsync(
+                        $"property: Cannot convert '{newValueStr}' to {elementType.Name}: {ex.Message}", ct);
+                    return ExitCode.UsageError;
+                }
+            }
+
+            await context.Stderr.WriteLineAsync($"property: '{memberName}' is not an array or list", ct);
             return ExitCode.RuntimeError;
         }
 
@@ -291,22 +394,35 @@ namespace Xeon.UniTerminal.UnityCommands
         /// </summary>
         private (object value, Type memberType, string error) GetMemberValue(Component comp, Type type, string memberName)
         {
+            // 配列インデックスを解析 (例: materials[0])
+            var (baseName, arrayIndex) = ParseArrayIndex(memberName);
+
             // フィールドを検索
-            var field = type.GetField(memberName,
+            var field = type.GetField(baseName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (field != null)
             {
-                return (field.GetValue(comp), field.FieldType, null);
+                var value = field.GetValue(comp);
+                if (arrayIndex.HasValue)
+                {
+                    return GetArrayElement(value, field.FieldType, arrayIndex.Value, baseName);
+                }
+                return (value, field.FieldType, null);
             }
 
             // プロパティを検索
-            var prop = type.GetProperty(memberName,
+            var prop = type.GetProperty(baseName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (prop != null && prop.CanRead)
             {
                 try
                 {
-                    return (prop.GetValue(comp), prop.PropertyType, null);
+                    var value = prop.GetValue(comp);
+                    if (arrayIndex.HasValue)
+                    {
+                        return GetArrayElement(value, prop.PropertyType, arrayIndex.Value, baseName);
+                    }
+                    return (value, prop.PropertyType, null);
                 }
                 catch (Exception ex)
                 {
@@ -315,6 +431,56 @@ namespace Xeon.UniTerminal.UnityCommands
             }
 
             return (null, null, $"property: '{memberName}': Property not found on {type.Name}");
+        }
+
+        /// <summary>
+        /// 配列インデックスを解析します（例: "materials[0]" -> ("materials", 0)）
+        /// </summary>
+        private (string baseName, int? index) ParseArrayIndex(string memberName)
+        {
+            var match = Regex.Match(memberName, @"^(.+)\[(\d+)\]$");
+            if (match.Success)
+            {
+                return (match.Groups[1].Value, int.Parse(match.Groups[2].Value));
+            }
+            return (memberName, null);
+        }
+
+        /// <summary>
+        /// 配列/リストから要素を取得します。
+        /// </summary>
+        private (object value, Type memberType, string error) GetArrayElement(object arrayObj, Type arrayType, int index, string memberName)
+        {
+            if (arrayObj == null)
+            {
+                return (null, null, $"property: '{memberName}' is null");
+            }
+
+            // 配列の場合
+            if (arrayObj is Array array)
+            {
+                if (index < 0 || index >= array.Length)
+                {
+                    return (null, null, $"property: Index {index} out of range for '{memberName}' (length: {array.Length})");
+                }
+                var elementType = arrayType.GetElementType() ?? typeof(object);
+                return (array.GetValue(index), elementType, null);
+            }
+
+            // IListの場合
+            if (arrayObj is IList list)
+            {
+                if (index < 0 || index >= list.Count)
+                {
+                    return (null, null, $"property: Index {index} out of range for '{memberName}' (count: {list.Count})");
+                }
+                var elementType = arrayType.IsGenericType
+                    ? arrayType.GetGenericArguments()[0]
+                    : typeof(object);
+                return (list[index], elementType, null);
+            }
+
+            return (null, null, $"property: '{memberName}' is not an array or list");
         }
 
         /// <summary>
@@ -365,6 +531,7 @@ namespace Xeon.UniTerminal.UnityCommands
         public IEnumerable<string> GetCompletions(CompletionContext context)
         {
             var token = context.CurrentToken ?? "";
+            var tokens = context.InputLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
             // サブコマンド補完
             if (context.TokenIndex == 1)
@@ -384,6 +551,90 @@ namespace Xeon.UniTerminal.UnityCommands
                 foreach (var path in GameObjectPath.GetCompletions(token))
                 {
                     yield return path;
+                }
+                yield break;
+            }
+
+            // コンポーネント名補完
+            if (context.TokenIndex == 3 && !token.StartsWith("-"))
+            {
+                // パスからGameObjectを解決してコンポーネント一覧を取得
+                if (tokens.Length >= 3)
+                {
+                    var go = GameObjectPath.Resolve(tokens[2]);
+                    if (go != null)
+                    {
+                        var components = go.GetComponents<Component>();
+                        var seenTypes = new HashSet<string>();
+                        foreach (var comp in components)
+                        {
+                            if (comp == null) continue;
+                            var typeName = comp.GetType().Name;
+                            if (seenTypes.Add(typeName) && typeName.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                            {
+                                yield return typeName;
+                            }
+                        }
+                    }
+                }
+
+                // よく使うコンポーネント名
+                foreach (var compName in TypeResolver.GetCommonComponentNames())
+                {
+                    if (compName.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                        yield return compName;
+                }
+                yield break;
+            }
+
+            // プロパティ名補完
+            if (context.TokenIndex == 4 && !token.StartsWith("-"))
+            {
+                if (tokens.Length >= 4)
+                {
+                    var go = GameObjectPath.Resolve(tokens[2]);
+                    if (go != null)
+                    {
+                        var compType = TypeResolver.ResolveComponentType(tokens[3]);
+                        if (compType != null)
+                        {
+                            var comp = go.GetComponent(compType);
+                            if (comp != null)
+                            {
+                                foreach (var propName in GetMemberNames(comp.GetType(), token))
+                                {
+                                    yield return propName;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// コンポーネントのメンバー名を取得します。
+        /// </summary>
+        private IEnumerable<string> GetMemberNames(Type type, string prefix)
+        {
+            var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+            if (IncludePrivate)
+                bindingFlags |= BindingFlags.NonPublic;
+
+            // フィールド
+            foreach (var field in type.GetFields(bindingFlags))
+            {
+                if (field.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    yield return field.Name;
+            }
+
+            // プロパティ
+            foreach (var prop in type.GetProperties(bindingFlags))
+            {
+                if (prop.CanRead && prop.GetIndexParameters().Length == 0)
+                {
+                    if (prop.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                        yield return prop.Name;
                 }
             }
         }

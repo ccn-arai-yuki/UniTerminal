@@ -484,6 +484,7 @@ namespace Xeon.UniTerminal.UnityCommands
         public IEnumerable<string> GetCompletions(CompletionContext context)
         {
             var token = context.CurrentToken ?? "";
+            var tokens = context.InputLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
             // サブコマンド補完
             if (context.TokenIndex == 1)
@@ -507,17 +508,40 @@ namespace Xeon.UniTerminal.UnityCommands
                 yield break;
             }
 
-            // addサブコマンドの型名補完
-            if (context.TokenIndex == 3)
+            // 型名補完（TokenIndex == 3）
+            if (context.TokenIndex == 3 && tokens.Length >= 3)
             {
-                // InputLineから"add"サブコマンドかどうかを判定
                 var inputLower = context.InputLine?.ToLower() ?? "";
+
+                // addサブコマンドの場合は追加可能なコンポーネント
                 if (inputLower.Contains(" add "))
                 {
                     foreach (var typeName in TypeResolver.GetCommonComponentNames())
                     {
                         if (typeName.StartsWith(token, StringComparison.OrdinalIgnoreCase))
                             yield return typeName;
+                    }
+                    yield break;
+                }
+
+                // remove/info/enable/disableサブコマンドの場合は既存のコンポーネント
+                if (inputLower.Contains(" remove ") || inputLower.Contains(" info ") ||
+                    inputLower.Contains(" enable ") || inputLower.Contains(" disable "))
+                {
+                    var go = GameObjectPath.Resolve(tokens[2]);
+                    if (go != null)
+                    {
+                        var components = go.GetComponents<Component>();
+                        var seenTypes = new HashSet<string>();
+                        foreach (var comp in components)
+                        {
+                            if (comp == null) continue;
+                            var typeName = comp.GetType().Name;
+                            if (seenTypes.Add(typeName) && typeName.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                            {
+                                yield return typeName;
+                            }
+                        }
                     }
                 }
             }
