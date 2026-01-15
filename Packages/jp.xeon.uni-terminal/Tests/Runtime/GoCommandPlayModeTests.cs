@@ -80,16 +80,17 @@ namespace Xeon.UniTerminal.Tests.Runtime
         {
             yield return null;
 
+            stderr = new StringBuilderTextWriter();
             var task = terminal.ExecuteAsync("go create PlayMode_GoCube -p Cube", stdout, stderr);
             while (!task.IsCompleted) yield return null;
 
-            Assert.AreEqual(ExitCode.Success, task.Result);
+            Assert.AreEqual(ExitCode.Success, task.Result, $"stderr: {stderr}");
 
             yield return null;
 
             var created = GameObject.Find("PlayMode_GoCube");
-            Assert.IsNotNull(created);
-            Assert.IsNotNull(created.GetComponent<MeshFilter>());
+            Assert.IsNotNull(created, "GameObject not found after creation");
+            Assert.IsNotNull(created.GetComponent<MeshFilter>(), "MeshFilter not found on primitive");
         }
 
         [UnityTest]
@@ -99,7 +100,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
 
             yield return null;
 
-            var task = terminal.ExecuteAsync("go create PlayMode_GoChild -P /PlayMode_GoParent", stdout, stderr);
+            var task = terminal.ExecuteAsync("go create PlayMode_GoChild --parent /PlayMode_GoParent", stdout, stderr);
             while (!task.IsCompleted) yield return null;
 
             Assert.AreEqual(ExitCode.Success, task.Result);
@@ -140,13 +141,14 @@ namespace Xeon.UniTerminal.Tests.Runtime
             yield return null;
 
             stdout = new StringBuilderTextWriter();
-            var task = terminal.ExecuteAsync("go find -n \"PlayMode_GoFind_Match*\"", stdout, stderr);
+            // Note: find uses partial match (IndexOf), not glob pattern
+            var task = terminal.ExecuteAsync("go find -n PlayMode_GoFind_Match", stdout, stderr);
             while (!task.IsCompleted) yield return null;
 
             Assert.AreEqual(ExitCode.Success, task.Result);
             var output = stdout.ToString();
-            Assert.IsTrue(output.Contains("PlayMode_GoFind_Match1"));
-            Assert.IsTrue(output.Contains("PlayMode_GoFind_Match2"));
+            Assert.IsTrue(output.Contains("PlayMode_GoFind_Match1"), $"Match1 not found in: {output}");
+            Assert.IsTrue(output.Contains("PlayMode_GoFind_Match2"), $"Match2 not found in: {output}");
         }
 
         [UnityTest]
@@ -191,7 +193,8 @@ namespace Xeon.UniTerminal.Tests.Runtime
 
             yield return null;
 
-            var task = terminal.ExecuteAsync("go rename /PlayMode_GoOldName -n PlayMode_GoNewName", stdout, stderr);
+            // rename expects positional arguments: go rename <path> <new-name>
+            var task = terminal.ExecuteAsync("go rename /PlayMode_GoOldName PlayMode_GoNewName", stdout, stderr);
             while (!task.IsCompleted) yield return null;
 
             Assert.AreEqual(ExitCode.Success, task.Result);

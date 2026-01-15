@@ -17,7 +17,7 @@ namespace Xeon.UniTerminal.UnityCommands
         [Option("primitive", "p", Description = "Primitive type (Cube, Sphere, Capsule, Cylinder, Plane, Quad)")]
         public string Primitive;
 
-        [Option("parent", "P", Description = "Parent object path")]
+        [Option("parent", "", Description = "Parent object path")]
         public string ParentPath;
 
         [Option("position", "", Description = "Initial position (x,y,z)")]
