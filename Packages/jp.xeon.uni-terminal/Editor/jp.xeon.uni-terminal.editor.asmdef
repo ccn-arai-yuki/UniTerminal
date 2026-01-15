@@ -1,18 +1,25 @@
 {
-  "name": "jp.xeon.uni-terminal.editor",
-  "rootNamespace": "Xeon.UniTerminal.Editor",
-  "references": [
-    "jp.xeon.uni-terminal.runtime"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "jp.xeon.uni-terminal.editor",
+    "rootNamespace": "Xeon.UniTerminal.Editor",
+    "references": [
+        "jp.xeon.uni-terminal.runtime",
+        "UniTask"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "",
+            "define": "UNI_TERMINAL_UNI_TASK_SUPPORT"
+        }
+    ],
+    "noEngineReferences": false
 }

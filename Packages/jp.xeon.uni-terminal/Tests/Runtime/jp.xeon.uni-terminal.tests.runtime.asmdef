@@ -1,22 +1,29 @@
 {
-  "name": "jp.xeon.uni-terminal.tests.runtime",
-  "rootNamespace": "Xeon.UniTerminal.Tests.Runtime",
-  "references": [
-    "jp.xeon.uni-terminal.runtime",
-    "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "nunit.framework.dll"
-  ],
-  "autoReferenced": false,
-  "defineConstraints": [
-    "UNITY_INCLUDE_TESTS"
-  ],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "jp.xeon.uni-terminal.tests.runtime",
+    "rootNamespace": "Xeon.UniTerminal.Tests.Runtime",
+    "references": [
+        "jp.xeon.uni-terminal.runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "",
+            "define": "UNI_TERMINAL_UNI_TASK_SUPPORT"
+        }
+    ],
+    "noEngineReferences": false
 }
