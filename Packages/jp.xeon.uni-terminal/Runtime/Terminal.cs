@@ -102,9 +102,12 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<LsCommand>();
             registry.RegisterCommand<HistoryCommand>();
             registry.RegisterCommand<FindCommand>();
+            registry.RegisterCommand<LessCommand>();
 
             // Unity固有コマンド
             registry.RegisterCommand<HierarchyCommand>();
+            registry.RegisterCommand<GoCommand>();
+            registry.RegisterCommand<TransformCommand>();
         }
 
         /// <summary>
