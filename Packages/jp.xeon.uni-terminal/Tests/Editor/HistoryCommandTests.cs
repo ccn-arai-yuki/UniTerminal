@@ -78,15 +78,17 @@ namespace Xeon.UniTerminal.Tests
             await terminal.ExecuteAsync("echo fourth", stdout, stderr);
 
             stdout = new StringBuilderTextWriter();
+            // history -n 2 自体も履歴に追加されるため、最後の2件は "echo fourth" と "history -n 2"
             var exitCode = await terminal.ExecuteAsync("history -n 2", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             var output = stdout.ToString();
-            // 最後の2件のみ表示
+            // 最後の2件のみ表示（echo fourth と history -n 2）
             Assert.IsFalse(output.Contains("echo first"));
             Assert.IsFalse(output.Contains("echo second"));
-            Assert.IsTrue(output.Contains("echo third"));
+            Assert.IsFalse(output.Contains("echo third"));
             Assert.IsTrue(output.Contains("echo fourth"));
+            Assert.IsTrue(output.Contains("history -n 2"));
         }
 
         // HIST-004 -r オプション
@@ -221,8 +223,10 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task History_MaxSize_LimitsEntries()
         {
-            // 最大3件の履歴を持つターミナルを作成
-            var smallTerminal = new Terminal(testDir, testDir, registerBuiltInCommands: true, maxHistorySize: 3);
+            // 最大4件の履歴を持つターミナルを作成
+            // echo first(1), echo second(2), echo third(3), echo fourth(4)
+            // history(5) 追加時に echo first が削除される
+            var smallTerminal = new Terminal(testDir, testDir, registerBuiltInCommands: true, maxHistorySize: 4);
 
             await smallTerminal.ExecuteAsync("echo first", stdout, stderr);
             await smallTerminal.ExecuteAsync("echo second", stdout, stderr);
@@ -234,7 +238,7 @@ namespace Xeon.UniTerminal.Tests
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             var output = stdout.ToString();
-            // 最初のエントリは削除されているはず
+            // 最初のエントリ（echo first）は削除されているはず
             Assert.IsFalse(output.Contains("echo first"));
             Assert.IsTrue(output.Contains("echo second"));
             Assert.IsTrue(output.Contains("echo third"));
