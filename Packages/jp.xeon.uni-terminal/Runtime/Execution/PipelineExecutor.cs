@@ -67,7 +67,7 @@ namespace Xeon.UniTerminal.Execution
             IAsyncTextWriter stderr,
             CancellationToken ct = default)
         {
-            if (pipeline == null || pipeline.Commands.Count == 0)
+            if (pipeline.Commands == null || pipeline.Commands.Count == 0)
             {
                 return ExecutionResult.Successful;
             }

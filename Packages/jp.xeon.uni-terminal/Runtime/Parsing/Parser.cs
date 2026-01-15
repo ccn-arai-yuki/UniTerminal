@@ -105,6 +105,11 @@ namespace Xeon.UniTerminal.Parsing
             bool afterEndOfOptions = false;
             int i = 0;
 
+            // リダイレクション用のローカル変数
+            string stdinPath = null;
+            string stdoutPath = null;
+            var stdoutMode = RedirectMode.None;
+
             // 最初のトークンはコマンド名であるべき
             if (tokens.Count == 0)
             {
@@ -123,7 +128,7 @@ namespace Xeon.UniTerminal.Parsing
                     {
                         throw new ParseException("Expected file path after <");
                     }
-                    command.Redirections.StdinPath = tokens[i].Value;
+                    stdinPath = tokens[i].Value;
                     i++;
                     continue;
                 }
@@ -135,8 +140,8 @@ namespace Xeon.UniTerminal.Parsing
                     {
                         throw new ParseException("Expected file path after >");
                     }
-                    command.Redirections.StdoutPath = tokens[i].Value;
-                    command.Redirections.StdoutMode = RedirectMode.Overwrite;
+                    stdoutPath = tokens[i].Value;
+                    stdoutMode = RedirectMode.Overwrite;
                     i++;
                     continue;
                 }
@@ -148,8 +153,8 @@ namespace Xeon.UniTerminal.Parsing
                     {
                         throw new ParseException("Expected file path after >>");
                     }
-                    command.Redirections.StdoutPath = tokens[i].Value;
-                    command.Redirections.StdoutMode = RedirectMode.Append;
+                    stdoutPath = tokens[i].Value;
+                    stdoutMode = RedirectMode.Append;
                     i++;
                     continue;
                 }
@@ -240,6 +245,9 @@ namespace Xeon.UniTerminal.Parsing
             {
                 throw new ParseException("Command name is missing");
             }
+
+            // リダイレクションを設定
+            command.Redirections = new ParsedRedirections(stdinPath, stdoutPath, stdoutMode);
 
             return command;
         }

@@ -15,28 +15,35 @@ namespace Xeon.UniTerminal.Parsing
     /// <summary>
     /// コマンドのパースされたリダイレクション。
     /// </summary>
-    public class ParsedRedirections
+    public readonly struct ParsedRedirections
     {
         /// <summary>
         /// 標準入力リダイレクションのパス (< file)。指定されていない場合はnull。
         /// </summary>
-        public string StdinPath { get; set; }
+        public string StdinPath { get; }
 
         /// <summary>
         /// 標準出力リダイレクションのパス (> または >> file)。指定されていない場合はnull。
         /// </summary>
-        public string StdoutPath { get; set; }
+        public string StdoutPath { get; }
 
         /// <summary>
         /// 標準出力リダイレクションのモード。
         /// </summary>
-        public RedirectMode StdoutMode { get; set; } = RedirectMode.None;
+        public RedirectMode StdoutMode { get; }
+
+        public ParsedRedirections(string stdinPath, string stdoutPath, RedirectMode stdoutMode)
+        {
+            StdinPath = stdinPath;
+            StdoutPath = stdoutPath;
+            StdoutMode = stdoutMode;
+        }
     }
 
     /// <summary>
     /// パースされたオプションの出現（まだ型にバインドされていない）。
     /// </summary>
-    public class ParsedOptionOccurrence
+    public readonly struct ParsedOptionOccurrence
     {
         /// <summary>
         /// オプション名（-または--なし）。
@@ -110,7 +117,7 @@ namespace Xeon.UniTerminal.Parsing
         /// <summary>
         /// このコマンドのリダイレクション。
         /// </summary>
-        public ParsedRedirections Redirections { get; } = new ParsedRedirections();
+        public ParsedRedirections Redirections { get; set; }
     }
 
     /// <summary>

@@ -3,7 +3,7 @@ namespace Xeon.UniTerminal
     /// <summary>
     /// タブ補完時に提供されるコンテキスト。
     /// </summary>
-    public class CompletionContext
+    public readonly struct CompletionContext
     {
         /// <summary>
         /// 入力行全体。

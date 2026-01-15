@@ -6,7 +6,7 @@ namespace Xeon.UniTerminal.Binding
     /// <summary>
     /// 型変換されたオプションでバインドされたコマンド。
     /// </summary>
-    public class BoundCommand
+    public readonly struct BoundCommand
     {
         /// <summary>
         /// オプションが設定されたコマンドインスタンス。
@@ -44,7 +44,7 @@ namespace Xeon.UniTerminal.Binding
     /// <summary>
     /// 実行準備が完了したバインドされたパイプライン。
     /// </summary>
-    public class BoundPipeline
+    public readonly struct BoundPipeline
     {
         /// <summary>
         /// 順序通りのバインドされたコマンド。
