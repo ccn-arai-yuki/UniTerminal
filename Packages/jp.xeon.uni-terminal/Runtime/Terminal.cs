@@ -108,6 +108,7 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<HierarchyCommand>();
             registry.RegisterCommand<GoCommand>();
             registry.RegisterCommand<TransformCommand>();
+            registry.RegisterCommand<ComponentCommand>();
         }
 
         /// <summary>
