@@ -103,12 +103,14 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<HistoryCommand>();
             registry.RegisterCommand<FindCommand>();
             registry.RegisterCommand<LessCommand>();
+            registry.RegisterCommand<DiffCommand>();
 
             // Unity固有コマンド
             registry.RegisterCommand<HierarchyCommand>();
             registry.RegisterCommand<GoCommand>();
             registry.RegisterCommand<TransformCommand>();
             registry.RegisterCommand<ComponentCommand>();
+            registry.RegisterCommand<PropertyCommand>();
         }
 
         /// <summary>
