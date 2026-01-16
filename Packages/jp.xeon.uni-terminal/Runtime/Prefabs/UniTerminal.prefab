@@ -91,9 +91,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: jp.xeon.uni-terminal.runtime::Xeon.UniTerminal.UniTerminal
   input: {fileID: 8957956180611247019}
-  content: {fileID: 7516492654054873126}
   messagePrefab: {fileID: 796008145072161414, guid: beaf53140f7654fddbf96886d4273738, type: 3}
   scrollView: {fileID: 4639714274021058225}
+  scrollRect: {fileID: 4212932005764818002}
 --- !u!1 &4313553595559031344
 GameObject:
   m_ObjectHideFlags: 0
@@ -857,6 +857,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4069624623270514785, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
   m_PrefabInstance: {fileID: 3196685532501422989}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4212932005764818002 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1597581429500073951, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
+  m_PrefabInstance: {fileID: 3196685532501422989}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ScrollRect
 --- !u!114 &4639714274021058225 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7800088331860383036, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
@@ -868,8 +879,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35ce79c02b9ad154080d0d517babeec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.NewVirtualVerticalScrollView
---- !u!224 &7516492654054873126 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4905293765551762347, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
-  m_PrefabInstance: {fileID: 3196685532501422989}
-  m_PrefabAsset: {fileID: 0}
