@@ -8,11 +8,14 @@ Unity向けのLinuxライクなCLI実行フレームワークです。文字列�
 - **豊富な組み込みコマンド**: ファイル操作、テキスト処理、Unity固有のコマンドを提供
 - **拡張可能**: カスタムコマンドを簡単に追加可能
 - **非同期実行**: async/awaitによる非同期コマンド実行
+- **UniTaskサポート**: UniTaskを使用した高パフォーマンスな非同期処理（オプション）
 - **タブ補完**: コマンドやパスの補完機能
+- **FlyweightScrollView**: 大量のログ表示に対応した仮想スクロールビュー
 
 ## 動作要件
 
 - Unity 6000.0 以上
+- （オプション）UniTask 2.0 以上
 
 ## インストール
 
@@ -35,6 +38,17 @@ https://github.com/AraiYuhki/UniTerminal.git?path=Packages/jp.xeon.uni-terminal
   }
 }
 ```
+
+### UniTaskサポートを有効にする
+
+UniTaskがプロジェクトにインストールされている場合、自動的にUniTaskサポートが有効になります。
+
+1. UniTaskをインストール（OpenUPM経由推奨）:
+```
+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
+```
+
+2. UniTerminalがUniTaskを検出すると、`UNITERMINAL_UNITASK_SUPPORT` シンボルが自動定義されます
 
 ## 基本的な使い方
 
@@ -67,11 +81,21 @@ var exitCode = await terminal.ExecuteAsync("echo Hello, World!", stdout, stderr)
 Debug.Log(stdout.ToString());  // "Hello, World!"
 ```
 
+### UniTaskを使用したコマンド実行
+
+```csharp
+using Cysharp.Threading.Tasks;
+using Xeon.UniTerminal;
+
+// UniTask版の非同期実行
+var exitCode = await terminal.ExecuteUniTaskAsync("echo Hello!", stdout, stderr);
+```
+
 ### パイプラインの使用
 
 ```csharp
 // コマンドをパイプでつなげる
-await terminal.ExecuteAsync("cat myfile.txt | grep -p error | less", stdout, stderr);
+await terminal.ExecuteAsync("cat myfile.txt | grep --pattern=error | less", stdout, stderr);
 ```
 
 ### リダイレクト
@@ -84,7 +108,7 @@ await terminal.ExecuteAsync("echo Hello > output.txt", stdout, stderr);
 await terminal.ExecuteAsync("echo World >> output.txt", stdout, stderr);
 
 // ファイルからの入力
-await terminal.ExecuteAsync("grep -p pattern < input.txt", stdout, stderr);
+await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr);
 ```
 
 ## コマンド一覧
@@ -106,7 +130,7 @@ await terminal.ExecuteAsync("grep -p pattern < input.txt", stdout, stderr);
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
 | `echo` | テキストを出力 | `-n` |
-| `grep` | パターンマッチング検索 | `-p`, `-i`, `-v`, `-c` |
+| `grep` | パターンマッチング検索 | `--pattern`, `-i`, `-v`, `-c` |
 
 ### ユーティリティコマンド
 
@@ -120,7 +144,7 @@ await terminal.ExecuteAsync("grep -p pattern < input.txt", stdout, stderr);
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
 | `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y` |
-| `go` | GameObjectを操作 | `-p`, `-P`, `-t`, `-n`, `-c`, `-i`, `-s` |
+| `go` | GameObjectを操作 | `--primitive`, `-P`, `-t`, `-n`, `-c`, `-i`, `-s` |
 | `transform` | Transformを操作 | `-p`, `-P`, `-r`, `-R`, `-s`, `--parent`, `-w` |
 | `component` | コンポーネントを管理 | `-a`, `-v`, `-i`, `-n` |
 | `property` | プロパティ値を操作 | `-a`, `-s`, `-n` |
@@ -162,7 +186,7 @@ hierarchy -s MyScene
 go create MyObject
 
 # プリミティブを作成
-go create Cube -p Cube
+go create Cube --primitive=Cube
 
 # 親を指定して作成
 go create Child -P /Parent
@@ -260,6 +284,8 @@ property set /MyObject Transform parent null
 
 ## カスタムコマンドの作成
 
+### 標準のICommandインターフェース
+
 ```csharp
 using Xeon.UniTerminal;
 using System.Threading;
@@ -293,6 +319,38 @@ public class MyCommand : ICommand
 }
 ```
 
+### UniTask対応コマンド
+
+UniTaskを使用する場合は `IUniTaskCommand` インターフェースを実装します:
+
+```csharp
+using Cysharp.Threading.Tasks;
+using Xeon.UniTerminal;
+
+[Command("myasync", "UniTask-based async command")]
+public class MyUniTaskCommand : IUniTaskCommand
+{
+    [Option("delay", "d", Description = "Delay in milliseconds")]
+    public int Delay = 1000;
+
+    public string CommandName => "myasync";
+    public string Description => "UniTask-based async command";
+
+    public async UniTask<ExitCode> ExecuteAsync(UniTaskCommandContext context, CancellationToken ct)
+    {
+        await context.Stdout.WriteLineAsync("Starting...", ct);
+        await UniTask.Delay(Delay, cancellationToken: ct);
+        await context.Stdout.WriteLineAsync("Done!", ct);
+        return ExitCode.Success;
+    }
+
+    public IEnumerable<string> GetCompletions(CompletionContext context)
+    {
+        yield break;
+    }
+}
+```
+
 ### コマンドの登録
 
 ```csharp
@@ -301,6 +359,33 @@ terminal.Registry.Register<MyCommand>();
 
 // または、アセンブリから自動登録
 terminal.Registry.RegisterFromAssembly(typeof(MyCommand).Assembly);
+```
+
+## FlyweightScrollView
+
+大量のログを効率的に表示するための仮想スクロールビューコンポーネントです。Flyweightパターンを使用し、表示に必要な最小限のUIアイテムのみを生成・再利用します。
+
+### 特徴
+
+- 大量データの効率的な表示（数万行のログも軽快に表示）
+- 垂直/水平スクロール対応
+- CircularBufferによる固定サイズのログバッファ
+- ObservableCollectionとの連携
+
+### 使用例
+
+```csharp
+using Xeon.Common.FlyweightScrollView;
+using Xeon.Common.FlyweightScrollView.Model;
+
+// CircularBufferを使用（最大1000行のログを保持）
+var logBuffer = new CircularBuffer<string>(1000);
+
+// スクロールビューにバインド
+scrollView.Initialize<string, LogItemView>(logItemPrefab, logBuffer);
+
+// ログを追加（バッファが満杯になると古いログが自動削除）
+logBuffer.Add("New log entry");
 ```
 
 ## 終了コード
