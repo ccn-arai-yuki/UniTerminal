@@ -298,7 +298,7 @@ namespace Xeon.UniTerminal.Completion
                     // ホームディレクトリ展開
                     var expandedPath = prefix.Length == 1
                         ? homeDirectory
-                        : Path.Combine(homeDirectory, prefix.Substring(2));
+                        : PathUtility.Combine(homeDirectory, prefix.Substring(2));
 
                     if (Directory.Exists(expandedPath))
                     {
@@ -307,7 +307,7 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(expandedPath) ?? homeDirectory;
+                        basePath = PathUtility.GetDirectoryName(expandedPath) ?? homeDirectory;
                         searchPattern = Path.GetFileName(expandedPath);
                     }
                 }
@@ -320,13 +320,13 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(prefix) ?? workingDirectory;
+                        basePath = PathUtility.GetDirectoryName(prefix) ?? workingDirectory;
                         searchPattern = Path.GetFileName(prefix);
                     }
                 }
                 else
                 {
-                    var fullPath = Path.Combine(workingDirectory, prefix);
+                    var fullPath = PathUtility.Combine(workingDirectory, prefix);
                     if (Directory.Exists(fullPath))
                     {
                         basePath = fullPath;
@@ -334,7 +334,7 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(fullPath);
+                        basePath = PathUtility.GetDirectoryName(fullPath);
                         if (string.IsNullOrEmpty(basePath))
                             basePath = workingDirectory;
                         searchPattern = Path.GetFileName(prefix);
@@ -393,8 +393,10 @@ namespace Xeon.UniTerminal.Completion
             }
             else if (prefix.StartsWith("~"))
             {
-                var relativeTohome = basePath.StartsWith(homeDirectory)
-                    ? basePath.Substring(homeDirectory.Length).TrimStart(Path.DirectorySeparatorChar)
+                var normalizedBasePath = PathUtility.NormalizeToSlash(basePath);
+                var normalizedHome = PathUtility.NormalizeToSlash(homeDirectory);
+                var relativeTohome = normalizedBasePath.StartsWith(normalizedHome)
+                    ? normalizedBasePath.Substring(normalizedHome.Length).TrimStart('/')
                     : "";
                 result = string.IsNullOrEmpty(relativeTohome)
                     ? $"~/{name}"
@@ -402,11 +404,11 @@ namespace Xeon.UniTerminal.Completion
             }
             else if (Path.IsPathRooted(prefix))
             {
-                result = Path.Combine(basePath, name);
+                result = PathUtility.Combine(basePath, name);
             }
             else
             {
-                var prefixDir = Path.GetDirectoryName(prefix);
+                var prefixDir = PathUtility.GetDirectoryName(prefix);
                 result = string.IsNullOrEmpty(prefixDir)
                     ? name
                     : $"{prefixDir}/{name}";

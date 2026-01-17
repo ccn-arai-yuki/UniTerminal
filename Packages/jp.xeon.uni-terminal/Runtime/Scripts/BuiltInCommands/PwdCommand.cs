@@ -30,12 +30,12 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 if (Physical)
                 {
                     // シンボリックリンクを解決した物理パスを取得
-                    path = Path.GetFullPath(context.WorkingDirectory);
+                    path = PathUtility.NormalizeToSlash(Path.GetFullPath(context.WorkingDirectory));
                 }
                 else
                 {
                     // 論理パス（設定されているパスをそのまま使用）
-                    path = context.WorkingDirectory;
+                    path = PathUtility.NormalizeToSlash(context.WorkingDirectory);
                 }
 
                 // ディレクトリの存在確認

@@ -217,20 +217,24 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 return Path.GetFileName(fullPath);
             }
 
+            // パスをスラッシュで正規化
+            var normalizedBase = PathUtility.NormalizeToSlash(basePath);
+            var normalizedFull = PathUtility.NormalizeToSlash(fullPath);
+
             // ベースパスと同じ場合
-            if (basePath == fullPath)
+            if (normalizedBase == normalizedFull)
             {
                 return ".";
             }
 
             // 相対パスを計算
-            if (fullPath.StartsWith(basePath, StringComparison.Ordinal))
+            if (normalizedFull.StartsWith(normalizedBase, StringComparison.Ordinal))
             {
-                var relative = fullPath.Substring(basePath.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                return "./" + relative.Replace(Path.DirectorySeparatorChar, '/');
+                var relative = normalizedFull.Substring(normalizedBase.Length).TrimStart('/');
+                return "./" + relative;
             }
 
-            return fullPath;
+            return normalizedFull;
         }
 
         public IEnumerable<string> GetCompletions(CompletionContext context)

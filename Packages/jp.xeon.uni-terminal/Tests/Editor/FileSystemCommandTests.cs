@@ -18,8 +18,9 @@ namespace Xeon.UniTerminal.Tests
         [SetUp]
         public void SetUp()
         {
-            testDir = Path.Combine(Path.GetTempPath(), "UniTerminalFsTests");
-            homeDir = Path.Combine(testDir, "home");
+            // パスをスラッシュで正規化（Terminal内部でスラッシュに統一されるため）
+            testDir = PathUtility.NormalizeToSlash(Path.Combine(Path.GetTempPath(), "UniTerminalFsTests"));
+            homeDir = PathUtility.NormalizeToSlash(Path.Combine(testDir, "home"));
 
             // テストディレクトリ構造を作成
             Directory.CreateDirectory(testDir);
@@ -97,7 +98,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Cd_AbsolutePath_ChangesDirectory()
         {
-            var subdir = Path.Combine(testDir, "subdir");
+            var subdir = PathUtility.NormalizeToSlash(Path.Combine(testDir, "subdir"));
 
             var exitCode = await terminal.ExecuteAsync($"cd \"{subdir}\"", stdout, stderr);
 

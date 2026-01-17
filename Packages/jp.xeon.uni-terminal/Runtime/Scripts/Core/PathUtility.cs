@@ -8,23 +8,58 @@ namespace Xeon.UniTerminal
     public static class PathUtility
     {
         /// <summary>
+        /// パスの区切り文字をスラッシュに正規化します。
+        /// </summary>
+        /// <param name="path">正規化するパス。</param>
+        /// <returns>スラッシュで統一されたパス。</returns>
+        public static string NormalizeToSlash(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return path;
+
+            return path.Replace('\\', '/');
+        }
+
+        /// <summary>
+        /// パスを結合し、スラッシュで正規化します。
+        /// </summary>
+        /// <param name="path1">最初のパス。</param>
+        /// <param name="path2">結合するパス。</param>
+        /// <returns>スラッシュで統一された結合パス。</returns>
+        public static string Combine(string path1, string path2)
+        {
+            return NormalizeToSlash(Path.Combine(path1, path2));
+        }
+
+        /// <summary>
+        /// パスの親ディレクトリを取得し、スラッシュで正規化します。
+        /// </summary>
+        /// <param name="path">パス。</param>
+        /// <returns>スラッシュで統一された親ディレクトリパス。</returns>
+        public static string GetDirectoryName(string path)
+        {
+            var dir = Path.GetDirectoryName(path);
+            return dir != null ? NormalizeToSlash(dir) : null;
+        }
+
+        /// <summary>
         /// 作業ディレクトリを基準にパスを解決します（~展開付き）。
         /// </summary>
         /// <param name="path">解決するパス。</param>
         /// <param name="workingDirectory">現在の作業ディレクトリ。</param>
         /// <param name="homeDirectory">~展開用のホームディレクトリ。</param>
-        /// <returns>解決された絶対パス。</returns>
+        /// <returns>解決された絶対パス（スラッシュで統一）。</returns>
         public static string ResolvePath(string path, string workingDirectory, string homeDirectory)
         {
             if (string.IsNullOrEmpty(path))
-                return workingDirectory;
+                return NormalizeToSlash(workingDirectory);
 
             // ~展開の処理
             if (path.StartsWith("~"))
             {
                 if (path.Length == 1)
                 {
-                    return homeDirectory;
+                    return NormalizeToSlash(homeDirectory);
                 }
                 if (path[1] == '/' || path[1] == Path.DirectorySeparatorChar)
                 {
@@ -47,8 +82,8 @@ namespace Xeon.UniTerminal
                 path = Path.Combine(workingDirectory, path);
             }
 
-            // パスを正規化（..と.を解決）
-            return Path.GetFullPath(path);
+            // パスを正規化（..と.を解決し、スラッシュで統一）
+            return NormalizeToSlash(Path.GetFullPath(path));
         }
     }
 }

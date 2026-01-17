@@ -34,14 +34,14 @@ namespace Xeon.UniTerminal
         {
             if (string.IsNullOrEmpty(line))
             {
-                buffer.Add(new OutputData(string.Empty, isError));
+                buffer.PushFront(new OutputData(string.Empty, isError));
                 return Cysharp.Threading.Tasks.UniTask.CompletedTask;
             }
 
             var lines = line.Split('\n');
             foreach (var l in lines)
             {
-                buffer.Add(new OutputData(l, isError));
+                buffer.PushFront(new OutputData(l, isError));
             }
             return Cysharp.Threading.Tasks.UniTask.CompletedTask;
         }
@@ -53,7 +53,7 @@ namespace Xeon.UniTerminal
         /// <param name="ct">キャンセルトークン</param>
         public Cysharp.Threading.Tasks.UniTask WriteAsync(string text, CancellationToken ct = default)
         {
-            buffer.Add(new OutputData(text, isError));
+            buffer.PushFront(new OutputData(text, isError));
             return Cysharp.Threading.Tasks.UniTask.CompletedTask;
         }
     }

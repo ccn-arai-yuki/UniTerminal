@@ -78,14 +78,14 @@ namespace Xeon.UniTerminal.BuiltInCommands
             // Brief出力
             if (Brief)
             {
-                await context.Stdout.WriteLineAsync($"Files {file1Path} and {file2Path} differ", ct);
+                await context.Stdout.WriteLineAsync($"Files {PathUtility.NormalizeToSlash(file1Path)} and {PathUtility.NormalizeToSlash(file2Path)} differ", ct);
                 return (ExitCode)1; // 差分あり
             }
 
             // Unified形式
             if (UnifiedContext >= 0)
             {
-                await OutputUnifiedAsync(context, file1Path, file2Path, lines1, lines2, diff, ct);
+                await OutputUnifiedAsync(context, PathUtility.NormalizeToSlash(file1Path), PathUtility.NormalizeToSlash(file2Path), lines1, lines2, diff, ct);
             }
             else
             {

@@ -59,20 +59,10 @@ namespace Xeon.UniTerminal.BuiltInCommands
 
                 var path = paths[i];
                 var resolvedPath = PathUtility.ResolvePath(path, context.WorkingDirectory, context.HomeDirectory);
-
-                // パスの存在確認
-                if (!Directory.Exists(resolvedPath) && !File.Exists(resolvedPath))
+                var (isStop, isError) = await CheckPathExists(context, resolvedPath, path, ct);
+                if (isStop)
                 {
-                    await context.Stderr.WriteLineAsync($"ls: {path}: No such file or directory", ct);
-                    hasError = true;
-                    continue;
-                }
-
-                // ファイルの場合、そのファイルの情報を表示
-                if (File.Exists(resolvedPath))
-                {
-                    var fileInfo = new FileInfo(resolvedPath);
-                    await PrintEntryAsync(context, fileInfo, ct);
+                    hasError = isError;
                     continue;
                 }
 
@@ -111,6 +101,25 @@ namespace Xeon.UniTerminal.BuiltInCommands
             return hasError ? ExitCode.RuntimeError : ExitCode.Success;
         }
 
+        private async Task<(bool stopLoop, bool hasError)> CheckPathExists(CommandContext context, string resolvedPath, string path, CancellationToken ct)
+        {
+            // パスの存在確認
+            if (!Directory.Exists(resolvedPath) && !File.Exists(resolvedPath))
+            {
+                await context.Stderr.WriteLineAsync($"ls: {path}: No such file or directory", ct);
+                return (true, true);
+            }
+
+            // ファイルの場合、そのファイルの情報を表示
+            if (File.Exists(resolvedPath))
+            {
+                var fileInfo = new FileInfo(resolvedPath);
+                await PrintEntryAsync(context, fileInfo, ct);
+                return (true, false);
+            }
+            return (false, false);
+        }
+
         /// <summary>
         /// ディレクトリの内容を一覧表示します。
         /// </summary>
@@ -124,15 +133,14 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 {
                     await PrintEntryAsync(context, entry, ct);
                 }
+                return;
             }
-            else
+
+            // 通常形式: ファイル名をスペース区切りで表示
+            var names = entries.Select(e => e.Name).ToList();
+            if (names.Count > 0)
             {
-                // 通常形式: ファイル名をスペース区切りで表示
-                var names = entries.Select(e => e.Name).ToList();
-                if (names.Count > 0)
-                {
-                    await context.Stdout.WriteLineAsync(string.Join("  ", names), ct);
-                }
+                await context.Stdout.WriteLineAsync(string.Join("  ", names), ct);
             }
         }
 
@@ -150,7 +158,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 ct.ThrowIfCancellationRequested();
 
                 await context.Stdout.WriteLineAsync("", ct);
-                await context.Stdout.WriteLineAsync($"{subDir}:", ct);
+                await context.Stdout.WriteLineAsync($"{PathUtility.NormalizeToSlash(subDir)}:", ct);
 
                 try
                 {
@@ -216,34 +224,31 @@ namespace Xeon.UniTerminal.BuiltInCommands
         /// </summary>
         private async Task PrintEntryAsync(CommandContext context, FileSystemInfo entry, CancellationToken ct)
         {
-            if (LongFormat)
+            var name = entry.Name;
+            if (!LongFormat)
             {
-                var permissions = GetPermissionString(entry);
-                var linkCount = entry is DirectoryInfo ? 2 : 1;
-                var size = GetSize(entry);
-                var sizeStr = HumanReadable ? FormatSize(size) : size.ToString();
-                var dateStr = entry.LastWriteTime.ToString("yyyy-MM-dd HH:mm");
-                var name = entry.Name;
-
-                // ディレクトリの場合、末尾にスラッシュを付ける
-                if (entry is DirectoryInfo)
-                {
-                    name += "/";
-                }
-
-                // 右揃えでサイズを表示
-                await context.Stdout.WriteLineAsync(
-                    $"{permissions}  {linkCount}  {sizeStr,8}  {dateStr}  {name}", ct);
-            }
-            else
-            {
-                var name = entry.Name;
                 if (entry is DirectoryInfo)
                 {
                     name += "/";
                 }
                 await context.Stdout.WriteLineAsync(name, ct);
+                return;
             }
+
+            var permissions = GetPermissionString(entry);
+            var linkCount = entry is DirectoryInfo ? 2 : 1;
+            var size = GetSize(entry);
+            var sizeStr = HumanReadable ? FormatSize(size) : size.ToString();
+            var dateStr = entry.LastWriteTime.ToString("yyyy-MM-dd HH:mm");
+
+            // ディレクトリの場合、末尾にスラッシュを付ける
+            if (entry is DirectoryInfo)
+            {
+                name += "/";
+            }
+
+            // 右揃えでサイズを表示
+            await context.Stdout.WriteLineAsync($"{permissions}  {linkCount}  {sizeStr,8}  {dateStr}  {name}", ct);
         }
 
         /// <summary>

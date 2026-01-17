@@ -73,7 +73,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
             {
                 try
                 {
-                    targetPath = Path.GetFullPath(targetPath);
+                    targetPath = PathUtility.NormalizeToSlash(Path.GetFullPath(targetPath));
                 }
                 catch (Exception ex)
                 {
