@@ -1,14 +1,13 @@
 #if UNI_TERMINAL_UNI_TASK_SUPPORT
 using System;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.Common.FlyweightScrollView;
 using Xeon.Common.FlyweightScrollView.Model;
 using Xeon.UniTerminal.UniTask;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
+using Xeon.UniTerminal.Common;
 
 namespace Xeon.UniTerminal
 {
@@ -63,68 +62,20 @@ namespace Xeon.UniTerminal
                 return;
             }
 
+            if (InputHandler.IsPressedTab())
+                ProcessComletions();
+
             // 上キーで履歴を遡る
-            if (GetUpArrowDown())
+            if (InputHandler.IsPressedUpArrow())
             {
                 NavigateHistoryUp();
             }
             // 下キーで履歴を進む
-            else if (GetDownArrowDown())
+            else if (InputHandler.IsPressedDownArrow())
             {
                 NavigateHistoryDown();
             }
         }
-
-        #region Input Handling
-
-        /// <summary>
-        /// 上矢印キーが押されたかを取得
-        /// </summary>
-        private bool GetUpArrowDown()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.upArrowKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKeyDown(KeyCode.UpArrow);
-#else
-            return false;
-#endif
-        }
-
-        /// <summary>
-        /// 下矢印キーが押されたかを取得
-        /// </summary>
-        private bool GetDownArrowDown()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKeyDown(KeyCode.DownArrow);
-#else
-            return false;
-#endif
-        }
-
-        /// <summary>
-        /// Enterキーが押されたかを取得
-        /// </summary>
-        private bool GetSubmitDown()
-        {
-#if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current == null)
-            {
-                return false;
-            }
-            return Keyboard.current.enterKey.wasPressedThisFrame ||
-                   Keyboard.current.numpadEnterKey.wasPressedThisFrame;
-#elif ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
-#else
-            return false;
-#endif
-        }
-
-        #endregion
 
         /// <summary>
         /// 履歴を遡る（古いコマンドへ）
@@ -179,6 +130,25 @@ namespace Xeon.UniTerminal
             }
         }
 
+        private void ProcessComletions()
+        {
+            var completions = terminal.GetCompletions(input.text);
+            var candidates = completions.Candidates;
+            if (candidates.Count <= 0)
+                return;
+
+            if (candidates.Count > 1)
+            {
+                var text = string.Join("\t", candidates.Select(candidate => candidate.DisplayText));
+                buffer.PushFront(new OutputData(text, false));
+                return;
+            }
+            
+            var candidate = completions.Candidates[0];
+            var newText = input.text.Remove(completions.TokenStart, completions.TokenLength).Insert(completions.TokenStart, candidate.Text);
+            SetInputText(newText);
+        }
+
         /// <summary>
         /// 入力フィールドにテキストを設定し、キャレットを末尾に移動する
         /// </summary>
@@ -204,7 +174,7 @@ namespace Xeon.UniTerminal
         private async void OnInputCommand(string command)
         {
             // Enterキー以外での終了（フォーカス喪失など）は無視
-            if (!GetSubmitDown())
+            if (!InputHandler.IsPressedReturn())
             {
                 return;
             }
@@ -223,7 +193,7 @@ namespace Xeon.UniTerminal
             try
             {
                 input.interactable = false;
-                buffer.Add(new OutputData($"> {command}", false));
+                buffer.PushFront(new OutputData($"> {command}", false));
                 ScrollToBottom();
                 input.DeactivateInputField();
                 await terminal.ExecuteUniTaskAsync(command, normalOutput, errorOutput, ct: destroyCancellationToken);
