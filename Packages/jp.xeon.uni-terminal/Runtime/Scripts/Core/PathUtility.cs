@@ -20,19 +20,30 @@ namespace Xeon.UniTerminal
 
             var normalized = path.Replace('\\', '/');
 
+            // 連続するスラッシュがなければ早期リターン
+            int doubleSlashIndex = normalized.IndexOf("//");
+            if (doubleSlashIndex < 0)
+                return normalized;
+
             // 連続するスラッシュを1つにまとめる
             // 先頭の // はUNCパスの可能性があるので保持
             if (normalized.StartsWith("//"))
             {
                 var rest = normalized.Substring(2);
-                while (rest.Contains("//"))
+                // 1回のReplaceで大半のケースは解決する
+                rest = rest.Replace("//", "/");
+                // 3連続以上のスラッシュがあった場合のみ再処理
+                if (rest.Contains("//"))
                 {
                     rest = rest.Replace("//", "/");
                 }
                 return "//" + rest;
             }
 
-            while (normalized.Contains("//"))
+            // 1回のReplaceで大半のケースは解決する
+            normalized = normalized.Replace("//", "/");
+            // 3連続以上のスラッシュがあった場合のみ再処理
+            if (normalized.Contains("//"))
             {
                 normalized = normalized.Replace("//", "/");
             }

@@ -41,18 +41,17 @@ namespace Xeon.UniTerminal
         /// <summary>
         /// このオプションがboolフラグかどうか。
         /// </summary>
-        public bool IsBool => OptionType == typeof(bool);
+        public bool IsBool { get; }
 
         /// <summary>
         /// このオプションがリスト型かどうか。
         /// </summary>
-        public bool IsList => OptionType.IsGenericType &&
-                              OptionType.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>);
+        public bool IsList { get; }
 
         /// <summary>
         /// リストオプションの要素型。
         /// </summary>
-        public Type ListElementType => IsList ? OptionType.GetGenericArguments()[0] : null;
+        public Type ListElementType { get; }
 
         public OptionMetadata(
             string longName,
@@ -68,6 +67,12 @@ namespace Xeon.UniTerminal
             Description = description;
             OptionType = optionType;
             Member = member;
+
+            // リフレクション結果をキャッシュ
+            IsBool = optionType == typeof(bool);
+            IsList = optionType.IsGenericType &&
+                     optionType.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>);
+            ListElementType = IsList ? optionType.GetGenericArguments()[0] : null;
         }
 
         /// <summary>
