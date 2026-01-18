@@ -31,6 +31,7 @@ namespace Xeon.UniTerminal
         [SerializeField] private OutputItem messagePrefab;
         [SerializeField] private FlyweightVerticalScrollView scrollView;
         [SerializeField] private ScrollRect scrollRect;
+        [SerializeField] private TMP_Text currentDirectoryLabel;
 
         private Terminal terminal;
         private FlyweightScrollViewController<OutputData, OutputItem> scrollViewController;
@@ -74,6 +75,7 @@ namespace Xeon.UniTerminal
 
         private void Update()
         {
+            currentDirectoryLabel.text = terminal.WorkingDirectory.Replace(terminal.HomeDirectory, "~/");
             if (maxCharsPerLine < 0)
             {
                 var sample = scrollViewController.GetSample();
