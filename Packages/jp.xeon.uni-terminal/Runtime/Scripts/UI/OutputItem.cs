@@ -13,6 +13,8 @@ namespace Xeon.UniTerminal
     {
         [SerializeField] private TMP_Text label;
 
+        public TMP_Text Label => label;
+
         /// <summary>
         /// 出力データをUIにバインドする
         /// </summary>

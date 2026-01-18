@@ -53,5 +53,29 @@ namespace Xeon.UniTerminal.Common
 #endif
             return result;
         }
+
+        public static bool IsPressedY()
+        {
+            var result = false;
+#if ENABLE_INPUT_SYSTEM
+            result = Keyboard.current != null && Keyboard.current.yKey.wasPressedThisFrame;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            result |= Input.GetKeyDown(KeyCode.Y);
+#endif
+            return result;
+        }
+
+        public static bool IsPressedN()
+        {
+            var result = false;
+#if ENABLE_INPUT_SYSTEM
+            result = Keyboard.current != null && Keyboard.current.nKey.wasPressedThisFrame;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            result |= Input.GetKeyDown(KeyCode.N);
+#endif
+            return result;
+        }
     }
 }

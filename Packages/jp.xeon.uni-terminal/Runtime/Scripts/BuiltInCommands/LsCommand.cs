@@ -136,8 +136,8 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 return;
             }
 
-            // 通常形式: ファイル名をスペース区切りで表示
-            var names = entries.Select(e => e.Name).ToList();
+            // 通常形式: ファイル名をスペース区切りで表示（ディレクトリは末尾にスラッシュ）
+            var names = entries.Select(e => e is DirectoryInfo ? e.Name + "/" : e.Name).ToList();
             if (names.Count > 0)
             {
                 await context.Stdout.WriteLineAsync(string.Join("  ", names), ct);

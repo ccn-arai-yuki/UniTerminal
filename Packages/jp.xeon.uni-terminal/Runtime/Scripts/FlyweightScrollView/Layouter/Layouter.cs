@@ -67,6 +67,11 @@ namespace Xeon.Common.FlyweightScrollView
         /// <returns>アイテム数</returns>
         public int GetItemCount() => GetTailIndex() + 1;
 
+        public Vector2 GetFitItemSize()
+        {
+            return new Vector2(container.rect.width - padding.horizontal, container.rect.height - padding.vertical);
+        }
+
         /// <summary>
         /// 表示範囲の末尾インデックスを取得します
         /// </summary>

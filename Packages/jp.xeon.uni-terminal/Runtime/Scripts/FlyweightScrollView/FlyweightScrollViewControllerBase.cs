@@ -159,7 +159,7 @@ namespace Xeon.Common.FlyweightScrollView
         /// <param name="param">スクロールビューのパラメータ</param>
         /// <param name="container">コンテンツコンテナのRectTransform</param>
         /// <param name="alignment">水平方向の配置設定</param>
-        public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
+        public virtual void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
         {
             this.scrollView = scrollView;
             this.container = container;
@@ -346,6 +346,8 @@ namespace Xeon.Common.FlyweightScrollView
             }
             itemList.Clear();
         }
+
+        public Vector2 GetFitItemSize() => layouter.GetFitItemSize();
 
 
         // ====================================================================================================

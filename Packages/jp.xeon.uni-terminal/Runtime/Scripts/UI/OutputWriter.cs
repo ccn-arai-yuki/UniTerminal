@@ -1,7 +1,9 @@
 #if UNI_TERMINAL_UNI_TASK_SUPPORT
+using System;
 using System.Threading;
 using Xeon.Common.FlyweightScrollView.Model;
 using Xeon.UniTerminal.UniTask;
+using Xeon.UniTerminal.Common;
 
 namespace Xeon.UniTerminal
 {
@@ -13,16 +15,19 @@ namespace Xeon.UniTerminal
     {
         private readonly CircularBuffer<OutputData> buffer;
         private readonly bool isError;
+        private readonly Func<int> getMaxCharsPerLine;
 
         /// <summary>
         /// コンストラクタ
         /// </summary>
         /// <param name="buffer">出力先のバッファ</param>
         /// <param name="isError">エラー出力かどうか</param>
-        public OutputWriter(CircularBuffer<OutputData> buffer, bool isError = false)
+        /// <param name="getMaxCharsPerLine">1行あたりの最大文字数を取得する関数</param>
+        public OutputWriter(CircularBuffer<OutputData> buffer, bool isError = false, Func<int> getMaxCharsPerLine = null)
         {
             this.buffer = buffer;
             this.isError = isError;
+            this.getMaxCharsPerLine = getMaxCharsPerLine;
         }
 
         /// <summary>
@@ -38,11 +43,14 @@ namespace Xeon.UniTerminal
                 return Cysharp.Threading.Tasks.UniTask.CompletedTask;
             }
 
-            var lines = line.Split('\n');
-            foreach (var l in lines)
+            var maxChars = getMaxCharsPerLine?.Invoke() ?? 0;
+            var rawLines = line.Split('\n');
+
+            foreach (var rawLine in rawLines)
             {
-                buffer.PushFront(new OutputData(l, isError));
+                WriteWrappedLine(rawLine, maxChars);
             }
+
             return Cysharp.Threading.Tasks.UniTask.CompletedTask;
         }
 
@@ -53,8 +61,28 @@ namespace Xeon.UniTerminal
         /// <param name="ct">キャンセルトークン</param>
         public Cysharp.Threading.Tasks.UniTask WriteAsync(string text, CancellationToken ct = default)
         {
-            buffer.PushFront(new OutputData(text, isError));
+            var maxChars = getMaxCharsPerLine?.Invoke() ?? 0;
+            WriteWrappedLine(text, maxChars);
             return Cysharp.Threading.Tasks.UniTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// ワードラップを適用して行を書き込む
+        /// </summary>
+        private void WriteWrappedLine(string text, int maxChars)
+        {
+            if (maxChars <= 0 || string.IsNullOrEmpty(text) || text.Length <= maxChars)
+            {
+                buffer.PushFront(new OutputData(text ?? string.Empty, isError));
+                return;
+            }
+
+            var wrappedLines = TextMeshUtility.WrapText(text, maxChars);
+            // 逆順でPushFrontして正しい順序で表示
+            for (var i = wrappedLines.Count - 1; i >= 0; i--)
+            {
+                buffer.PushFront(new OutputData(wrappedLines[i], isError));
+            }
         }
     }
 }

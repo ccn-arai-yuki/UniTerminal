@@ -1,6 +1,7 @@
 #if UNI_TERMINAL_UNI_TASK_SUPPORT
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,11 @@ namespace Xeon.UniTerminal
     public class UniTerminal : MonoBehaviour
     {
         private const int BufferSize = 1000;
+
+        /// <summary>
+        /// y/n確認を求める候補数のしきい値（bashに準拠）
+        /// </summary>
+        private const int CompletionConfirmThreshold = 100;
 
         [SerializeField] private TMP_InputField input;
         [SerializeField] private OutputItem messagePrefab;
@@ -42,20 +48,56 @@ namespace Xeon.UniTerminal
         /// </summary>
         private string currentInput = string.Empty;
 
+        /// <summary>
+        /// y/n確認待ち状態かどうか
+        /// </summary>
+        private bool waitingForCompletionConfirmation;
+
+        /// <summary>
+        /// 確認待ち中の補完候補（表示テキストのリスト）
+        /// </summary>
+        private List<string> pendingCompletionCandidates;
+
+        private int maxCharsPerLine = -1;
+
         private void Awake()
         {
             terminal = new Terminal(Application.persistentDataPath, Application.persistentDataPath, maxHistorySize: BufferSize);
             scrollViewController = new FlyweightScrollViewController<OutputData, OutputItem>(messagePrefab, buffer);
             scrollView.Setup(scrollViewController);
 
-            normalOutput = new OutputWriter(buffer, false);
-            errorOutput = new OutputWriter(buffer, true);
+            normalOutput = new OutputWriter(buffer, false, () => maxCharsPerLine);
+            errorOutput = new OutputWriter(buffer, true, () => maxCharsPerLine);
 
             input.onEndEdit.AddListener(OnInputCommand);
         }
 
         private void Update()
         {
+            if (maxCharsPerLine < 0)
+            {
+                var sample = scrollViewController.GetSample();
+                maxCharsPerLine = GetMaxCharsPerLine(sample);
+            }
+            // y/n確認待ち状態の処理
+            if (waitingForCompletionConfirmation)
+            {
+                if (InputHandler.IsPressedY())
+                {
+                    waitingForCompletionConfirmation = false;
+                    DisplayCompletionCandidates(pendingCompletionCandidates);
+                    pendingCompletionCandidates = null;
+                    FocusInputFieldAsync().Forget();
+                }
+                else if (InputHandler.IsPressedN())
+                {
+                    waitingForCompletionConfirmation = false;
+                    pendingCompletionCandidates = null;
+                    FocusInputFieldAsync().Forget();
+                }
+                return;
+            }
+
             // 入力フィールドがアクティブでない場合は無視
             if (!input.isFocused || !input.interactable)
             {
@@ -63,7 +105,7 @@ namespace Xeon.UniTerminal
             }
 
             if (InputHandler.IsPressedTab())
-                ProcessComletions();
+                ProcessCompletions();
 
             // 上キーで履歴を遡る
             if (InputHandler.IsPressedUpArrow())
@@ -130,7 +172,7 @@ namespace Xeon.UniTerminal
             }
         }
 
-        private void ProcessComletions()
+        private void ProcessCompletions()
         {
             var completions = terminal.GetCompletions(input.text);
             var candidates = completions.Candidates;
@@ -139,14 +181,84 @@ namespace Xeon.UniTerminal
 
             if (candidates.Count > 1)
             {
-                var text = string.Join("\t", candidates.Select(candidate => candidate.DisplayText));
-                buffer.PushFront(new OutputData(text, false));
+                var displayTexts = candidates.Select(c => c.DisplayText).ToList();
+
+                // 候補数がしきい値を超える場合はy/n確認を求める
+                if (candidates.Count >= CompletionConfirmThreshold)
+                {
+                    buffer.PushFront(new OutputData($"Display all {candidates.Count} possibilities? (y or n)", false));
+                    ScrollToBottom();
+                    pendingCompletionCandidates = displayTexts;
+                    waitingForCompletionConfirmation = true;
+                    input.DeactivateInputField();
+                    return;
+                }
+
+                DisplayCompletionCandidates(displayTexts);
                 return;
             }
-            
+
             var candidate = completions.Candidates[0];
             var newText = input.text.Remove(completions.TokenStart, completions.TokenLength).Insert(completions.TokenStart, candidate.Text);
             SetInputText(newText);
+        }
+
+        /// <summary>
+        /// 補完候補を適切な列数でフォーマットしてバッファに追加する
+        /// </summary>
+        /// <param name="displayTexts">表示する候補テキストのリスト</param>
+        private void DisplayCompletionCandidates(List<string> displayTexts)
+        {
+            if (displayTexts == null || displayTexts.Count == 0)
+                return;
+
+            var sample = scrollViewController.GetSample();
+
+            var displayText = string.Empty;
+            for (var index = 0; index < displayTexts.Count; index++)
+            {
+                var tmp = displayText;
+                if (index > 0) tmp += " ";
+                tmp += displayTexts[index];
+                if (tmp.Length >= maxCharsPerLine)
+                {
+                    buffer.PushFront(new OutputData(displayText, false));
+                    displayText = displayTexts[index];
+                    continue;
+                }
+                displayText = tmp;
+            }
+
+            ScrollToBottom();
+        }
+
+        /// <summary>
+        /// サンプルのTMP_Textを使用して1行に表示可能な最大文字数を取得する
+        /// </summary>
+        /// <param name="sample">サンプル用のOutputItem</param>
+        /// <returns>1行に表示可能な最大文字数</returns>
+        private int GetMaxCharsPerLine(OutputItem sample)
+        {
+            var go = sample.gameObject;
+            var wasActive = go.activeInHierarchy;
+
+            // GameObjectが無効な場合は一時的に有効化
+            if (!wasActive)
+            {
+                go.SetActive(true);
+            }
+
+            // TextMeshUtilityに計算を委譲
+            const string sampleChars = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
+            var maxChars = sample.Label.GetMaxCharacterCountInOneLine(sampleChars);
+
+            // 元の状態に戻す
+            if (!wasActive)
+            {
+                go.SetActive(false);
+            }
+
+            return Math.Max(1, maxChars);
         }
 
         /// <summary>
@@ -183,7 +295,7 @@ namespace Xeon.UniTerminal
             if (string.IsNullOrWhiteSpace(command))
             {
                 input.text = string.Empty;
-                input.ActivateInputField();
+                FocusInputFieldAsync().Forget();
                 return;
             }
 
@@ -207,8 +319,19 @@ namespace Xeon.UniTerminal
                 ScrollToBottom();
                 input.text = string.Empty;
                 input.interactable = true;
-                input.ActivateInputField();
+                FocusInputFieldAsync().Forget();
             }
+        }
+
+        /// <summary>
+        /// 次フレームで入力フィールドにフォーカスを設定する
+        /// </summary>
+        private async UniTaskVoid FocusInputFieldAsync()
+        {
+            await Cysharp.Threading.Tasks.UniTask.NextFrame(cancellationToken: destroyCancellationToken);
+            if (input == null) return;
+            input.ActivateInputField();
+            input.Select();
         }
 
         /// <summary>

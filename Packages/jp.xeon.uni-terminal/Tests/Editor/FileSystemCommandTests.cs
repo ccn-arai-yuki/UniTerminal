@@ -362,6 +362,30 @@ namespace Xeon.UniTerminal.Tests
             Assert.IsFalse(output.Contains(".hidden"));
         }
 
+        // LS-040 通常形式でディレクトリ末尾にスラッシュ
+        [Test]
+        public async Task Ls_NormalFormat_DirectoriesHaveTrailingSlash()
+        {
+            var exitCode = await terminal.ExecuteAsync("ls", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            // ディレクトリには末尾にスラッシュが付く
+            Assert.IsTrue(output.Contains("subdir/"));
+        }
+
+        // LS-041 詳細形式でもディレクトリ末尾にスラッシュ
+        [Test]
+        public async Task Ls_LongFormat_DirectoriesHaveTrailingSlash()
+        {
+            var exitCode = await terminal.ExecuteAsync("ls -l", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            // 詳細形式でもディレクトリには末尾にスラッシュが付く
+            Assert.IsTrue(output.Contains("subdir/"));
+        }
+
         #endregion
     }
 }
