@@ -9,6 +9,7 @@ namespace Xeon.UniTerminal
     {
         /// <summary>
         /// パスの区切り文字をスラッシュに正規化します。
+        /// 連続するスラッシュも1つにまとめます（UNCパスの先頭は保持）。
         /// </summary>
         /// <param name="path">正規化するパス。</param>
         /// <returns>スラッシュで統一されたパス。</returns>
@@ -17,7 +18,26 @@ namespace Xeon.UniTerminal
             if (string.IsNullOrEmpty(path))
                 return path;
 
-            return path.Replace('\\', '/');
+            var normalized = path.Replace('\\', '/');
+
+            // 連続するスラッシュを1つにまとめる
+            // 先頭の // はUNCパスの可能性があるので保持
+            if (normalized.StartsWith("//"))
+            {
+                var rest = normalized.Substring(2);
+                while (rest.Contains("//"))
+                {
+                    rest = rest.Replace("//", "/");
+                }
+                return "//" + rest;
+            }
+
+            while (normalized.Contains("//"))
+            {
+                normalized = normalized.Replace("//", "/");
+            }
+
+            return normalized;
         }
 
         /// <summary>

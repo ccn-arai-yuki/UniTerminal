@@ -78,11 +78,8 @@ namespace Xeon.UniTerminal
             }
 
             var wrappedLines = TextMeshUtility.WrapText(text, maxChars);
-            // 逆順でPushFrontして正しい順序で表示
-            for (var i = wrappedLines.Count - 1; i >= 0; i--)
-            {
-                buffer.PushFront(new OutputData(wrappedLines[i], isError));
-            }
+            foreach (var wrappedLine in wrappedLines)
+                buffer.PushFront(new OutputData(wrappedLine, isError));
         }
     }
 }

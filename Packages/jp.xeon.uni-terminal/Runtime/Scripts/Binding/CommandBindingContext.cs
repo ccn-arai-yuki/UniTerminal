@@ -107,7 +107,10 @@ namespace Xeon.UniTerminal.Binding
             }
 
             // スペース区切りで解析された値は位置引数として扱う
-            ExtraPositionalArgs.Add(option.RawValue);
+            if (option.HasValue && option.IsValueSpaceSeparated)
+            {
+                ExtraPositionalArgs.Add(option.RawValue);
+            }
             optionMetadata.SetValue(Command, true);
             SetOptions.Add(optionMetadata.LongName);
         }
