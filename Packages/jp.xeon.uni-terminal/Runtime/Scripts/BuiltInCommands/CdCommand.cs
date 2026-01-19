@@ -23,112 +23,113 @@ namespace Xeon.UniTerminal.BuiltInCommands
 
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
-            // 引数チェック
             if (context.PositionalArguments.Count > 1)
             {
                 await context.Stderr.WriteLineAsync("cd: too many arguments", ct);
                 return ExitCode.UsageError;
             }
 
-            // ChangeWorkingDirectoryコールバックが設定されているか確認
             if (context.ChangeWorkingDirectory == null)
             {
                 await context.Stderr.WriteLineAsync("cd: cannot change directory in this context", ct);
                 return ExitCode.RuntimeError;
             }
 
-            string targetPath;
-            bool showPath = false;
-
-            if (context.PositionalArguments.Count == 0)
+            var (targetPath, showPath, error) = ResolveTargetPath(context);
+            if (error != null)
             {
-                // 引数なし: ホームディレクトリに移動
-                targetPath = context.HomeDirectory;
-            }
-            else
-            {
-                var arg = context.PositionalArguments[0];
-
-                if (arg == "-")
-                {
-                    // 前のディレクトリに移動
-                    if (string.IsNullOrEmpty(context.PreviousWorkingDirectory))
-                    {
-                        await context.Stderr.WriteLineAsync("cd: OLDPWD not set", ct);
-                        return ExitCode.RuntimeError;
-                    }
-                    targetPath = context.PreviousWorkingDirectory;
-                    showPath = true;
-                }
-                else
-                {
-                    // パスを解決
-                    targetPath = PathUtility.ResolvePath(
-                        arg, context.WorkingDirectory, context.HomeDirectory);
-                }
-            }
-
-            // 物理パスに変換（-P オプション）
-            if (Physical)
-            {
-                try
-                {
-                    targetPath = PathUtility.NormalizeToSlash(Path.GetFullPath(targetPath));
-                }
-                catch (Exception ex)
-                {
-                    await context.Stderr.WriteLineAsync($"cd: {ex.Message}", ct);
-                    return ExitCode.RuntimeError;
-                }
-            }
-
-            // ディレクトリの存在確認
-            if (!Directory.Exists(targetPath))
-            {
-                string displayPath = context.PositionalArguments.Count > 0
-                    ? context.PositionalArguments[0]
-                    : targetPath;
-
-                if (File.Exists(targetPath))
-                {
-                    await context.Stderr.WriteLineAsync($"cd: {displayPath}: Not a directory", ct);
-                }
-                else
-                {
-                    await context.Stderr.WriteLineAsync($"cd: {displayPath}: No such file or directory", ct);
-                }
+                await context.Stderr.WriteLineAsync(error, ct);
                 return ExitCode.RuntimeError;
             }
 
-            // アクセス権限の確認（ディレクトリ内のファイル一覧を取得できるか）
+            var physicalResult = ConvertToPhysicalPath(targetPath);
+            if (physicalResult.error != null)
+            {
+                await context.Stderr.WriteLineAsync(physicalResult.error, ct);
+                return ExitCode.RuntimeError;
+            }
+            targetPath = physicalResult.path;
+
+            var validationError = ValidateDirectory(targetPath, GetDisplayPath(context, targetPath));
+            if (validationError != null)
+            {
+                await context.Stderr.WriteLineAsync(validationError, ct);
+                return ExitCode.RuntimeError;
+            }
+
+            context.ChangeWorkingDirectory(targetPath);
+
+            if (showPath)
+                await context.Stdout.WriteLineAsync(targetPath, ct);
+
+            return ExitCode.Success;
+        }
+
+        private (string path, bool showPath, string error) ResolveTargetPath(CommandContext context)
+        {
+            if (context.PositionalArguments.Count == 0)
+                return (context.HomeDirectory, false, null);
+
+            var arg = context.PositionalArguments[0];
+
+            if (arg == "-")
+            {
+                if (string.IsNullOrEmpty(context.PreviousWorkingDirectory))
+                    return (null, false, "cd: OLDPWD not set");
+
+                return (context.PreviousWorkingDirectory, true, null);
+            }
+
+            var resolved = PathUtility.ResolvePath(arg, context.WorkingDirectory, context.HomeDirectory);
+            return (resolved, false, null);
+        }
+
+        private (string path, string error) ConvertToPhysicalPath(string targetPath)
+        {
+            if (!Physical)
+                return (targetPath, null);
+
             try
             {
-                Directory.GetFileSystemEntries(targetPath);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                string displayPath = context.PositionalArguments.Count > 0
-                    ? context.PositionalArguments[0]
-                    : targetPath;
-                await context.Stderr.WriteLineAsync($"cd: {displayPath}: Permission denied", ct);
-                return ExitCode.RuntimeError;
+                var physicalPath = PathUtility.NormalizeToSlash(Path.GetFullPath(targetPath));
+                return (physicalPath, null);
             }
             catch (Exception ex)
             {
-                await context.Stderr.WriteLineAsync($"cd: {ex.Message}", ct);
-                return ExitCode.RuntimeError;
+                return (null, $"cd: {ex.Message}");
             }
+        }
 
-            // ディレクトリを変更
-            context.ChangeWorkingDirectory(targetPath);
-
-            // cd - の場合、移動先を表示
-            if (showPath)
+        private string ValidateDirectory(string targetPath, string displayPath)
+        {
+            if (!Directory.Exists(targetPath))
             {
-                await context.Stdout.WriteLineAsync(targetPath, ct);
+                if (File.Exists(targetPath))
+                    return $"cd: {displayPath}: Not a directory";
+
+                return $"cd: {displayPath}: No such file or directory";
             }
 
-            return ExitCode.Success;
+            try
+            {
+                Directory.GetFileSystemEntries(targetPath);
+                return null;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return $"cd: {displayPath}: Permission denied";
+            }
+            catch (Exception ex)
+            {
+                return $"cd: {ex.Message}";
+            }
+        }
+
+        private string GetDisplayPath(CommandContext context, string targetPath)
+        {
+            return context.PositionalArguments.Count > 0
+                ? context.PositionalArguments[0]
+                : targetPath;
         }
 
         public IEnumerable<string> GetCompletions(CompletionContext context)
