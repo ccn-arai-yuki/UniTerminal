@@ -315,12 +315,19 @@ namespace Xeon.UniTerminal
             if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
                 return null;
 
+            // インスタンスID指定 (#12345形式)
+            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
+            {
+                var obj = FindObjectByInstanceId<GameObject>(instanceId);
+                if (obj == null)
+                    throw new FormatException($"GameObject not found with instance ID: {value}");
+                return obj;
+            }
+
             // パスで解決
             var go = GameObjectPath.Resolve(value);
             if (go == null)
-            {
                 throw new FormatException($"GameObject not found: {value}");
-            }
             return go;
         }
 
@@ -333,42 +340,43 @@ namespace Xeon.UniTerminal
             if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
                 return null;
 
+            // インスタンスID指定 (#12345形式)
+            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
+            {
+                var obj = FindObjectByInstanceId<Component>(instanceId);
+                if (obj == null)
+                    throw new FormatException($"Component not found with instance ID: {value}");
+                if (!componentType.IsAssignableFrom(obj.GetType()))
+                    throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {obj.GetType().Name}");
+                return obj;
+            }
+
             // パス/コンポーネント形式 (例: /Player:Rigidbody)
             var parts = value.Split(':');
             if (parts.Length == 2)
             {
                 var go = GameObjectPath.Resolve(parts[0]);
                 if (go == null)
-                {
                     throw new FormatException($"GameObject not found: {parts[0]}");
-                }
 
                 var compType = TypeResolver.ResolveComponentType(parts[1]);
                 if (compType == null || !componentType.IsAssignableFrom(compType))
-                {
                     throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {parts[1]}");
-                }
 
                 var comp = go.GetComponent(compType);
                 if (comp == null)
-                {
                     throw new FormatException($"Component '{parts[1]}' not found on {parts[0]}");
-                }
                 return comp;
             }
 
             // パスのみの場合、そのGameObjectから指定型のコンポーネントを取得
             var gameObject = GameObjectPath.Resolve(value);
             if (gameObject == null)
-            {
                 throw new FormatException($"GameObject not found: {value}");
-            }
 
             var component = gameObject.GetComponent(componentType);
             if (component == null)
-            {
                 throw new FormatException($"Component '{componentType.Name}' not found on {value}");
-            }
             return component;
         }
 
@@ -533,6 +541,39 @@ namespace Xeon.UniTerminal
             }
 
             return $"[List<{elementType.Name}>[{list.Count}]]";
+        }
+
+        /// <summary>
+        /// インスタンスIDからオブジェクトを検索します。
+        /// </summary>
+        /// <typeparam name="T">検索対象の型（GameObjectまたはComponent）</typeparam>
+        /// <param name="instanceId">検索するインスタンスID</param>
+        /// <returns>見つかったオブジェクト、見つからない場合はnull</returns>
+        private static T FindObjectByInstanceId<T>(int instanceId) where T : UnityEngine.Object
+        {
+            // GameObjectを検索
+            if (typeof(T) == typeof(GameObject))
+            {
+                foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+                {
+                    if (go.GetInstanceID() == instanceId)
+                        return go as T;
+                }
+                return null;
+            }
+
+            // Componentを検索
+            if (typeof(Component).IsAssignableFrom(typeof(T)))
+            {
+                foreach (var comp in Resources.FindObjectsOfTypeAll<Component>())
+                {
+                    if (comp.GetInstanceID() == instanceId)
+                        return comp as T;
+                }
+                return null;
+            }
+
+            return null;
         }
     }
 }

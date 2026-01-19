@@ -143,7 +143,7 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y` |
+| `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y`, `-i` |
 | `go` | GameObjectを操作 | `--primitive`, `-P`, `-t`, `-n`, `-c`, `-i`, `-s` |
 | `transform` | Transformを操作 | `-p`, `-P`, `-r`, `-R`, `-s`, `--parent`, `-w` |
 | `component` | コンポーネントを管理 | `-a`, `-v`, `-i`, `-n` |
@@ -162,6 +162,13 @@ hierarchy -r
 
 # 詳細情報付きで表示
 hierarchy -l
+
+# インスタンスIDを表示（参照設定に使用）
+hierarchy -i
+# 出力例:
+# ├── Player #12345
+# ├── Enemy #12346
+# └── Camera #12347
 
 # 特定のパス以下を表示
 hierarchy /Canvas/Panel
@@ -277,9 +284,21 @@ property set /MyObject Transform position 1,2,3
 # 配列要素にアクセス
 property get /MyObject MeshRenderer sharedMaterials[0]
 
-# 参照型の設定
+# 参照型の設定（パス指定）
 property set /Child Transform parent /Parent
 property set /MyObject Transform parent null
+
+# 参照型の設定（インスタンスID指定）
+# 同名のオブジェクトがある場合や、ツリー構造が複雑な場合に便利
+# まずhierarchy -iでインスタンスIDを確認
+hierarchy -i
+# ├── Player #12345
+# ├── Enemy #12346
+# └── Target #12347
+
+# インスタンスIDで参照を設定
+property set /Enemy FollowTarget target #12345
+property set /MyObject SomeComponent gameObjectRef #12347
 ```
 
 ## カスタムコマンドの作成
