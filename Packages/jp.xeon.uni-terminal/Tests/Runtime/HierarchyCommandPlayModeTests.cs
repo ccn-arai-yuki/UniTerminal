@@ -195,5 +195,83 @@ namespace Xeon.UniTerminal.Tests.Runtime
             Assert.IsTrue(output.Contains("PlayMode_Active"));
             Assert.IsTrue(output.Contains("PlayMode_Inactive"));
         }
+
+        // --- インスタンスID表示テスト ---
+
+        [UnityTest]
+        public IEnumerator Hierarchy_ShowInstanceId_DisplaysIds()
+        {
+            var testObj = CreateTestObject("PlayMode_InstanceId");
+            var instanceId = testObj.GetInstanceID();
+
+            yield return null;
+
+            stdout = new StringBuilderTextWriter();
+            var task = terminal.ExecuteAsync("hierarchy -i", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("PlayMode_InstanceId"));
+            Assert.IsTrue(output.Contains($"#{instanceId}"), $"Output should contain #{instanceId}. Output: {output}");
+        }
+
+        [UnityTest]
+        public IEnumerator Hierarchy_ShowInstanceIdWithLong_DisplaysBoth()
+        {
+            var testObj = CreateTestObject("PlayMode_IdLong");
+            testObj.AddComponent<BoxCollider>();
+            var instanceId = testObj.GetInstanceID();
+
+            yield return null;
+
+            stdout = new StringBuilderTextWriter();
+            var task = terminal.ExecuteAsync("hierarchy -i -l", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("PlayMode_IdLong"));
+            Assert.IsTrue(output.Contains($"#{instanceId}"));
+            Assert.IsTrue(output.Contains("[A]") || output.Contains("[-]"));
+        }
+
+        [UnityTest]
+        public IEnumerator Hierarchy_ShowInstanceIdRecursive_DisplaysAllIds()
+        {
+            var parent = CreateTestObject("PlayMode_IdParent");
+            var child = CreateTestObject("PlayMode_IdChild", parent.transform);
+            var parentId = parent.GetInstanceID();
+            var childId = child.GetInstanceID();
+
+            yield return null;
+
+            stdout = new StringBuilderTextWriter();
+            var task = terminal.ExecuteAsync("hierarchy -r -i", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains($"#{parentId}"), $"Output should contain #{parentId}");
+            Assert.IsTrue(output.Contains($"#{childId}"), $"Output should contain #{childId}");
+        }
+
+        [UnityTest]
+        public IEnumerator Hierarchy_Default_DoesNotShowInstanceId()
+        {
+            var testObj = CreateTestObject("PlayMode_NoId");
+            var instanceId = testObj.GetInstanceID();
+
+            yield return null;
+
+            stdout = new StringBuilderTextWriter();
+            var task = terminal.ExecuteAsync("hierarchy", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("PlayMode_NoId"));
+            Assert.IsFalse(output.Contains($"#{instanceId}"), $"Output should NOT contain #{instanceId} by default");
+        }
     }
 }
