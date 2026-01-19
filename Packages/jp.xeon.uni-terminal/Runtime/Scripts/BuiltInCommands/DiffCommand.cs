@@ -135,10 +135,18 @@ namespace Xeon.UniTerminal.BuiltInCommands
         /// </summary>
         private DiffResult ComputeDiff(string[] lines1, string[] lines2)
         {
+            var lcs = ComputeLcsTable(lines1, lines2);
+            var diffLines = BacktrackDiff(lines1, lines2, lcs);
+            return new DiffResult(diffLines);
+        }
+
+        /// <summary>
+        /// LCS（最長共通部分列）テーブルを計算します。
+        /// </summary>
+        private int[,] ComputeLcsTable(string[] lines1, string[] lines2)
+        {
             int m = lines1.Length;
             int n = lines2.Length;
-
-            // LCS（最長共通部分列）の長さを計算
             int[,] lcs = new int[m + 1, n + 1];
 
             for (int i = 1; i <= m; i++)
@@ -146,41 +154,56 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 for (int j = 1; j <= n; j++)
                 {
                     if (LinesEqual(lines1[i - 1], lines2[j - 1]))
-                    {
                         lcs[i, j] = lcs[i - 1, j - 1] + 1;
-                    }
                     else
-                    {
                         lcs[i, j] = Math.Max(lcs[i - 1, j], lcs[i, j - 1]);
-                    }
                 }
             }
 
-            // バックトラックして差分を生成
+            return lcs;
+        }
+
+        /// <summary>
+        /// LCSテーブルをバックトラックして差分行を生成します。
+        /// </summary>
+        private List<DiffLine> BacktrackDiff(string[] lines1, string[] lines2, int[,] lcs)
+        {
             var diffLines = new List<DiffLine>();
-            int x = m, y = n;
+            int x = lines1.Length;
+            int y = lines2.Length;
 
             while (x > 0 || y > 0)
             {
-                if (x > 0 && y > 0 && LinesEqual(lines1[x - 1], lines2[y - 1]))
-                {
-                    diffLines.Insert(0, new DiffLine(DiffType.Context, lines1[x - 1], x, y));
-                    x--;
-                    y--;
-                }
-                else if (y > 0 && (x == 0 || lcs[x, y - 1] >= lcs[x - 1, y]))
-                {
-                    diffLines.Insert(0, new DiffLine(DiffType.Add, lines2[y - 1], x, y));
-                    y--;
-                }
-                else if (x > 0)
-                {
-                    diffLines.Insert(0, new DiffLine(DiffType.Delete, lines1[x - 1], x, y));
-                    x--;
-                }
+                var diffLine = GetNextDiffLine(lines1, lines2, lcs, ref x, ref y);
+                diffLines.Insert(0, diffLine);
             }
 
-            return new DiffResult(diffLines);
+            return diffLines;
+        }
+
+        /// <summary>
+        /// バックトラック中の次の差分行を取得します。
+        /// </summary>
+        private DiffLine GetNextDiffLine(string[] lines1, string[] lines2, int[,] lcs, ref int x, ref int y)
+        {
+            if (x > 0 && y > 0 && LinesEqual(lines1[x - 1], lines2[y - 1]))
+            {
+                var line = new DiffLine(DiffType.Context, lines1[x - 1], x, y);
+                x--;
+                y--;
+                return line;
+            }
+
+            if (y > 0 && (x == 0 || lcs[x, y - 1] >= lcs[x - 1, y]))
+            {
+                var line = new DiffLine(DiffType.Add, lines2[y - 1], x, y);
+                y--;
+                return line;
+            }
+
+            var deleteLine = new DiffLine(DiffType.Delete, lines1[x - 1], x, y);
+            x--;
+            return deleteLine;
         }
 
         /// <summary>
@@ -218,45 +241,39 @@ namespace Xeon.UniTerminal.BuiltInCommands
             foreach (var hunk in hunks)
             {
                 ct.ThrowIfCancellationRequested();
-
-                // ハンク情報を出力
-                string rangeStr;
-                if (hunk.DeleteCount > 0 && hunk.AddCount > 0)
-                {
-                    // 変更
-                    rangeStr = $"{FormatRange(hunk.OldStart, hunk.DeleteCount)}c{FormatRange(hunk.NewStart, hunk.AddCount)}";
-                }
-                else if (hunk.DeleteCount > 0)
-                {
-                    // 削除
-                    rangeStr = $"{FormatRange(hunk.OldStart, hunk.DeleteCount)}d{hunk.NewStart}";
-                }
-                else
-                {
-                    // 追加
-                    rangeStr = $"{hunk.OldStart}a{FormatRange(hunk.NewStart, hunk.AddCount)}";
-                }
-
-                await context.Stdout.WriteLineAsync(rangeStr, ct);
-
-                // 削除行
-                foreach (var line in hunk.DeletedLines)
-                {
-                    await context.Stdout.WriteLineAsync($"< {line}", ct);
-                }
-
-                // 区切り
-                if (hunk.DeleteCount > 0 && hunk.AddCount > 0)
-                {
-                    await context.Stdout.WriteLineAsync("---", ct);
-                }
-
-                // 追加行
-                foreach (var line in hunk.AddedLines)
-                {
-                    await context.Stdout.WriteLineAsync($"> {line}", ct);
-                }
+                await OutputHunkAsync(context, hunk, ct);
             }
+        }
+
+        /// <summary>
+        /// 単一のハンクをNormal形式で出力します。
+        /// </summary>
+        private async Task OutputHunkAsync(CommandContext context, DiffHunk hunk, CancellationToken ct)
+        {
+            await context.Stdout.WriteLineAsync(FormatHunkRange(hunk), ct);
+
+            foreach (var line in hunk.DeletedLines)
+                await context.Stdout.WriteLineAsync($"< {line}", ct);
+
+            if (hunk.DeleteCount > 0 && hunk.AddCount > 0)
+                await context.Stdout.WriteLineAsync("---", ct);
+
+            foreach (var line in hunk.AddedLines)
+                await context.Stdout.WriteLineAsync($"> {line}", ct);
+        }
+
+        /// <summary>
+        /// ハンクの範囲文字列を生成します。
+        /// </summary>
+        private string FormatHunkRange(DiffHunk hunk)
+        {
+            if (hunk.DeleteCount > 0 && hunk.AddCount > 0)
+                return $"{FormatRange(hunk.OldStart, hunk.DeleteCount)}c{FormatRange(hunk.NewStart, hunk.AddCount)}";
+
+            if (hunk.DeleteCount > 0)
+                return $"{FormatRange(hunk.OldStart, hunk.DeleteCount)}d{hunk.NewStart}";
+
+            return $"{hunk.OldStart}a{FormatRange(hunk.NewStart, hunk.AddCount)}";
         }
 
         /// <summary>
@@ -273,7 +290,6 @@ namespace Xeon.UniTerminal.BuiltInCommands
         {
             int contextLines = UnifiedContext >= 0 ? UnifiedContext : 3;
 
-            // ヘッダー
             await context.Stdout.WriteLineAsync($"--- {file1Path}", ct);
             await context.Stdout.WriteLineAsync($"+++ {file2Path}", ct);
 
@@ -282,23 +298,33 @@ namespace Xeon.UniTerminal.BuiltInCommands
             foreach (var hunk in hunks)
             {
                 ct.ThrowIfCancellationRequested();
-
-                // ハンクヘッダー
-                await context.Stdout.WriteLineAsync(
-                    $"@@ -{hunk.OldStart},{hunk.OldCount} +{hunk.NewStart},{hunk.NewCount} @@", ct);
-
-                // 行を出力
-                foreach (var line in hunk.Lines)
-                {
-                    string prefix = line.Type switch
-                    {
-                        DiffType.Add => "+",
-                        DiffType.Delete => "-",
-                        _ => " "
-                    };
-                    await context.Stdout.WriteLineAsync($"{prefix}{line.Content}", ct);
-                }
+                await OutputUnifiedHunkAsync(context, hunk, ct);
             }
+        }
+
+        /// <summary>
+        /// 単一のハンクをUnified形式で出力します。
+        /// </summary>
+        private async Task OutputUnifiedHunkAsync(CommandContext context, UnifiedHunk hunk, CancellationToken ct)
+        {
+            await context.Stdout.WriteLineAsync(
+                $"@@ -{hunk.OldStart},{hunk.OldCount} +{hunk.NewStart},{hunk.NewCount} @@", ct);
+
+            foreach (var line in hunk.Lines)
+                await context.Stdout.WriteLineAsync($"{GetDiffLinePrefix(line.Type)}{line.Content}", ct);
+        }
+
+        /// <summary>
+        /// 差分タイプに応じたプレフィックスを取得します。
+        /// </summary>
+        private string GetDiffLinePrefix(DiffType type)
+        {
+            return type switch
+            {
+                DiffType.Add => "+",
+                DiffType.Delete => "-",
+                _ => " "
+            };
         }
 
         /// <summary>
@@ -366,48 +392,49 @@ namespace Xeon.UniTerminal.BuiltInCommands
         {
             var hunks = new List<DiffHunk>();
             DiffHunk currentHunk = null;
-
             int oldLine = 1;
             int newLine = 1;
 
             foreach (var line in Lines)
             {
                 if (line.Type == DiffType.Context)
-                {
-                    if (currentHunk != null)
-                    {
-                        hunks.Add(currentHunk);
-                        currentHunk = null;
-                    }
-                    oldLine++;
-                    newLine++;
-                }
+                    currentHunk = ProcessContextLine(hunks, currentHunk, ref oldLine, ref newLine);
                 else
-                {
-                    if (currentHunk == null)
-                    {
-                        currentHunk = new DiffHunk(oldLine, newLine);
-                    }
-
-                    if (line.Type == DiffType.Delete)
-                    {
-                        currentHunk.DeletedLines.Add(line.Content);
-                        oldLine++;
-                    }
-                    else if (line.Type == DiffType.Add)
-                    {
-                        currentHunk.AddedLines.Add(line.Content);
-                        newLine++;
-                    }
-                }
+                    currentHunk = ProcessDiffLine(currentHunk, line, oldLine, newLine, ref oldLine, ref newLine);
             }
 
             if (currentHunk != null)
-            {
                 hunks.Add(currentHunk);
-            }
 
             return hunks;
+        }
+
+        private DiffHunk ProcessContextLine(List<DiffHunk> hunks, DiffHunk currentHunk, ref int oldLine, ref int newLine)
+        {
+            if (currentHunk != null)
+                hunks.Add(currentHunk);
+
+            oldLine++;
+            newLine++;
+            return null;
+        }
+
+        private DiffHunk ProcessDiffLine(DiffHunk currentHunk, DiffLine line, int oldLine, int newLine, ref int oldLineRef, ref int newLineRef)
+        {
+            var hunk = currentHunk ?? new DiffHunk(oldLine, newLine);
+
+            if (line.Type == DiffType.Delete)
+            {
+                hunk.DeletedLines.Add(line.Content);
+                oldLineRef++;
+            }
+            else if (line.Type == DiffType.Add)
+            {
+                hunk.AddedLines.Add(line.Content);
+                newLineRef++;
+            }
+
+            return hunk;
         }
 
         /// <summary>
