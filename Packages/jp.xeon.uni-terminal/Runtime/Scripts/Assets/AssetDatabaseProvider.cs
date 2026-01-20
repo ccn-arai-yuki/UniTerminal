@@ -120,10 +120,7 @@ namespace Xeon.UniTerminal.Assets
         public string GetAssetPathFromInstanceId(int instanceId)
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId);
-            if (obj == null)
-                return null;
-
-            return AssetDatabase.GetAssetPath(obj);
+            return obj == null ? null : AssetDatabase.GetAssetPath(obj);
         }
 
         private string BuildSearchFilter(string pattern, Type assetType)

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Xeon.UniTerminal.Assets
 {
@@ -19,7 +19,7 @@ namespace Xeon.UniTerminal.Assets
 
         public bool IsAvailable => true;
 
-        public Task<T> LoadAsync<T>(string key, CancellationToken ct) where T : UnityEngine.Object
+        public Task<T> LoadAsync<T>(string key, CancellationToken ct) where T : Object
         {
             ct.ThrowIfCancellationRequested();
 
@@ -27,7 +27,7 @@ namespace Xeon.UniTerminal.Assets
             return Task.FromResult(asset);
         }
 
-        public Task<UnityEngine.Object> LoadAsync(string key, Type assetType, CancellationToken ct)
+        public Task<Object> LoadAsync(string key, Type assetType, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -35,7 +35,7 @@ namespace Xeon.UniTerminal.Assets
             return Task.FromResult(asset);
         }
 
-        public void Release(UnityEngine.Object asset)
+        public void Release(Object asset)
         {
             if (asset != null)
                 Resources.UnloadAsset(asset);
@@ -45,23 +45,20 @@ namespace Xeon.UniTerminal.Assets
         {
             // Resourcesでは実行時にファイル一覧を取得する標準的な方法がない
             // Resources.FindObjectsOfTypeAllで既にロード済みのものから検索
-            var type = assetType ?? typeof(UnityEngine.Object);
+            var type = assetType ?? typeof(Object);
             var objects = Resources.FindObjectsOfTypeAll(type);
 
             Regex regex = null;
             if (!string.IsNullOrEmpty(pattern))
             {
-                var regexPattern = "^" + Regex.Escape(pattern)
-                    .Replace("\\*", ".*")
-                    .Replace("\\?", ".") + "$";
+                var regexPattern = "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
                 regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
             }
 
             foreach (var obj in objects)
             {
                 // エディタ専用オブジェクトをスキップ
-                if (obj.hideFlags.HasFlag(HideFlags.NotEditable) ||
-                    obj.hideFlags.HasFlag(HideFlags.HideAndDontSave))
+                if (obj.hideFlags.HasFlag(HideFlags.NotEditable) || obj.hideFlags.HasFlag(HideFlags.HideAndDontSave))
                     continue;
 
                 if (regex != null && !regex.IsMatch(obj.name))

@@ -2,29 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Xeon.UniTerminal.Assets
 {
-    /// <summary>
-    /// ロード済みアセットのエントリ。
-    /// </summary>
-    public class LoadedAssetEntry
-    {
-        public UnityEngine.Object Asset { get; set; }
-        public int InstanceId { get; set; }
-        public string Name { get; set; }
-        public string Key { get; set; }
-        public Type AssetType { get; set; }
-        public string ProviderName { get; set; }
-        public DateTime LoadedAt { get; set; }
-
-        public override string ToString()
-        {
-            return $"{Name} #{InstanceId} ({AssetType?.Name ?? "Unknown"}) [{ProviderName}]";
-        }
-    }
-
     /// <summary>
     /// ロード済みアセットを管理するレジストリ。
     /// </summary>
@@ -45,7 +26,7 @@ namespace Xeon.UniTerminal.Assets
         /// <param name="key">アセットのキー（パス、アドレス等）</param>
         /// <param name="providerName">プロバイダー名</param>
         /// <returns>登録されたエントリ</returns>
-        public LoadedAssetEntry Register(UnityEngine.Object asset, string key, string providerName)
+        public LoadedAssetEntry Register(Object asset, string key, string providerName)
         {
             if (asset == null)
                 return null;
@@ -84,7 +65,7 @@ namespace Xeon.UniTerminal.Assets
         /// </summary>
         /// <param name="asset">登録解除するアセット</param>
         /// <returns>登録解除されたらtrue</returns>
-        public bool Unregister(UnityEngine.Object asset)
+        public bool Unregister(Object asset)
         {
             if (asset == null)
                 return false;

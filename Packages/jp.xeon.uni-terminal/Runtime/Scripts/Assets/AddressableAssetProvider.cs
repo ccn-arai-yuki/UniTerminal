@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
@@ -51,7 +50,6 @@ namespace Xeon.UniTerminal.Assets
                     return asset;
                 }
                 Addressables.Release(handle);
-                return null;
             }
 
             return null;

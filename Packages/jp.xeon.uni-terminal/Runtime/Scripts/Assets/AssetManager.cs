@@ -104,16 +104,11 @@ namespace Xeon.UniTerminal.Assets
         /// <param name="key">アセットのキー</param>
         /// <param name="ct">キャンセルトークン</param>
         /// <returns>ロードされたアセットのエントリ</returns>
-        public async Task<LoadedAssetEntry> LoadAsync<T>(
-            IAssetProvider provider,
-            string key,
-            CancellationToken ct) where T : UnityEngine.Object
+        public async Task<LoadedAssetEntry> LoadAsync<T>(IAssetProvider provider, string key, CancellationToken ct)
+            where T : UnityEngine.Object
         {
             var asset = await provider.LoadAsync<T>(key, ct);
-            if (asset == null)
-                return null;
-
-            return Registry.Register(asset, key, provider.ProviderName);
+            return asset == null ? null : Registry.Register(asset, key, provider.ProviderName);
         }
 
         /// <summary>
@@ -124,17 +119,10 @@ namespace Xeon.UniTerminal.Assets
         /// <param name="assetType">アセットの型</param>
         /// <param name="ct">キャンセルトークン</param>
         /// <returns>ロードされたアセットのエントリ</returns>
-        public async Task<LoadedAssetEntry> LoadAsync(
-            IAssetProvider provider,
-            string key,
-            Type assetType,
-            CancellationToken ct)
+        public async Task<LoadedAssetEntry> LoadAsync(IAssetProvider provider, string key, Type assetType, CancellationToken ct)
         {
             var asset = await provider.LoadAsync(key, assetType, ct);
-            if (asset == null)
-                return null;
-
-            return Registry.Register(asset, key, provider.ProviderName);
+            return asset == null ? null : Registry.Register(asset, key, provider.ProviderName);
         }
 
         /// <summary>
