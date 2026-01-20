@@ -45,9 +45,6 @@ namespace Xeon.UniTerminal.BuiltInCommands
         {
             try
             {
-                // ファイルタイプを解析
-                var fileType = ParseFileType(FileType);
-
                 // 検索開始パスを取得
                 var searchPaths = new List<string>();
                 if (context.PositionalArguments.Count == 0)
@@ -62,10 +59,15 @@ namespace Xeon.UniTerminal.BuiltInCommands
                         searchPaths.Add(resolvedPath);
                     }
                 }
+                
+                // ファイルタイプを解析
+                var fileType = ParseFileType(FileType);
 
                 // パターンを準備
                 string pattern = NamePattern ?? INamePattern;
                 bool ignoreCase = INamePattern != null;
+
+                var param = new FindParams(pattern, ignoreCase, fileType);
 
                 // 各パスを検索
                 bool hasError = false;
@@ -81,7 +83,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
                     }
 
                     // 検索を実行
-                    await foreach (var result in SearchAsync(searchPath, searchPath, 0, pattern, ignoreCase, fileType, ct))
+                    await foreach (var result in SearchAsync(searchPath, searchPath, 0, param, ct))
                     {
                         await context.Stdout.WriteLineAsync(result, ct);
                     }
@@ -129,9 +131,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
             string basePath,
             string currentPath,
             int currentDepth,
-            string pattern,
-            bool ignoreCase,
-            FindFileType fileType,
+            FindParams param,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
         {
             // 最大深度チェック
@@ -146,14 +146,12 @@ namespace Xeon.UniTerminal.BuiltInCommands
             // 現在のパスがマッチするか確認
             if (currentDepth >= MinDepth)
             {
-                bool typeMatches = fileType == FindFileType.All ||
-                                   (fileType == FindFileType.File && isFile) ||
-                                   (fileType == FindFileType.Directory && isDirectory);
+                bool typeMatches = param.MatchType(isFile, isDirectory);
 
                 if (typeMatches)
                 {
                     string name = Path.GetFileName(currentPath);
-                    bool nameMatches = string.IsNullOrEmpty(pattern) || MatchWildcard(name, pattern, ignoreCase);
+                    bool nameMatches = string.IsNullOrEmpty(param.pattern) || MatchWildcard(name, param);
 
                     if (nameMatches)
                     {
@@ -163,29 +161,29 @@ namespace Xeon.UniTerminal.BuiltInCommands
             }
 
             // ディレクトリの場合、サブエントリを検索
-            if (isDirectory)
+            if (!isDirectory)
+                yield break;
+            
+            IEnumerable<string> entries;
+            try
             {
-                IEnumerable<string> entries;
-                try
-                {
-                    entries = Directory.EnumerateFileSystemEntries(currentPath);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    // アクセス権限がない場合はスキップ（エラーは出さない）
-                    yield break;
-                }
-                catch (DirectoryNotFoundException)
-                {
-                    yield break;
-                }
+                entries = Directory.EnumerateFileSystemEntries(currentPath);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // アクセス権限がない場合はスキップ（エラーは出さない）
+                yield break;
+            }
+            catch (DirectoryNotFoundException)
+            {
+                yield break;
+            }
 
-                foreach (var entry in entries)
+            foreach (var entry in entries)
+            {
+                await foreach (var result in SearchAsync(basePath, entry, currentDepth + 1, param, ct))
                 {
-                    await foreach (var result in SearchAsync(basePath, entry, currentDepth + 1, pattern, ignoreCase, fileType, ct))
-                    {
-                        yield return result;
-                    }
+                    yield return result;
                 }
             }
         }
@@ -193,17 +191,16 @@ namespace Xeon.UniTerminal.BuiltInCommands
         /// <summary>
         /// ワイルドカードパターンとマッチするか確認します。
         /// </summary>
-        private bool MatchWildcard(string name, string pattern, bool ignoreCase)
+        private bool MatchWildcard(string name, FindParams param)
         {
             // パターンを正規表現に変換
-            var regexPattern = "^" + Regex.Escape(pattern)
+            var regexPattern = "^" + Regex.Escape(param.pattern)
                 .Replace("\\*", ".*")
                 .Replace("\\?", ".")
                 .Replace("\\[", "[")
                 .Replace("\\]", "]") + "$";
-
-            var options = ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
-            return Regex.IsMatch(name, regexPattern, options);
+            
+            return Regex.IsMatch(name, regexPattern, param.RegexOption);
         }
 
         /// <summary>
