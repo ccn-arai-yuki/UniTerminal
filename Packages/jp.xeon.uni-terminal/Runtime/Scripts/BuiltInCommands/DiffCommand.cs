@@ -443,105 +443,108 @@ namespace Xeon.UniTerminal.BuiltInCommands
         public List<UnifiedHunk> GetUnifiedHunks(string[] lines1, string[] lines2, int contextLines)
         {
             var hunks = new List<UnifiedHunk>();
-            var diffIndexes = new List<int>();
-
-            // 差分がある行のインデックスを収集
-            for (int i = 0; i < Lines.Count; i++)
-            {
-                if (Lines[i].Type != DiffType.Context)
-                {
-                    diffIndexes.Add(i);
-                }
-            }
+            var diffIndexes = CollectDiffIndexes();
 
             if (diffIndexes.Count == 0)
                 return hunks;
 
-            // 差分をグループ化してハンクを作成
             int groupStart = 0;
             while (groupStart < diffIndexes.Count)
             {
-                int groupEnd = groupStart;
-
-                // 連続する差分をグループ化（コンテキスト行数以内なら同じハンクに）
-                while (groupEnd + 1 < diffIndexes.Count &&
-                       diffIndexes[groupEnd + 1] - diffIndexes[groupEnd] <= contextLines * 2 + 1)
-                {
-                    groupEnd++;
-                }
-
-                // ハンクの範囲を計算
-                int startIdx = Math.Max(0, diffIndexes[groupStart] - contextLines);
-                int endIdx = Math.Min(Lines.Count - 1, diffIndexes[groupEnd] + contextLines);
-
-                var hunkLines = new List<DiffLine>();
-                int oldStart = 1, newStart = 1;
-                int oldCount = 0, newCount = 0;
-
-                // 開始位置を計算
-                for (int i = 0; i < startIdx; i++)
-                {
-                    if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Delete)
-                        oldStart++;
-                    if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Add)
-                        newStart++;
-                }
-
-                // ハンクの行を収集
-                for (int i = startIdx; i <= endIdx; i++)
-                {
-                    hunkLines.Add(Lines[i]);
-                    if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Delete)
-                        oldCount++;
-                    if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Add)
-                        newCount++;
-                }
-
-                hunks.Add(new UnifiedHunk(oldStart, oldCount, newStart, newCount, hunkLines));
+                int groupEnd = FindGroupEndIndex(diffIndexes, groupStart, contextLines);
+                var hunk = CreateUnifiedHunkFromRange(diffIndexes, groupStart, groupEnd, contextLines);
+                hunks.Add(hunk);
                 groupStart = groupEnd + 1;
             }
 
             return hunks;
         }
-    }
 
-    /// <summary>
-    /// Normal形式のハンク。
-    /// </summary>
-    public class DiffHunk
-    {
-        public int OldStart { get; }
-        public int NewStart { get; }
-        public List<string> DeletedLines { get; } = new List<string>();
-        public List<string> AddedLines { get; } = new List<string>();
-        public int DeleteCount => DeletedLines.Count;
-        public int AddCount => AddedLines.Count;
-
-        public DiffHunk(int oldStart, int newStart)
+        /// <summary>
+        /// 差分がある行のインデックスを収集します。
+        /// </summary>
+        private List<int> CollectDiffIndexes()
         {
-            OldStart = oldStart;
-            NewStart = newStart;
+            var indexes = new List<int>();
+
+            for (int i = 0; i < Lines.Count; i++)
+            {
+                if (Lines[i].Type != DiffType.Context)
+                    indexes.Add(i);
+            }
+
+            return indexes;
         }
-    }
 
-    /// <summary>
-    /// Unified形式のハンク。
-    /// </summary>
-    public class UnifiedHunk
-    {
-        public int OldStart { get; }
-        public int OldCount { get; }
-        public int NewStart { get; }
-        public int NewCount { get; }
-        public List<DiffLine> Lines { get; }
-
-        public UnifiedHunk(int oldStart, int oldCount, int newStart, int newCount, List<DiffLine> lines)
+        /// <summary>
+        /// 連続する差分グループの終端インデックスを検索します。
+        /// </summary>
+        private int FindGroupEndIndex(List<int> diffIndexes, int groupStart, int contextLines)
         {
-            OldStart = oldStart;
-            OldCount = oldCount;
-            NewStart = newStart;
-            NewCount = newCount;
-            Lines = lines;
+            int groupEnd = groupStart;
+            int mergeThreshold = contextLines * 2 + 1;
+
+            while (groupEnd + 1 < diffIndexes.Count &&
+                   diffIndexes[groupEnd + 1] - diffIndexes[groupEnd] <= mergeThreshold)
+            {
+                groupEnd++;
+            }
+
+            return groupEnd;
+        }
+
+        /// <summary>
+        /// 指定範囲からUnifiedハンクを作成します。
+        /// </summary>
+        private UnifiedHunk CreateUnifiedHunkFromRange(List<int> diffIndexes, int groupStart, int groupEnd, int contextLines)
+        {
+            int startIdx = Math.Max(0, diffIndexes[groupStart] - contextLines);
+            int endIdx = Math.Min(Lines.Count - 1, diffIndexes[groupEnd] + contextLines);
+
+            var (oldStart, newStart) = CalculateHunkStartPositions(startIdx);
+            var (hunkLines, oldCount, newCount) = CollectHunkLinesWithCounts(startIdx, endIdx);
+
+            return new UnifiedHunk(oldStart, oldCount, newStart, newCount, hunkLines);
+        }
+
+        /// <summary>
+        /// ハンクの開始位置（oldStart, newStart）を計算します。
+        /// </summary>
+        private (int oldStart, int newStart) CalculateHunkStartPositions(int startIdx)
+        {
+            int oldStart = 1;
+            int newStart = 1;
+
+            for (int i = 0; i < startIdx; i++)
+            {
+                if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Delete)
+                    oldStart++;
+                if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Add)
+                    newStart++;
+            }
+
+            return (oldStart, newStart);
+        }
+
+        /// <summary>
+        /// ハンクの行を収集し、行数をカウントします。
+        /// </summary>
+        private (List<DiffLine> lines, int oldCount, int newCount) CollectHunkLinesWithCounts(int startIdx, int endIdx)
+        {
+            var hunkLines = new List<DiffLine>();
+            int oldCount = 0;
+            int newCount = 0;
+
+            for (int i = startIdx; i <= endIdx; i++)
+            {
+                hunkLines.Add(Lines[i]);
+                if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Delete)
+                    oldCount++;
+                if (Lines[i].Type == DiffType.Context || Lines[i].Type == DiffType.Add)
+                    newCount++;
+            }
+
+            return (hunkLines, oldCount, newCount);
         }
     }
 }
