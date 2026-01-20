@@ -414,6 +414,24 @@ namespace Xeon.UniTerminal
             if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
                 return null;
 
+            // インスタンスID指定 (#12345形式)
+            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
+            {
+                // ロード済みアセットレジストリから検索
+                var entry = AssetManager.Instance.Registry.GetByInstanceId(instanceId);
+                if (entry != null && entry.Asset is Material regMat)
+                    return regMat;
+
+                // Resources.FindObjectsOfTypeAllから検索
+                foreach (var mat in Resources.FindObjectsOfTypeAll<Material>())
+                {
+                    if (mat.GetInstanceID() == instanceId)
+                        return mat;
+                }
+
+                throw new FormatException($"Material not found with instance ID: {value}");
+            }
+
             // パス/コンポーネント形式でRendererから取得
             // 例: /Cube:MeshRenderer.material または /Cube:MeshRenderer.materials[0]
             if (value.Contains(":"))

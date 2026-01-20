@@ -15,6 +15,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
         private StringBuilderTextWriter stdout;
         private StringBuilderTextWriter stderr;
         private List<GameObject> createdObjects;
+        private List<Object> createdAssets;
 
         [SetUp]
         public void SetUp()
@@ -23,6 +24,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             stdout = new StringBuilderTextWriter();
             stderr = new StringBuilderTextWriter();
             createdObjects = new List<GameObject>();
+            createdAssets = new List<Object>();
         }
 
         [TearDown]
@@ -31,11 +33,16 @@ namespace Xeon.UniTerminal.Tests.Runtime
             foreach (var go in createdObjects)
             {
                 if (go != null)
-                {
                     Object.Destroy(go);
-                }
             }
             createdObjects.Clear();
+
+            foreach (var asset in createdAssets)
+            {
+                if (asset != null)
+                    Object.Destroy(asset);
+            }
+            createdAssets.Clear();
         }
 
         private GameObject CreateTestObject(string name, Transform parent = null)
@@ -267,7 +274,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             var renderer = target.AddComponent<MeshRenderer>();
             var material = new Material(Shader.Find("Standard"));
             material.name = "PlayMode_TestMaterial";
-            createdObjects.Add(material);
+            createdAssets.Add(material);
 
             yield return null;
 
@@ -286,7 +293,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             var renderer = target.AddComponent<MeshRenderer>();
             var material = new Material(Shader.Find("Standard"));
             material.name = "PlayMode_RegisteredMaterial";
-            createdObjects.Add(material);
+            createdAssets.Add(material);
 
             Assets.AssetManager.Instance.Registry.Register(material, "test/path", "TestProvider");
 
@@ -308,7 +315,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             var renderer = target.AddComponent<MeshRenderer>();
             var material = new Material(Shader.Find("Standard"));
             renderer.sharedMaterial = material;
-            createdObjects.Add(material);
+            createdAssets.Add(material);
 
             Assert.IsNotNull(renderer.sharedMaterial);
 
@@ -354,7 +361,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             // LookAtConstraintのworldUpObjectを使用
             var lookAt = target.AddComponent<UnityEngine.Animations.LookAtConstraint>();
 
-            var specifier = $"#{sourceObj.GetInstanceID()}";
+            var specifier = $"#{sourceObj.transform.GetInstanceID()}";
             var task = terminal.ExecuteAsync($"property set /PlayMode_PropGoId LookAtConstraint worldUpObject {specifier}", stdout, stderr);
             while (!task.IsCompleted) yield return null;
 
@@ -370,7 +377,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             var material = new Material(Shader.Find("Standard"));
             material.name = "PlayMode_NamedMaterial";
             renderer.sharedMaterial = material;
-            createdObjects.Add(material);
+            createdAssets.Add(material);
 
             yield return null;
 

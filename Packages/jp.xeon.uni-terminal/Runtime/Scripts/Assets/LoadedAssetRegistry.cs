@@ -193,7 +193,7 @@ namespace Xeon.UniTerminal.Assets
         /// <returns>アセットエントリのリスト</returns>
         public IEnumerable<LoadedAssetEntry> GetAll(Type assetType = null)
         {
-            var entries = entriesByInstanceId.Values;
+            IEnumerable<LoadedAssetEntry> entries = entriesByInstanceId.Values;
 
             if (assetType != null)
                 entries = entries.Where(e => assetType.IsAssignableFrom(e.AssetType));
@@ -214,7 +214,7 @@ namespace Xeon.UniTerminal.Assets
                 .Replace("\\?", ".") + "$";
             var regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
 
-            var entries = entriesByInstanceId.Values;
+            IEnumerable<LoadedAssetEntry> entries = entriesByInstanceId.Values;
 
             if (assetType != null)
                 entries = entries.Where(e => assetType.IsAssignableFrom(e.AssetType));
