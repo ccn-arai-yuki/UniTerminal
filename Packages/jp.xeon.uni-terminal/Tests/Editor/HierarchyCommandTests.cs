@@ -440,6 +440,94 @@ namespace Xeon.UniTerminal.Tests
             Assert.AreEqual(ExitCode.UsageError, exitCode);
             Assert.IsTrue(stderr.ToString().Contains("invalid layer number") || stderr.ToString().Contains("must be 0-31"));
         }
+
+        // --- Phase 6: インスタンスID表示テスト ---
+
+        // HIER-070 インスタンスID表示
+        [Test]
+        public async Task Hierarchy_ShowInstanceId_DisplaysIds()
+        {
+            var testObj = CreateTestObject("HierTest_InstanceId");
+            var instanceId = testObj.GetInstanceID();
+
+            stdout = new StringBuilderTextWriter();
+            var exitCode = await terminal.ExecuteAsync("hierarchy -i", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("HierTest_InstanceId"));
+            Assert.IsTrue(output.Contains($"#{instanceId}"), $"Output should contain instance ID #{instanceId}. Output: {output}");
+        }
+
+        // HIER-071 インスタンスID表示（詳細形式との組み合わせ）
+        [Test]
+        public async Task Hierarchy_ShowInstanceIdWithLong_DisplaysBoth()
+        {
+            var testObj = CreateTestObject("HierTest_IdLong");
+            testObj.AddComponent<BoxCollider>();
+            var instanceId = testObj.GetInstanceID();
+
+            stdout = new StringBuilderTextWriter();
+            var exitCode = await terminal.ExecuteAsync("hierarchy -i -l", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("HierTest_IdLong"));
+            Assert.IsTrue(output.Contains($"#{instanceId}"));
+            Assert.IsTrue(output.Contains("[A]") || output.Contains("[-]")); // active marker
+            Assert.IsTrue(output.Contains("component")); // component count
+        }
+
+        // HIER-072 インスタンスID表示（再帰）
+        [Test]
+        public async Task Hierarchy_ShowInstanceIdRecursive_DisplaysAllIds()
+        {
+            var parent = CreateTestObject("HierTest_IdParent");
+            var child = CreateTestObject("HierTest_IdChild", parent.transform);
+            var parentId = parent.GetInstanceID();
+            var childId = child.GetInstanceID();
+
+            stdout = new StringBuilderTextWriter();
+            var exitCode = await terminal.ExecuteAsync("hierarchy -r -i", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains($"#{parentId}"), $"Output should contain parent ID #{parentId}. Output: {output}");
+            Assert.IsTrue(output.Contains($"#{childId}"), $"Output should contain child ID #{childId}. Output: {output}");
+        }
+
+        // HIER-073 インスタンスID表示（パス指定）
+        [Test]
+        public async Task Hierarchy_ShowInstanceIdWithPath_DisplaysIds()
+        {
+            var root = CreateTestObject("HierTest_IdPath");
+            var child = CreateTestObject("HierTest_IdPathChild", root.transform);
+            var childId = child.GetInstanceID();
+
+            stdout = new StringBuilderTextWriter();
+            var exitCode = await terminal.ExecuteAsync("hierarchy -i /HierTest_IdPath", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("HierTest_IdPathChild"));
+            Assert.IsTrue(output.Contains($"#{childId}"));
+        }
+
+        // HIER-074 インスタンスID表示なし（デフォルト）
+        [Test]
+        public async Task Hierarchy_Default_DoesNotShowInstanceId()
+        {
+            var testObj = CreateTestObject("HierTest_NoId");
+            var instanceId = testObj.GetInstanceID();
+
+            stdout = new StringBuilderTextWriter();
+            var exitCode = await terminal.ExecuteAsync("hierarchy", stdout, stderr);
+
+            Assert.AreEqual(ExitCode.Success, exitCode);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("HierTest_NoId"));
+            Assert.IsFalse(output.Contains($"#{instanceId}"), $"Output should NOT contain instance ID #{instanceId} by default. Output: {output}");
+        }
     }
 
     /// <summary>

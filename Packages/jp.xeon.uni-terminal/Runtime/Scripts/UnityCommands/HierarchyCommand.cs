@@ -42,6 +42,9 @@ namespace Xeon.UniTerminal.UnityCommands
         [Option("layer", "y", Description = "Filter by layer name or number")]
         public string LayerFilter;
 
+        [Option("id", "i", Description = "Show instance IDs")]
+        public bool ShowInstanceId;
+
         private Regex nameFilterRegex;
         private Type componentFilterType;
         private int? layerFilterValue;
@@ -246,18 +249,17 @@ namespace Xeon.UniTerminal.UnityCommands
         private string BuildObjectLine(GameObject go, bool highlight = false)
         {
             string marker = highlight ? "* " : "";
+            string instanceId = ShowInstanceId ? $" #{go.GetInstanceID()}" : "";
 
             if (!LongFormat)
-            {
-                return marker + go.name;
-            }
+                return $"{marker}{go.name}{instanceId}";
 
             // 詳細形式
             string active = go.activeSelf ? "[A]" : "[-]";
             int compCount = go.GetComponents<Component>().Length;
             string tag = go.tag;
 
-            return $"{marker}{active} {go.name,-24} ({compCount} components) [{tag}]";
+            return $"{marker}{active} {go.name,-24} ({compCount} components) [{tag}]{instanceId}";
         }
 
         /// <summary>

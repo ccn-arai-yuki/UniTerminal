@@ -143,11 +143,20 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y` |
+| `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y`, `-i` |
 | `go` | GameObjectを操作 | `--primitive`, `-P`, `-t`, `-n`, `-c`, `-i`, `-s` |
 | `transform` | Transformを操作 | `-p`, `-P`, `-r`, `-R`, `-s`, `--parent`, `-w` |
 | `component` | コンポーネントを管理 | `-a`, `-v`, `-i`, `-n` |
 | `property` | プロパティ値を操作 | `-a`, `-s`, `-n` |
+
+### アセット管理コマンド
+
+| コマンド | 説明 | 主なオプション |
+|---------|------|---------------|
+| `asset` | ロード済みアセットを管理 | `-t`, `-n`, `-l` |
+| `assetdb` | AssetDatabase経由でロード（エディタ専用） | `-t`, `-l` |
+| `adr` | Addressables経由でロード | `-t`, `-l` |
+| `res` | Resources経由でロード（非推奨） | `-t`, `-l` |
 
 ## コマンド詳細
 
@@ -162,6 +171,13 @@ hierarchy -r
 
 # 詳細情報付きで表示
 hierarchy -l
+
+# インスタンスIDを表示（参照設定に使用）
+hierarchy -i
+# 出力例:
+# ├── Player #12345
+# ├── Enemy #12346
+# └── Camera #12347
 
 # 特定のパス以下を表示
 hierarchy /Canvas/Panel
@@ -277,9 +293,142 @@ property set /MyObject Transform position 1,2,3
 # 配列要素にアクセス
 property get /MyObject MeshRenderer sharedMaterials[0]
 
-# 参照型の設定
+# 参照型の設定（パス指定）
 property set /Child Transform parent /Parent
 property set /MyObject Transform parent null
+
+# 参照型の設定（インスタンスID指定）
+# 同名のオブジェクトがある場合や、ツリー構造が複雑な場合に便利
+# まずhierarchy -iでインスタンスIDを確認
+hierarchy -i
+# ├── Player #12345
+# ├── Enemy #12346
+# └── Target #12347
+
+# インスタンスIDで参照を設定
+property set /Enemy FollowTarget target #12345
+property set /MyObject SomeComponent gameObjectRef #12347
+```
+
+### asset - ロード済みアセット管理
+
+```bash
+# ロード済みアセット一覧を表示
+asset list
+
+# 型でフィルタ
+asset list -t Texture2D
+
+# 名前でフィルタ（ワイルドカード対応）
+asset list -n "Player*"
+
+# 詳細情報付きで表示
+asset list -l
+
+# アセット詳細を表示（インスタンスIDまたは名前で指定）
+asset info #12345
+asset info MyTexture
+
+# アセットをアンロード
+asset unload #12345
+
+# 利用可能なプロバイダー一覧
+asset providers
+```
+
+### assetdb - AssetDatabase（エディタ専用）
+
+```bash
+# アセットをロード
+assetdb load Assets/Textures/icon.png
+
+# 型を指定してロード
+assetdb load -t Texture2D Assets/Textures/icon.png
+
+# アセットを検索（AssetDatabase.FindAssets形式）
+assetdb find "t:Texture2D icon"
+assetdb find -t Material "Red"
+
+# ディレクトリ内のアセット一覧
+assetdb list Assets/Textures
+
+# インスタンスIDからアセットパスを取得
+assetdb path #12345
+```
+
+### adr - Addressables
+
+Addressablesがプロジェクトにインストールされている場合に利用可能です。
+
+```bash
+# アセットをロード（キーで指定）
+adr load player_texture
+
+# 型を指定してロード
+adr load -t Texture2D player_texture
+
+# アセットをリリース
+adr release #12345
+adr release player_texture
+
+# ロード可能なアセットを検索
+adr find "player*"
+adr find -t Texture2D
+
+# ロード可能なアセット一覧
+adr list
+adr list -t Material
+
+# ラベル一覧
+adr labels
+```
+
+### res - Resources（非推奨）
+
+**警告**: Resources APIはUnityが非推奨としています。可能であればAddressablesの使用を推奨します。
+
+Resources APIの制限:
+- Resourcesフォルダ内の全アセットがビルドに含まれる
+- 実行時にロード可能なアセット一覧を取得できない
+- メモリ管理が困難
+
+```bash
+# アセットをロード（Resourcesフォルダからの相対パス、拡張子なし）
+res load Prefabs/Player
+
+# 型を指定してロード
+res load -t Material Materials/Red
+
+# アセットをアンロード
+res unload #12345
+
+# 未使用アセットを一括アンロード
+res unloadunused
+
+# ロード済みアセットを検索（ロード済みのもののみ）
+res find "Player*"
+
+# ヘルプを表示
+res help
+```
+
+### プロパティへのアセット設定
+
+ロードしたアセットをコンポーネントのプロパティに設定できます：
+
+```bash
+# テクスチャをロードしてマテリアルに設定
+assetdb load Assets/Textures/NewTexture.png
+asset list -t Texture2D
+# NewTexture #12345
+property set /Cube MeshRenderer sharedMaterial.mainTexture #12345
+
+# メッシュを変更
+assetdb load Assets/Models/NewMesh.fbx
+property set /Cube MeshFilter sharedMesh #67890
+
+# アセット名で指定（同名が1つの場合のみ）
+property set /Cube MeshRenderer sharedMaterial.mainTexture NewTexture
 ```
 
 ## カスタムコマンドの作成
