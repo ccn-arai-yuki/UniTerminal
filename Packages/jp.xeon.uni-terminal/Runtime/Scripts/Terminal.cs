@@ -112,6 +112,7 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<TransformCommand>();
             registry.RegisterCommand<ComponentCommand>();
             registry.RegisterCommand<PropertyCommand>();
+            registry.RegisterCommand<SceneCommand>();
 
             // アセット管理コマンド
             registry.RegisterCommand<AssetCommand>();
