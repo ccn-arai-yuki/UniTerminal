@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Xeon.UniTerminal.BuiltInCommands.Less;
 
 namespace Xeon.UniTerminal.BuiltInCommands
 {
@@ -30,71 +31,48 @@ namespace Xeon.UniTerminal.BuiltInCommands
 
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
-            List<string> allLines;
-            string fileName = null;
+            var result = await ReadInputAsync(context, ct);
 
-            // ファイル指定がある場合
-            if (context.PositionalArguments.Count > 0)
+            if (result.HasError)
             {
-                var filePath = context.PositionalArguments[0];
-
-                // "-" は標準入力として扱う
-                if (filePath == "-")
-                {
-                    allLines = await ReadStdinAsync(context, ct);
-                }
-                else
-                {
-                    var resolvedPath = PathUtility.ResolvePath(filePath, context.WorkingDirectory, context.HomeDirectory);
-
-                    if (Directory.Exists(resolvedPath))
-                    {
-                        await context.Stderr.WriteLineAsync($"less: {filePath}: Is a directory", ct);
-                        return ExitCode.RuntimeError;
-                    }
-
-                    if (!File.Exists(resolvedPath))
-                    {
-                        await context.Stderr.WriteLineAsync($"less: {filePath}: No such file or directory", ct);
-                        return ExitCode.RuntimeError;
-                    }
-
-                    try
-                    {
-                        allLines = new List<string>(await File.ReadAllLinesAsync(resolvedPath, ct));
-                        fileName = Path.GetFileName(resolvedPath);
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        await context.Stderr.WriteLineAsync($"less: {filePath}: Permission denied", ct);
-                        return ExitCode.RuntimeError;
-                    }
-                    catch (Exception ex)
-                    {
-                        await context.Stderr.WriteLineAsync($"less: {filePath}: {ex.Message}", ct);
-                        return ExitCode.RuntimeError;
-                    }
-                }
-            }
-            else
-            {
-                // 標準入力から読み取り
-                allLines = await ReadStdinAsync(context, ct);
+                await context.Stderr.WriteLineAsync(result.Error, ct);
+                return ExitCode.RuntimeError;
             }
 
-            if (allLines.Count == 0)
-            {
+            if (result.NoLines)
                 return ExitCode.Success;
-            }
 
-            // 開始行の検証
+            var startLine = NormalizeFromLine(result.Lines.Count);
+            return await DisplayAsync(context, result.Lines, startLine, result.FileName, ct);
+        }
+
+        /// <summary>
+        /// 入力ソースから全行を読み取ります。
+        /// </summary>
+        private async Task<ReadResult> ReadInputAsync(CommandContext context, CancellationToken ct)
+        {
+            // 引数なしまたは"-"の場合は標準入力から読み取り
+            if (context.PositionalArguments.Count == 0)
+                return new (await ReadStdinAsync(context, ct), null);
+
+            var filePath = context.PositionalArguments[0];
+
+            if (filePath == "-")
+                return new (await ReadStdinAsync(context, ct), null);
+
+            return await ReadFileAsync(filePath, context, ct);
+        }
+
+        /// <summary>
+        /// 開始行を検証して正規化します。
+        /// </summary>
+        private int NormalizeFromLine(int totalLines)
+        {
             if (FromLine < 1)
-                FromLine = 1;
-            if (FromLine > allLines.Count)
-                FromLine = allLines.Count;
-
-            // 表示
-            return await DisplayAsync(context, allLines, FromLine, fileName, ct);
+                return 1;
+            if (FromLine > totalLines)
+                return totalLines;
+            return FromLine;
         }
 
         /// <summary>
@@ -113,6 +91,36 @@ namespace Xeon.UniTerminal.BuiltInCommands
             }
 
             return lines;
+        }
+
+        /// <summary>
+        /// ファイルから全行を読み取ります。
+        /// </summary>
+        /// <returns>成功時は(lines, fileName, null)、エラー時は(null, null, errorMessage)を返します。</returns>
+        private async Task<ReadResult> ReadFileAsync(string filePath, CommandContext context, CancellationToken ct)
+        {
+            var resolvedPath = PathUtility.ResolvePath(filePath, context.WorkingDirectory, context.HomeDirectory);
+
+            if (Directory.Exists(resolvedPath))
+                return new ($"less: {filePath}: Is a directory");
+
+            if (!File.Exists(resolvedPath))
+                return new ($"less: {filePath}: No such file or directory");
+
+            try
+            {
+                var lines = new List<string>(await File.ReadAllLinesAsync(resolvedPath, ct));
+                var fileName = Path.GetFileName(resolvedPath);
+                return new (lines, fileName);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return new ($"less: {filePath}: Permission denied");
+            }
+            catch (Exception ex)
+            {
+                return new ($"less: {filePath}: {ex.Message}");
+            }
         }
 
         /// <summary>
