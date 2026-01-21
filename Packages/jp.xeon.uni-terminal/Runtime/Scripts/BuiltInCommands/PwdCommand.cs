@@ -25,18 +25,8 @@ namespace Xeon.UniTerminal.BuiltInCommands
         {
             try
             {
-                string path;
-
-                if (Physical)
-                {
-                    // シンボリックリンクを解決した物理パスを取得
-                    path = PathUtility.NormalizeToSlash(Path.GetFullPath(context.WorkingDirectory));
-                }
-                else
-                {
-                    // 論理パス（設定されているパスをそのまま使用）
-                    path = PathUtility.NormalizeToSlash(context.WorkingDirectory);
-                }
+                // シンボリックリンクを解決した物理パスを取得か設定されているパスそのままの論理パスを使用
+                var path = PathUtility.NormalizeToSlash(Physical ? Path.GetFullPath(context.WorkingDirectory) : context.WorkingDirectory);
 
                 // ディレクトリの存在確認
                 if (!Directory.Exists(path))
@@ -51,13 +41,12 @@ namespace Xeon.UniTerminal.BuiltInCommands
             catch (UnauthorizedAccessException)
             {
                 await context.Stderr.WriteLineAsync("pwd: permission denied", ct);
-                return ExitCode.RuntimeError;
             }
             catch (Exception ex)
             {
                 await context.Stderr.WriteLineAsync($"pwd: {ex.Message}", ct);
-                return ExitCode.RuntimeError;
             }
+            return ExitCode.RuntimeError;
         }
 
         public IEnumerable<string> GetCompletions(CompletionContext context)
