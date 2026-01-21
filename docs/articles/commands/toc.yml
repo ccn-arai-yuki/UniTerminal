@@ -4,5 +4,7 @@
   href: file-operations.md
 - name: Text Processing
   href: text-processing.md
+- name: Utilities
+  href: utilities.md
 - name: Unity Commands
   href: unity-commands.md
