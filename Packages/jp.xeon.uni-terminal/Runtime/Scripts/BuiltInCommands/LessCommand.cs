@@ -43,7 +43,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 return ExitCode.Success;
 
             var startLine = NormalizeFromLine(result.Lines.Count);
-            return await DisplayAsync(context, result.Lines, startLine, result.FileName, ct);
+            return await DisplayAsync(context, startLine, result, ct);
         }
 
         /// <summary>
@@ -126,24 +126,17 @@ namespace Xeon.UniTerminal.BuiltInCommands
         /// <summary>
         /// 内容を表示します。
         /// </summary>
-        private async Task<ExitCode> DisplayAsync(
-            CommandContext context,
-            List<string> allLines,
-            int startLine,
-            string fileName,
-            CancellationToken ct)
+        private async Task<ExitCode> DisplayAsync(CommandContext context, int startLine, ReadResult result, CancellationToken ct)
         {
-            int totalLines = allLines.Count;
-            int endLine = LinesPerPage > 0
-                ? Math.Min(startLine + LinesPerPage - 1, totalLines)
-                : totalLines;
+            var totalLines = result.Lines.Count;
+            var endLine = LinesPerPage > 0 ? Math.Min(startLine + LinesPerPage - 1, totalLines) : totalLines;
 
             // ヘッダー（LinesPerPageが指定されている場合のみ）
             if (LinesPerPage > 0)
             {
-                var header = string.IsNullOrEmpty(fileName)
+                var header = string.IsNullOrEmpty(result.FileName) 
                     ? $"(stdin) (lines {startLine}-{endLine} of {totalLines})"
-                    : $"File: {fileName} (lines {startLine}-{endLine} of {totalLines})";
+                    : $"File: {result.FileName} (lines {startLine}-{endLine} of {totalLines})";
 
                 await context.Stdout.WriteLineAsync(header, ct);
                 await context.Stdout.WriteLineAsync(new string('-', 40), ct);
@@ -153,7 +146,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
             for (int i = startLine - 1; i < endLine; i++)
             {
                 ct.ThrowIfCancellationRequested();
-                string line = ProcessLine(allLines[i], i + 1);
+                string line = ProcessLine(result.Lines[i], i + 1);
                 await context.Stdout.WriteLineAsync(line, ct);
             }
 

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Xeon.UniTerminal.BuiltInCommands.Less
 {
-    public class ReadResult
+    public readonly struct ReadResult
     {
         public List<string> Lines { get; }
         public string FileName { get; }
@@ -10,6 +10,8 @@ namespace Xeon.UniTerminal.BuiltInCommands.Less
 
         public ReadResult(string error)
         {
+            Lines = new();
+            FileName = null;
             Error = error;
         }
 
@@ -17,6 +19,7 @@ namespace Xeon.UniTerminal.BuiltInCommands.Less
         {
             Lines = lines;
             FileName = fileName;
+            Error = null;
         }
 
         public bool HasError => Error != null;
