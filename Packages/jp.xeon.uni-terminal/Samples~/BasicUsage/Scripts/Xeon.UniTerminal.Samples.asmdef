@@ -1,0 +1,16 @@
+{
+    "name": "Xeon.UniTerminal.Samples",
+    "rootNamespace": "Xeon.UniTerminal.Samples",
+    "references": [
+        "jp.xeon.uni-terminal.runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
