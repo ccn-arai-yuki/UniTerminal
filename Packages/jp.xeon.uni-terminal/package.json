@@ -2,21 +2,33 @@
   "name": "jp.xeon.uni-terminal",
   "version": "0.1.0",
   "displayName": "UniTerminal",
-  "description": "A string-based CLI execution framework for Unity with Linux-like behavior",
+  "description": "A string-based CLI execution framework for Unity with Linux-like behavior. Supports pipelines, redirects, and extensible custom commands.",
   "unity": "6000.0",
-  "documentationUrl": "",
-  "changelogUrl": "",
-  "licensesUrl": "",
+  "documentationUrl": "https://github.com/AraiYuhki/UniTerminal#readme",
+  "changelogUrl": "https://github.com/AraiYuhki/UniTerminal/blob/main/Packages/jp.xeon.uni-terminal/CHANGELOG.md",
+  "licensesUrl": "https://github.com/AraiYuhki/UniTerminal/blob/main/Packages/jp.xeon.uni-terminal/LICENSE.md",
   "keywords": [
     "terminal",
     "cli",
     "command",
-    "console"
+    "console",
+    "shell",
+    "debug"
   ],
   "author": {
     "name": "Xeon",
-    "email": "",
-    "url": ""
+    "email": "xeon.lagunas@gmail.com",
+    "url": "https://github.com/AraiYuhki"
   },
-  "samples": []
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AraiYuhki/UniTerminal.git"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Usage",
+      "description": "Basic terminal usage and custom command examples",
+      "path": "Samples~/BasicUsage"
+    }
+  ]
 }
