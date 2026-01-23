@@ -116,7 +116,7 @@ namespace Xeon.UniTerminal.UnityCommands
             {
                 var byName = registry.GetByName(specifier);
                 if (byName.Count > 1)
-                    return await ShowAmbiguousAssets(context, specifier, byName, ct);
+                    return await ShowAmbiguousAssets(context, specifier, byName.ToList(), ct);
 
                 await context.Stderr.WriteLineAsync($"asset: '{specifier}' not found", ct);
                 return ExitCode.RuntimeError;

@@ -560,7 +560,9 @@ namespace Xeon.UniTerminal.UnityCommands
         private IEnumerable<string> GetComponentNameCompletions(string[] tokens, string token)
         {
             if (tokens.Length < 3)
-                return Enumerable.Empty<string>();
+            {
+                yield break;
+            }
 
             var go = GameObjectPath.Resolve(tokens[2]);
             if (go != null)
