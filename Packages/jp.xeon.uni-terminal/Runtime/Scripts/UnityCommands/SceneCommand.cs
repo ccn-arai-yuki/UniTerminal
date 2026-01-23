@@ -13,6 +13,8 @@ namespace Xeon.UniTerminal.UnityCommands
     [Command("scene", "Manage scenes (list, load, unload, active, info, create)")]
     public class SceneCommand : ICommand
     {
+        #region Options
+
         [Option("all", "a", Description = "Show all scenes in Build Settings")]
         public bool All;
 
@@ -28,18 +30,17 @@ namespace Xeon.UniTerminal.UnityCommands
         [Option("setup", "s", Description = "Add default objects (Camera, Light) for create")]
         public bool Setup;
 
+        #endregion
+
+        #region ICommand
+
         public string CommandName => "scene";
         public string Description => "Manage scenes";
 
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             if (context.PositionalArguments.Count == 0)
-            {
-                await context.Stderr.WriteLineAsync("scene: missing subcommand", ct);
-                await context.Stderr.WriteLineAsync("Usage: scene <subcommand> [options] [arguments]", ct);
-                await context.Stderr.WriteLineAsync("Subcommands: list, load, unload, active, info, create", ct);
-                return ExitCode.UsageError;
-            }
+                return await ShowUsageAsync(context, ct);
 
             var subCommand = context.PositionalArguments[0].ToLower();
             var args = context.PositionalArguments.Skip(1).ToList();
@@ -56,15 +57,203 @@ namespace Xeon.UniTerminal.UnityCommands
             };
         }
 
+        public IEnumerable<string> GetCompletions(CompletionContext context)
+        {
+            var token = context.CurrentToken ?? "";
+
+            if (context.TokenIndex == 1)
+                return GetSubCommandCompletions(token);
+
+            if (context.TokenIndex >= 2 && !token.StartsWith("-"))
+                return GetSceneNameCompletions(token);
+
+            return Enumerable.Empty<string>();
+        }
+
+        #endregion
+
+        #region Subcommands
+
         private async Task<ExitCode> ListAsync(CommandContext context, CancellationToken ct)
         {
             var activeScene = SceneManager.GetActiveScene();
 
-            if (All)
-                return await ListAllScenesAsync(context, activeScene, ct);
-
-            return await ListLoadedScenesAsync(context, activeScene, ct);
+            return All
+                ? await ListAllScenesAsync(context, activeScene, ct)
+                : await ListLoadedScenesAsync(context, activeScene, ct);
         }
+
+        private async Task<ExitCode> LoadAsync(CommandContext context, List<string> args, CancellationToken ct)
+        {
+            if (args.Count == 0)
+            {
+                await context.Stderr.WriteLineAsync("scene load: missing scene name", ct);
+                await context.Stderr.WriteLineAsync("Usage: scene load <scene> [--additive]", ct);
+                return ExitCode.UsageError;
+            }
+
+            var sceneToLoad = ResolveSceneName(args[0]);
+            if (sceneToLoad == null)
+            {
+                await context.Stderr.WriteLineAsync($"scene load: '{args[0]}': scene not found in Build Settings", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            var mode = Additive ? LoadSceneMode.Additive : LoadSceneMode.Single;
+
+            return Async
+                ? await LoadSceneAsyncInternal(context, sceneToLoad, mode, ct)
+                : await LoadSceneSync(context, sceneToLoad, mode, ct);
+        }
+
+        private async Task<ExitCode> UnloadAsync(CommandContext context, List<string> args, CancellationToken ct)
+        {
+            if (args.Count == 0)
+            {
+                await context.Stderr.WriteLineAsync("scene unload: missing scene name", ct);
+                await context.Stderr.WriteLineAsync("Usage: scene unload <scene>", ct);
+                return ExitCode.UsageError;
+            }
+
+            var scene = GetLoadedScene(args[0]);
+            if (!scene.IsValid())
+            {
+                await context.Stderr.WriteLineAsync($"scene unload: '{args[0]}': scene not loaded", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            if (SceneManager.sceneCount <= 1)
+            {
+                await context.Stderr.WriteLineAsync("scene unload: cannot unload the only loaded scene", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            if (scene == SceneManager.GetActiveScene())
+            {
+                await context.Stderr.WriteLineAsync("scene unload: cannot unload active scene. Change active scene first.", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            try
+            {
+                var operation = SceneManager.UnloadSceneAsync(scene);
+                if (operation == null)
+                {
+                    await context.Stderr.WriteLineAsync($"scene unload: failed to unload '{args[0]}'", ct);
+                    return ExitCode.RuntimeError;
+                }
+
+                if (Async)
+                {
+                    while (!operation.isDone)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        await Task.Yield();
+                    }
+                }
+
+                await context.Stdout.WriteLineAsync($"Unloaded scene '{scene.name}'", ct);
+                return ExitCode.Success;
+            }
+            catch (System.Exception ex)
+            {
+                await context.Stderr.WriteLineAsync($"scene unload: {ex.Message}", ct);
+                return ExitCode.RuntimeError;
+            }
+        }
+
+        private async Task<ExitCode> ActiveAsync(CommandContext context, List<string> args, CancellationToken ct)
+        {
+            var activeScene = SceneManager.GetActiveScene();
+
+            if (args.Count == 0)
+            {
+                await context.Stdout.WriteLineAsync($"Active scene: {activeScene.name} ({activeScene.path})", ct);
+                return ExitCode.Success;
+            }
+
+            var scene = GetLoadedScene(args[0]);
+            if (!scene.IsValid())
+            {
+                await context.Stderr.WriteLineAsync($"scene active: '{args[0]}': scene not loaded", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            var oldActive = activeScene.name;
+            if (!SceneManager.SetActiveScene(scene))
+            {
+                await context.Stderr.WriteLineAsync($"scene active: failed to set '{args[0]}' as active", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            await context.Stdout.WriteLineAsync($"Active scene changed: {oldActive} -> {scene.name}", ct);
+            return ExitCode.Success;
+        }
+
+        private async Task<ExitCode> InfoAsync(CommandContext context, List<string> args, CancellationToken ct)
+        {
+            Scene scene;
+
+            if (args.Count == 0)
+            {
+                scene = SceneManager.GetActiveScene();
+            }
+            else
+            {
+                scene = GetLoadedScene(args[0]);
+                if (!scene.IsValid())
+                {
+                    await context.Stderr.WriteLineAsync($"scene info: '{args[0]}': scene not loaded", ct);
+                    return ExitCode.RuntimeError;
+                }
+            }
+
+            await WriteSceneInfo(context, scene, ct);
+            return ExitCode.Success;
+        }
+
+        private async Task<ExitCode> CreateAsync(CommandContext context, List<string> args, CancellationToken ct)
+        {
+#if UNITY_EDITOR
+            if (args.Count == 0)
+            {
+                await context.Stderr.WriteLineAsync("scene create: missing scene name", ct);
+                await context.Stderr.WriteLineAsync("Usage: scene create <name> [--additive] [--setup]", ct);
+                return ExitCode.UsageError;
+            }
+
+            var sceneName = args[0];
+            var mode = Additive
+                ? UnityEditor.SceneManagement.NewSceneMode.Additive
+                : UnityEditor.SceneManagement.NewSceneMode.Single;
+            var setup = Setup
+                ? UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects
+                : UnityEditor.SceneManagement.NewSceneSetup.EmptyScene;
+
+            try
+            {
+                var newScene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(setup, mode);
+                newScene.name = sceneName;
+
+                var modeStr = Additive ? "additively" : "as single";
+                var setupStr = Setup ? "with default objects" : "empty";
+                await context.Stdout.WriteLineAsync($"Created scene '{sceneName}' {modeStr} ({setupStr})", ct);
+                return ExitCode.Success;
+            }
+            catch (System.Exception ex)
+            {
+                await context.Stderr.WriteLineAsync($"scene create: {ex.Message}", ct);
+                return ExitCode.RuntimeError;
+            }
+#else
+            await context.Stderr.WriteLineAsync("scene create: only available in Editor", ct);
+            return ExitCode.RuntimeError;
+#endif
+        }
+
+        #endregion
+
+        #region List Helpers
 
         private async Task<ExitCode> ListLoadedScenesAsync(CommandContext context, Scene activeScene, CancellationToken ct)
         {
@@ -80,21 +269,7 @@ namespace Xeon.UniTerminal.UnityCommands
             {
                 ct.ThrowIfCancellationRequested();
                 var scene = SceneManager.GetSceneAt(i);
-                var isActive = scene == activeScene;
-                var marker = isActive ? "*" : " ";
-
-                if (Long)
-                {
-                    var status = scene.isLoaded ? "Loaded" : "Loading";
-                    var rootCount = scene.isLoaded ? scene.rootCount : 0;
-                    await context.Stdout.WriteLineAsync(
-                        $"{marker} {scene.name,-20} {status,-10} {scene.path,-40} ({rootCount} root objects)", ct);
-                }
-                else
-                {
-                    var suffix = isActive ? " (active)" : "";
-                    await context.Stdout.WriteLineAsync($"{marker} {scene.name}{suffix}", ct);
-                }
+                await WriteSceneListEntry(context, scene, activeScene, ct);
             }
 
             return ExitCode.Success;
@@ -136,30 +311,28 @@ namespace Xeon.UniTerminal.UnityCommands
             return ExitCode.Success;
         }
 
-        private async Task<ExitCode> LoadAsync(CommandContext context, List<string> args, CancellationToken ct)
+        private async Task WriteSceneListEntry(CommandContext context, Scene scene, Scene activeScene, CancellationToken ct)
         {
-            if (args.Count == 0)
+            var isActive = scene == activeScene;
+            var marker = isActive ? "*" : " ";
+
+            if (Long)
             {
-                await context.Stderr.WriteLineAsync("scene load: missing scene name", ct);
-                await context.Stderr.WriteLineAsync("Usage: scene load <scene> [--additive]", ct);
-                return ExitCode.UsageError;
+                var status = scene.isLoaded ? "Loaded" : "Loading";
+                var rootCount = scene.isLoaded ? scene.rootCount : 0;
+                await context.Stdout.WriteLineAsync(
+                    $"{marker} {scene.name,-20} {status,-10} {scene.path,-40} ({rootCount} root objects)", ct);
             }
-
-            var sceneName = args[0];
-            var mode = Additive ? LoadSceneMode.Additive : LoadSceneMode.Single;
-
-            var sceneToLoad = ResolveSceneName(sceneName);
-            if (sceneToLoad == null)
+            else
             {
-                await context.Stderr.WriteLineAsync($"scene load: '{sceneName}': scene not found in Build Settings", ct);
-                return ExitCode.RuntimeError;
+                var suffix = isActive ? " (active)" : "";
+                await context.Stdout.WriteLineAsync($"{marker} {scene.name}{suffix}", ct);
             }
-
-            if (Async)
-                return await LoadSceneAsyncInternal(context, sceneToLoad, mode, ct);
-
-            return await LoadSceneSync(context, sceneToLoad, mode, ct);
         }
+
+        #endregion
+
+        #region Load Helpers
 
         private async Task<ExitCode> LoadSceneSync(CommandContext context, string sceneName, LoadSceneMode mode, CancellationToken ct)
         {
@@ -206,112 +379,12 @@ namespace Xeon.UniTerminal.UnityCommands
             }
         }
 
-        private async Task<ExitCode> UnloadAsync(CommandContext context, List<string> args, CancellationToken ct)
+        #endregion
+
+        #region Info Output
+
+        private async Task WriteSceneInfo(CommandContext context, Scene scene, CancellationToken ct)
         {
-            if (args.Count == 0)
-            {
-                await context.Stderr.WriteLineAsync("scene unload: missing scene name", ct);
-                await context.Stderr.WriteLineAsync("Usage: scene unload <scene>", ct);
-                return ExitCode.UsageError;
-            }
-
-            var sceneName = args[0];
-            var scene = GetLoadedScene(sceneName);
-
-            if (!scene.IsValid())
-            {
-                await context.Stderr.WriteLineAsync($"scene unload: '{sceneName}': scene not loaded", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            if (SceneManager.sceneCount <= 1)
-            {
-                await context.Stderr.WriteLineAsync("scene unload: cannot unload the only loaded scene", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            if (scene == SceneManager.GetActiveScene())
-            {
-                await context.Stderr.WriteLineAsync("scene unload: cannot unload active scene. Change active scene first.", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            try
-            {
-                var operation = SceneManager.UnloadSceneAsync(scene);
-                if (operation == null)
-                {
-                    await context.Stderr.WriteLineAsync($"scene unload: failed to unload '{sceneName}'", ct);
-                    return ExitCode.RuntimeError;
-                }
-
-                if (Async)
-                {
-                    while (!operation.isDone)
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        await Task.Yield();
-                    }
-                }
-
-                await context.Stdout.WriteLineAsync($"Unloaded scene '{scene.name}'", ct);
-                return ExitCode.Success;
-            }
-            catch (System.Exception ex)
-            {
-                await context.Stderr.WriteLineAsync($"scene unload: {ex.Message}", ct);
-                return ExitCode.RuntimeError;
-            }
-        }
-
-        private async Task<ExitCode> ActiveAsync(CommandContext context, List<string> args, CancellationToken ct)
-        {
-            var activeScene = SceneManager.GetActiveScene();
-
-            if (args.Count == 0)
-            {
-                await context.Stdout.WriteLineAsync($"Active scene: {activeScene.name} ({activeScene.path})", ct);
-                return ExitCode.Success;
-            }
-
-            var sceneName = args[0];
-            var scene = GetLoadedScene(sceneName);
-
-            if (!scene.IsValid())
-            {
-                await context.Stderr.WriteLineAsync($"scene active: '{sceneName}': scene not loaded", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            var oldActive = activeScene.name;
-            if (!SceneManager.SetActiveScene(scene))
-            {
-                await context.Stderr.WriteLineAsync($"scene active: failed to set '{sceneName}' as active", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            await context.Stdout.WriteLineAsync($"Active scene changed: {oldActive} -> {scene.name}", ct);
-            return ExitCode.Success;
-        }
-
-        private async Task<ExitCode> InfoAsync(CommandContext context, List<string> args, CancellationToken ct)
-        {
-            Scene scene;
-
-            if (args.Count == 0)
-            {
-                scene = SceneManager.GetActiveScene();
-            }
-            else
-            {
-                scene = GetLoadedScene(args[0]);
-                if (!scene.IsValid())
-                {
-                    await context.Stderr.WriteLineAsync($"scene info: '{args[0]}': scene not loaded", ct);
-                    return ExitCode.RuntimeError;
-                }
-            }
-
             await context.Stdout.WriteLineAsync($"Scene: {scene.name}", ct);
             await context.Stdout.WriteLineAsync($"  Path:         {scene.path}", ct);
             await context.Stdout.WriteLineAsync($"  Build Index:  {scene.buildIndex}", ct);
@@ -322,80 +395,35 @@ namespace Xeon.UniTerminal.UnityCommands
             await context.Stdout.WriteLineAsync($"  Is Dirty:     {scene.isDirty}", ct);
 #endif
 
-            if (scene.isLoaded)
+            if (!scene.isLoaded)
+                return;
+
+            var rootObjects = scene.GetRootGameObjects();
+            await context.Stdout.WriteLineAsync($"  Root Count:   {rootObjects.Length}", ct);
+            await context.Stdout.WriteLineAsync("  Root Objects:", ct);
+
+            var displayCount = Mathf.Min(rootObjects.Length, 10);
+            for (int i = 0; i < displayCount; i++)
             {
-                var rootObjects = scene.GetRootGameObjects();
-                await context.Stdout.WriteLineAsync($"  Root Count:   {rootObjects.Length}", ct);
-                await context.Stdout.WriteLineAsync("  Root Objects:", ct);
-
-                var displayCount = Mathf.Min(rootObjects.Length, 10);
-                for (int i = 0; i < displayCount; i++)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    await context.Stdout.WriteLineAsync($"    - {rootObjects[i].name}", ct);
-                }
-
-                if (rootObjects.Length > 10)
-                    await context.Stdout.WriteLineAsync($"    ... and {rootObjects.Length - 10} more", ct);
+                ct.ThrowIfCancellationRequested();
+                await context.Stdout.WriteLineAsync($"    - {rootObjects[i].name}", ct);
             }
 
-            return ExitCode.Success;
+            if (rootObjects.Length > 10)
+                await context.Stdout.WriteLineAsync($"    ... and {rootObjects.Length - 10} more", ct);
         }
 
-        private async Task<ExitCode> CreateAsync(CommandContext context, List<string> args, CancellationToken ct)
-        {
-#if UNITY_EDITOR
-            if (args.Count == 0)
-            {
-                await context.Stderr.WriteLineAsync("scene create: missing scene name", ct);
-                await context.Stderr.WriteLineAsync("Usage: scene create <name> [--additive] [--setup]", ct);
-                return ExitCode.UsageError;
-            }
+        #endregion
 
-            var sceneName = args[0];
-            var mode = Additive
-                ? UnityEditor.SceneManagement.NewSceneMode.Additive
-                : UnityEditor.SceneManagement.NewSceneMode.Single;
-            var setup = Setup
-                ? UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects
-                : UnityEditor.SceneManagement.NewSceneSetup.EmptyScene;
-
-            try
-            {
-                var newScene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(setup, mode);
-                newScene.name = sceneName;
-
-                var modeStr = Additive ? "additively" : "as single";
-                var setupStr = Setup ? "with default objects" : "empty";
-                await context.Stdout.WriteLineAsync($"Created scene '{sceneName}' {modeStr} ({setupStr})", ct);
-                return ExitCode.Success;
-            }
-            catch (System.Exception ex)
-            {
-                await context.Stderr.WriteLineAsync($"scene create: {ex.Message}", ct);
-                return ExitCode.RuntimeError;
-            }
-#else
-            await context.Stderr.WriteLineAsync("scene create: only available in Editor", ct);
-            return ExitCode.RuntimeError;
-#endif
-        }
-
-        private async Task<ExitCode> UnknownSubCommandAsync(CommandContext context, string subCommand, CancellationToken ct)
-        {
-            await context.Stderr.WriteLineAsync($"scene: unknown subcommand '{subCommand}'", ct);
-            await context.Stderr.WriteLineAsync("Available subcommands: list, load, unload, active, info, create", ct);
-            return ExitCode.UsageError;
-        }
+        #region Scene Resolution
 
         private string ResolveSceneName(string input)
         {
             if (int.TryParse(input, out int buildIndex))
             {
-                if (buildIndex >= 0 && buildIndex < SceneManager.sceneCountInBuildSettings)
-                    return SceneUtility.GetScenePathByBuildIndex(buildIndex);
-
-                return null;
+                return buildIndex >= 0 && buildIndex < SceneManager.sceneCountInBuildSettings
+                    ? SceneUtility.GetScenePathByBuildIndex(buildIndex)
+                    : null;
             }
 
             for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
@@ -419,38 +447,43 @@ namespace Xeon.UniTerminal.UnityCommands
             if (scene.IsValid())
                 return scene;
 
-            scene = SceneManager.GetSceneByPath(input);
-            return scene;
+            return SceneManager.GetSceneByPath(input);
         }
 
-        public IEnumerable<string> GetCompletions(CompletionContext context)
+        #endregion
+
+        #region Output Helpers
+
+        private async Task<ExitCode> ShowUsageAsync(CommandContext context, CancellationToken ct)
         {
-            var token = context.CurrentToken ?? "";
+            await context.Stderr.WriteLineAsync("scene: missing subcommand", ct);
+            await context.Stderr.WriteLineAsync("Usage: scene <subcommand> [options] [arguments]", ct);
+            await context.Stderr.WriteLineAsync("Subcommands: list, load, unload, active, info, create", ct);
+            return ExitCode.UsageError;
+        }
 
-            // サブコマンド補完
-            if (context.TokenIndex == 1)
-            {
-                var subCommands = new[] { "list", "load", "unload", "active", "info", "create" };
-                foreach (var cmd in subCommands)
-                {
-                    if (cmd.StartsWith(token, System.StringComparison.OrdinalIgnoreCase))
-                        yield return cmd;
-                }
-                yield break;
-            }
+        private async Task<ExitCode> UnknownSubCommandAsync(CommandContext context, string subCommand, CancellationToken ct)
+        {
+            await context.Stderr.WriteLineAsync($"scene: unknown subcommand '{subCommand}'", ct);
+            await context.Stderr.WriteLineAsync("Available subcommands: list, load, unload, active, info, create", ct);
+            return ExitCode.UsageError;
+        }
 
-            // シーン名補完（TokenIndex >= 2）
-            if (context.TokenIndex >= 2 && !token.StartsWith("-"))
-            {
-                foreach (var sceneName in GetSceneNameCompletions(token))
-                    yield return sceneName;
-            }
+        #endregion
+
+        #region Completion Helpers
+
+        private static IEnumerable<string> GetSubCommandCompletions(string token)
+        {
+            var subCommands = new[] { "list", "load", "unload", "active", "info", "create" };
+            return subCommands.Where(cmd => cmd.StartsWith(token, System.StringComparison.OrdinalIgnoreCase));
         }
 
         private IEnumerable<string> GetSceneNameCompletions(string prefix)
         {
             var scenes = new List<string>();
 
+            // ロード済みシーン
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
@@ -458,6 +491,7 @@ namespace Xeon.UniTerminal.UnityCommands
                     scenes.Add(scene.name);
             }
 
+            // ビルド設定のシーン
             for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
             {
                 var path = SceneUtility.GetScenePathByBuildIndex(i);
@@ -466,10 +500,11 @@ namespace Xeon.UniTerminal.UnityCommands
                     scenes.Add(name);
             }
 
-            if (string.IsNullOrEmpty(prefix))
-                return scenes;
-
-            return scenes.Where(s => s.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase));
+            return string.IsNullOrEmpty(prefix)
+                ? scenes
+                : scenes.Where(s => s.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase));
         }
+
+        #endregion
     }
 }

@@ -16,11 +16,17 @@ namespace Xeon.UniTerminal.UnityCommands
     [Command("assetdb", "Load and find assets via AssetDatabase (Editor only)")]
     public class AssetDbCommand : ICommand
     {
+        #region Options
+
         [Option("type", "t", Description = "Filter by asset type")]
         public string TypeFilter;
 
         [Option("long", "l", Description = "Show detailed information")]
         public bool LongFormat;
+
+        #endregion
+
+        #region Provider
 
         private static AssetDatabaseProvider provider;
 
@@ -28,14 +34,18 @@ namespace Xeon.UniTerminal.UnityCommands
         {
             get
             {
-                if (provider == null)
-                {
-                    provider = new AssetDatabaseProvider();
-                    AssetManager.Instance.RegisterProvider(provider);
-                }
+                if (provider != null)
+                    return provider;
+
+                provider = new AssetDatabaseProvider();
+                AssetManager.Instance.RegisterProvider(provider);
                 return provider;
             }
         }
+
+        #endregion
+
+        #region ICommand
 
         public string CommandName => "assetdb";
         public string Description => "Load and find assets via AssetDatabase (Editor only)";
@@ -49,12 +59,7 @@ namespace Xeon.UniTerminal.UnityCommands
             }
 
             if (context.PositionalArguments.Count == 0)
-            {
-                await context.Stderr.WriteLineAsync("assetdb: missing subcommand", ct);
-                await context.Stderr.WriteLineAsync("Usage: assetdb <subcommand> [arguments]", ct);
-                await context.Stderr.WriteLineAsync("Subcommands: load, find, list, path", ct);
-                return ExitCode.UsageError;
-            }
+                return await ShowUsageAsync(context, ct);
 
             var subCommand = context.PositionalArguments[0].ToLower();
             var args = context.PositionalArguments.Skip(1).ToList();
@@ -69,6 +74,23 @@ namespace Xeon.UniTerminal.UnityCommands
             };
         }
 
+        public IEnumerable<string> GetCompletions(CompletionContext context)
+        {
+            var token = context.CurrentToken ?? "";
+
+            if (context.TokenIndex == 1)
+                return GetSubCommandCompletions(token);
+
+            if (context.TokenIndex == 2 && (token.StartsWith("Assets") || token == ""))
+                return GetAssetPathCompletions(token);
+
+            return Enumerable.Empty<string>();
+        }
+
+        #endregion
+
+        #region Subcommands
+
         private async Task<ExitCode> LoadAsync(CommandContext context, List<string> args, CancellationToken ct)
         {
             if (args.Count == 0)
@@ -78,24 +100,19 @@ namespace Xeon.UniTerminal.UnityCommands
                 return ExitCode.UsageError;
             }
 
-            var assetPath = args[0];
-            Type assetType = typeof(UnityEngine.Object);
-
-            if (!string.IsNullOrEmpty(TypeFilter))
+            var assetType = ResolveAssetType();
+            if (!string.IsNullOrEmpty(TypeFilter) && assetType == null)
             {
-                assetType = TypeResolver.ResolveAssetType(TypeFilter);
-                if (assetType == null)
-                {
-                    await context.Stderr.WriteLineAsync($"assetdb: unknown type '{TypeFilter}'", ct);
-                    return ExitCode.UsageError;
-                }
+                await context.Stderr.WriteLineAsync($"assetdb: unknown type '{TypeFilter}'", ct);
+                return ExitCode.UsageError;
             }
 
-            var entry = await AssetManager.Instance.LoadAsync(Provider, assetPath, assetType, ct);
+            var entry = await AssetManager.Instance.LoadAsync(
+                Provider, args[0], assetType ?? typeof(UnityEngine.Object), ct);
 
             if (entry == null)
             {
-                await context.Stderr.WriteLineAsync($"assetdb: failed to load '{assetPath}'", ct);
+                await context.Stderr.WriteLineAsync($"assetdb: failed to load '{args[0]}'", ct);
                 return ExitCode.RuntimeError;
             }
 
@@ -113,19 +130,14 @@ namespace Xeon.UniTerminal.UnityCommands
                 return ExitCode.UsageError;
             }
 
-            var pattern = string.Join(" ", args);
-            Type assetType = null;
-
-            if (!string.IsNullOrEmpty(TypeFilter))
+            var assetType = ResolveAssetType();
+            if (!string.IsNullOrEmpty(TypeFilter) && assetType == null)
             {
-                assetType = TypeResolver.ResolveAssetType(TypeFilter);
-                if (assetType == null)
-                {
-                    await context.Stderr.WriteLineAsync($"assetdb: unknown type '{TypeFilter}'", ct);
-                    return ExitCode.UsageError;
-                }
+                await context.Stderr.WriteLineAsync($"assetdb: unknown type '{TypeFilter}'", ct);
+                return ExitCode.UsageError;
             }
 
+            var pattern = string.Join(" ", args);
             var results = Provider.Find(pattern, assetType).ToList();
 
             if (results.Count == 0)
@@ -135,40 +147,20 @@ namespace Xeon.UniTerminal.UnityCommands
             }
 
             await context.Stdout.WriteLineAsync($"Found {results.Count} assets:", ct);
-
-            foreach (var info in results)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                if (LongFormat)
-                {
-                    var size = info.Size > 0 ? FormatSize(info.Size) : "-";
-                    await context.Stdout.WriteLineAsync($"  {info.AssetType?.Name,-20} {size,10} {info.Path}", ct);
-                }
-                else
-                {
-                    await context.Stdout.WriteLineAsync($"  {info.Path}", ct);
-                }
-            }
-
+            await WriteAssetList(context, results, ct);
             return ExitCode.Success;
         }
 
         private async Task<ExitCode> ListAsync(CommandContext context, List<string> args, CancellationToken ct)
         {
-            var path = args.Count > 0 ? args[0] : "Assets";
-            Type assetType = null;
-
-            if (!string.IsNullOrEmpty(TypeFilter))
+            var assetType = ResolveAssetType();
+            if (!string.IsNullOrEmpty(TypeFilter) && assetType == null)
             {
-                assetType = TypeResolver.ResolveAssetType(TypeFilter);
-                if (assetType == null)
-                {
-                    await context.Stderr.WriteLineAsync($"assetdb: unknown type '{TypeFilter}'", ct);
-                    return ExitCode.UsageError;
-                }
+                await context.Stderr.WriteLineAsync($"assetdb: unknown type '{TypeFilter}'", ct);
+                return ExitCode.UsageError;
             }
 
+            var path = args.Count > 0 ? args[0] : "Assets";
             var results = Provider.List(path, assetType).ToList();
 
             if (results.Count == 0)
@@ -178,22 +170,7 @@ namespace Xeon.UniTerminal.UnityCommands
             }
 
             await context.Stdout.WriteLineAsync($"Assets in '{path}' ({results.Count}):", ct);
-
-            foreach (var info in results)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                if (LongFormat)
-                {
-                    var size = info.Size > 0 ? FormatSize(info.Size) : "-";
-                    await context.Stdout.WriteLineAsync($"  {info.AssetType?.Name,-20} {size,10} {info.Name}", ct);
-                }
-                else
-                {
-                    await context.Stdout.WriteLineAsync($"  {info.Name}", ct);
-                }
-            }
-
+            await WriteAssetList(context, results, ct);
             return ExitCode.Success;
         }
 
@@ -225,13 +202,10 @@ namespace Xeon.UniTerminal.UnityCommands
             // レジストリから検索
             if (AssetManager.Instance.Registry.TryResolve(specifier, out var entry))
             {
-                if (!string.IsNullOrEmpty(entry.Key))
-                {
-                    await context.Stdout.WriteLineAsync(entry.Key, ct);
-                    return ExitCode.Success;
-                }
+                var path = !string.IsNullOrEmpty(entry.Key)
+                    ? entry.Key
+                    : Provider.GetAssetPathFromInstanceId(entry.InstanceId);
 
-                var path = Provider.GetAssetPathFromInstanceId(entry.InstanceId);
                 if (!string.IsNullOrEmpty(path))
                 {
                     await context.Stdout.WriteLineAsync(path, ct);
@@ -243,68 +217,101 @@ namespace Xeon.UniTerminal.UnityCommands
             return ExitCode.RuntimeError;
         }
 
-        private async Task<ExitCode> UnknownSubCommandAsync(
-            CommandContext context,
-            string subCommand,
-            CancellationToken ct)
+        #endregion
+
+        #region Helpers
+
+        private Type ResolveAssetType()
+        {
+            return string.IsNullOrEmpty(TypeFilter) ? null : TypeResolver.ResolveAssetType(TypeFilter);
+        }
+
+        private async Task WriteAssetList(CommandContext context, List<AssetInfo> results, CancellationToken ct)
+        {
+            foreach (var info in results)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (LongFormat)
+                {
+                    var size = info.Size > 0 ? FormatSize(info.Size) : "-";
+                    var displayPath = !string.IsNullOrEmpty(info.Path) ? info.Path : info.Name;
+                    await context.Stdout.WriteLineAsync($"  {info.AssetType?.Name,-20} {size,10} {displayPath}", ct);
+                }
+                else
+                {
+                    var displayPath = !string.IsNullOrEmpty(info.Path) ? info.Path : info.Name;
+                    await context.Stdout.WriteLineAsync($"  {displayPath}", ct);
+                }
+            }
+        }
+
+        private static string FormatSize(long bytes)
+        {
+            const long KB = 1024;
+            const long MB = KB * 1024;
+            const long GB = MB * 1024;
+
+            if (bytes < KB) return $"{bytes} B";
+            if (bytes < MB) return $"{bytes / (double)KB:F1} KB";
+            if (bytes < GB) return $"{bytes / (double)MB:F1} MB";
+            return $"{bytes / (double)GB:F1} GB";
+        }
+
+        #endregion
+
+        #region Output Helpers
+
+        private async Task<ExitCode> ShowUsageAsync(CommandContext context, CancellationToken ct)
+        {
+            await context.Stderr.WriteLineAsync("assetdb: missing subcommand", ct);
+            await context.Stderr.WriteLineAsync("Usage: assetdb <subcommand> [arguments]", ct);
+            await context.Stderr.WriteLineAsync("Subcommands: load, find, list, path", ct);
+            return ExitCode.UsageError;
+        }
+
+        private async Task<ExitCode> UnknownSubCommandAsync(CommandContext context, string subCommand, CancellationToken ct)
         {
             await context.Stderr.WriteLineAsync($"assetdb: unknown subcommand '{subCommand}'", ct);
             await context.Stderr.WriteLineAsync("Subcommands: load, find, list, path", ct);
             return ExitCode.UsageError;
         }
 
-        private static string FormatSize(long bytes)
+        #endregion
+
+        #region Completion Helpers
+
+        private static IEnumerable<string> GetSubCommandCompletions(string token)
         {
-            if (bytes < 1024)
-                return $"{bytes} B";
-            if (bytes < 1024 * 1024)
-                return $"{bytes / 1024.0:F1} KB";
-            if (bytes < 1024 * 1024 * 1024)
-                return $"{bytes / (1024.0 * 1024.0):F1} MB";
-            return $"{bytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
+            var subCommands = new[] { "load", "find", "list", "path" };
+            return subCommands.Where(cmd => cmd.StartsWith(token, StringComparison.OrdinalIgnoreCase));
         }
 
-        public IEnumerable<string> GetCompletions(CompletionContext context)
+        private static IEnumerable<string> GetAssetPathCompletions(string token)
         {
-            var token = context.CurrentToken ?? "";
+            var searchPath = string.IsNullOrEmpty(token) ? "Assets" : token;
 
-            if (context.TokenIndex == 1)
+            // フォルダ補完
+            if (AssetDatabase.IsValidFolder(searchPath))
             {
-                var subCommands = new[] { "load", "find", "list", "path" };
-                foreach (var cmd in subCommands)
+                foreach (var folder in AssetDatabase.GetSubFolders(searchPath))
                 {
-                    if (cmd.StartsWith(token, StringComparison.OrdinalIgnoreCase))
-                        yield return cmd;
+                    if (folder.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                        yield return folder;
                 }
-                yield break;
             }
 
-            // パス補完（Assets/で始まる場合）
-            if (context.TokenIndex == 2 && (token.StartsWith("Assets") || token == ""))
+            // アセット補完 (上限50件)
+            var guids = AssetDatabase.FindAssets("", new[] { "Assets" });
+            foreach (var guid in guids.Take(50))
             {
-                var searchPath = string.IsNullOrEmpty(token) ? "Assets" : token;
-
-                // フォルダ補完
-                if (AssetDatabase.IsValidFolder(searchPath))
-                {
-                    var subFolders = AssetDatabase.GetSubFolders(searchPath);
-                    foreach (var folder in subFolders)
-                    {
-                        if (folder.StartsWith(token, StringComparison.OrdinalIgnoreCase))
-                            yield return folder;
-                    }
-                }
-
-                // アセット補完
-                var guids = AssetDatabase.FindAssets("", new[] { "Assets" });
-                foreach (var guid in guids.Take(50))
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(guid);
-                    if (path.StartsWith(token, StringComparison.OrdinalIgnoreCase))
-                        yield return path;
-                }
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                    yield return path;
             }
         }
+
+        #endregion
     }
 }
 #endif
