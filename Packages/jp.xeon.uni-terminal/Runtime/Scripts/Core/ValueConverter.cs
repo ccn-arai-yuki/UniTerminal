@@ -33,49 +33,15 @@ namespace Xeon.UniTerminal
             // Nullable型の場合
             var underlyingType = Nullable.GetUnderlyingType(targetType);
             if (underlyingType != null)
-            {
                 targetType = underlyingType;
-            }
 
             // 基本型
-            if (targetType == typeof(int))
-                return int.Parse(value, CultureInfo.InvariantCulture);
-            if (targetType == typeof(float))
-                return float.Parse(value, CultureInfo.InvariantCulture);
-            if (targetType == typeof(double))
-                return double.Parse(value, CultureInfo.InvariantCulture);
-            if (targetType == typeof(long))
-                return long.Parse(value, CultureInfo.InvariantCulture);
-            if (targetType == typeof(bool))
-                return ParseBool(value);
-            if (targetType == typeof(string))
-                return value.Trim('"');
-            if (targetType == typeof(byte))
-                return byte.Parse(value, CultureInfo.InvariantCulture);
-            if (targetType == typeof(short))
-                return short.Parse(value, CultureInfo.InvariantCulture);
+            if (TryConvertPrimitive(value, targetType, out var primitiveResult))
+                return primitiveResult;
 
-            // Unity型
-            if (targetType == typeof(Vector2))
-                return ParseVector2(value);
-            if (targetType == typeof(Vector3))
-                return ParseVector3(value);
-            if (targetType == typeof(Vector4))
-                return ParseVector4(value);
-            if (targetType == typeof(Vector2Int))
-                return ParseVector2Int(value);
-            if (targetType == typeof(Vector3Int))
-                return ParseVector3Int(value);
-            if (targetType == typeof(Color))
-                return ParseColor(value);
-            if (targetType == typeof(Color32))
-                return (Color32)ParseColor(value);
-            if (targetType == typeof(Quaternion))
-                return ParseQuaternion(value);
-            if (targetType == typeof(Rect))
-                return ParseRect(value);
-            if (targetType == typeof(Bounds))
-                return ParseBounds(value);
+            // Unity構造体型
+            if (TryConvertUnityStruct(value, targetType, out var unityStructResult))
+                return unityStructResult;
 
             // Enum
             if (targetType.IsEnum)
@@ -86,41 +52,95 @@ namespace Xeon.UniTerminal
                 return ParseLayerMask(value);
 
             // Unity Object参照型
-            if (typeof(GameObject).IsAssignableFrom(targetType))
-                return ParseGameObjectReference(value);
-
-            if (typeof(Component).IsAssignableFrom(targetType))
-                return ParseComponentReference(value, targetType);
-
-            // Material（特殊対応）
-            if (targetType == typeof(Material))
-                return ParseMaterialReference(value);
-
-            // Texture/Texture2D
-            if (typeof(Texture).IsAssignableFrom(targetType))
-                return ParseAssetReference(value, targetType);
-
-            // Mesh
-            if (targetType == typeof(Mesh))
-                return ParseAssetReference(value, targetType);
-
-            // Sprite
-            if (targetType == typeof(Sprite))
-                return ParseAssetReference(value, targetType);
-
-            // AudioClip
-            if (targetType == typeof(AudioClip))
-                return ParseAssetReference(value, targetType);
-
-            // Shader
-            if (targetType == typeof(Shader))
-                return ParseShaderReference(value);
-
-            // その他のUnityEngine.Object派生型（ロード済みアセットから検索）
-            if (typeof(UnityEngine.Object).IsAssignableFrom(targetType))
-                return ParseAssetReference(value, targetType);
+            if (TryConvertUnityObject(value, targetType, out var unityObjectResult))
+                return unityObjectResult;
 
             throw new NotSupportedException($"Cannot convert to type: {targetType.Name}");
+        }
+
+        /// <summary>
+        /// 基本型への変換を試みます。
+        /// </summary>
+        private static bool TryConvertPrimitive(string value, Type targetType, out object result)
+        {
+            result = null;
+
+            if (targetType == typeof(int))
+                result = int.Parse(value, CultureInfo.InvariantCulture);
+            else if (targetType == typeof(float))
+                result = float.Parse(value, CultureInfo.InvariantCulture);
+            else if (targetType == typeof(double))
+                result = double.Parse(value, CultureInfo.InvariantCulture);
+            else if (targetType == typeof(long))
+                result = long.Parse(value, CultureInfo.InvariantCulture);
+            else if (targetType == typeof(bool))
+                result = ParseBool(value);
+            else if (targetType == typeof(string))
+                result = value.Trim('"');
+            else if (targetType == typeof(byte))
+                result = byte.Parse(value, CultureInfo.InvariantCulture);
+            else if (targetType == typeof(short))
+                result = short.Parse(value, CultureInfo.InvariantCulture);
+            else
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Unity構造体型への変換を試みます。
+        /// </summary>
+        private static bool TryConvertUnityStruct(string value, Type targetType, out object result)
+        {
+            result = null;
+
+            if (targetType == typeof(Vector2))
+                result = ParseVector2(value);
+            else if (targetType == typeof(Vector3))
+                result = ParseVector3(value);
+            else if (targetType == typeof(Vector4))
+                result = ParseVector4(value);
+            else if (targetType == typeof(Vector2Int))
+                result = ParseVector2Int(value);
+            else if (targetType == typeof(Vector3Int))
+                result = ParseVector3Int(value);
+            else if (targetType == typeof(Color))
+                result = ParseColor(value);
+            else if (targetType == typeof(Color32))
+                result = (Color32)ParseColor(value);
+            else if (targetType == typeof(Quaternion))
+                result = ParseQuaternion(value);
+            else if (targetType == typeof(Rect))
+                result = ParseRect(value);
+            else if (targetType == typeof(Bounds))
+                result = ParseBounds(value);
+            else
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Unity Object参照型への変換を試みます。
+        /// </summary>
+        private static bool TryConvertUnityObject(string value, Type targetType, out object result)
+        {
+            result = null;
+
+            if (typeof(GameObject).IsAssignableFrom(targetType))
+                result = ParseGameObjectReference(value);
+            else if (typeof(Component).IsAssignableFrom(targetType))
+                result = ParseComponentReference(value, targetType);
+            else if (targetType == typeof(Material))
+                result = ParseMaterialReference(value);
+            else if (targetType == typeof(Shader))
+                result = ParseShaderReference(value);
+            else if (typeof(UnityEngine.Object).IsAssignableFrom(targetType))
+                result = ParseAssetReference(value, targetType);
+            else
+                return false;
+
+            return true;
         }
 
         /// <summary>
@@ -148,6 +168,24 @@ namespace Xeon.UniTerminal
             if (lower == "false" || lower == "0" || lower == "no" || lower == "off")
                 return false;
             throw new FormatException($"Cannot parse '{value}' as bool");
+        }
+
+        /// <summary>
+        /// 値がnullまたはnone指定かどうかを判定します。
+        /// </summary>
+        private static bool IsNullOrNone(string value)
+        {
+            var lower = value.ToLowerInvariant();
+            return lower == "null" || lower == "none";
+        }
+
+        /// <summary>
+        /// インスタンスID形式（#12345）のパースを試みます。
+        /// </summary>
+        private static bool TryParseInstanceId(string value, out int instanceId)
+        {
+            instanceId = 0;
+            return value.StartsWith("#") && int.TryParse(value.Substring(1), out instanceId);
         }
 
         private static Vector2 ParseVector2(string value)
@@ -336,12 +374,10 @@ namespace Xeon.UniTerminal
         /// </summary>
         private static GameObject ParseGameObjectReference(string value)
         {
-            // null/none指定
-            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+            if (IsNullOrNone(value))
                 return null;
 
-            // インスタンスID指定 (#12345形式)
-            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
+            if (TryParseInstanceId(value, out int instanceId))
             {
                 var obj = FindObjectByInstanceId<GameObject>(instanceId);
                 if (obj == null)
@@ -349,7 +385,6 @@ namespace Xeon.UniTerminal
                 return obj;
             }
 
-            // パスで解決
             var go = GameObjectPath.Resolve(value);
             if (go == null)
                 throw new FormatException($"GameObject not found: {value}");
@@ -361,40 +396,52 @@ namespace Xeon.UniTerminal
         /// </summary>
         private static Component ParseComponentReference(string value, Type componentType)
         {
-            // null/none指定
-            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+            if (IsNullOrNone(value))
                 return null;
 
-            // インスタンスID指定 (#12345形式)
-            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
-            {
-                var obj = FindObjectByInstanceId<Component>(instanceId);
-                if (obj == null)
-                    throw new FormatException($"Component not found with instance ID: {value}");
-                if (!componentType.IsAssignableFrom(obj.GetType()))
-                    throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {obj.GetType().Name}");
-                return obj;
-            }
+            if (TryParseInstanceId(value, out int instanceId))
+                return ResolveComponentByInstanceId(instanceId, componentType, value);
 
             // パス/コンポーネント形式 (例: /Player:Rigidbody)
-            var parts = value.Split(':');
-            if (parts.Length == 2)
-            {
-                var go = GameObjectPath.Resolve(parts[0]);
-                if (go == null)
-                    throw new FormatException($"GameObject not found: {parts[0]}");
-
-                var compType = TypeResolver.ResolveComponentType(parts[1]);
-                if (compType == null || !componentType.IsAssignableFrom(compType))
-                    throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {parts[1]}");
-
-                var comp = go.GetComponent(compType);
-                if (comp == null)
-                    throw new FormatException($"Component '{parts[1]}' not found on {parts[0]}");
-                return comp;
-            }
+            var colonIndex = value.IndexOf(':');
+            if (colonIndex >= 0)
+                return ResolveComponentByPathAndType(value, colonIndex, componentType);
 
             // パスのみの場合、そのGameObjectから指定型のコンポーネントを取得
+            return ResolveComponentByPath(value, componentType);
+        }
+
+        private static Component ResolveComponentByInstanceId(int instanceId, Type componentType, string originalValue)
+        {
+            var obj = FindObjectByInstanceId<Component>(instanceId);
+            if (obj == null)
+                throw new FormatException($"Component not found with instance ID: {originalValue}");
+            if (!componentType.IsAssignableFrom(obj.GetType()))
+                throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {obj.GetType().Name}");
+            return obj;
+        }
+
+        private static Component ResolveComponentByPathAndType(string value, int colonIndex, Type componentType)
+        {
+            var goPath = value.Substring(0, colonIndex);
+            var typeName = value.Substring(colonIndex + 1);
+
+            var go = GameObjectPath.Resolve(goPath);
+            if (go == null)
+                throw new FormatException($"GameObject not found: {goPath}");
+
+            var compType = TypeResolver.ResolveComponentType(typeName);
+            if (compType == null || !componentType.IsAssignableFrom(compType))
+                throw new FormatException($"Component type mismatch: expected {componentType.Name}, got {typeName}");
+
+            var comp = go.GetComponent(compType);
+            if (comp == null)
+                throw new FormatException($"Component '{typeName}' not found on {goPath}");
+            return comp;
+        }
+
+        private static Component ResolveComponentByPath(string value, Type componentType)
+        {
             var gameObject = GameObjectPath.Resolve(value);
             if (gameObject == null)
                 throw new FormatException($"GameObject not found: {value}");
@@ -410,91 +457,98 @@ namespace Xeon.UniTerminal
         /// </summary>
         private static Material ParseMaterialReference(string value)
         {
-            // null/none指定
-            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+            if (IsNullOrNone(value))
                 return null;
 
-            // インスタンスID指定 (#12345形式)
-            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
-            {
-                // ロード済みアセットレジストリから検索
-                var entry = AssetManager.Instance.Registry.GetByInstanceId(instanceId);
-                if (entry != null && entry.Asset is Material regMat)
-                    return regMat;
-
-                // Resources.FindObjectsOfTypeAllから検索
-                foreach (var mat in Resources.FindObjectsOfTypeAll<Material>())
-                {
-                    if (mat.GetInstanceID() == instanceId)
-                        return mat;
-                }
-
-                throw new FormatException($"Material not found with instance ID: {value}");
-            }
+            if (TryParseInstanceId(value, out int instanceId))
+                return ResolveMaterialByInstanceId(instanceId, value);
 
             // パス/コンポーネント形式でRendererから取得
             // 例: /Cube:MeshRenderer.material または /Cube:MeshRenderer.materials[0]
             if (value.Contains(":"))
-            {
-                var colonIdx = value.IndexOf(':');
-                var goPath = value.Substring(0, colonIdx);
-                var rest = value.Substring(colonIdx + 1);
-
-                var go = GameObjectPath.Resolve(goPath);
-                if (go == null)
-                {
-                    throw new FormatException($"GameObject not found: {goPath}");
-                }
-
-                // Renderer.material or Renderer.materials[n]
-                if (rest.Contains(".material"))
-                {
-                    var dotIdx = rest.IndexOf('.');
-                    var rendererTypeName = rest.Substring(0, dotIdx);
-                    var rendererType = TypeResolver.ResolveComponentType(rendererTypeName);
-
-                    if (rendererType == null || !typeof(Renderer).IsAssignableFrom(rendererType))
-                    {
-                        throw new FormatException($"'{rendererTypeName}' is not a Renderer type");
-                    }
-
-                    var renderer = go.GetComponent(rendererType) as Renderer;
-                    if (renderer == null)
-                    {
-                        throw new FormatException($"Renderer '{rendererTypeName}' not found on {goPath}");
-                    }
-
-                    // materials[n] 形式
-                    var propPart = rest.Substring(dotIdx + 1);
-                    if (propPart.StartsWith("materials["))
-                    {
-                        var indexStr = propPart.Substring(10, propPart.Length - 11);
-                        if (int.TryParse(indexStr, out int index) && index >= 0 && index < renderer.sharedMaterials.Length)
-                        {
-                            return renderer.sharedMaterials[index];
-                        }
-                        throw new FormatException($"Material index out of range: {index}");
-                    }
-
-                    // material 形式
-                    if (propPart == "material" || propPart == "sharedMaterial")
-                    {
-                        return renderer.sharedMaterial;
-                    }
-                }
-
-                throw new FormatException($"Invalid material reference format: {value}");
-            }
+                return ResolveMaterialFromRenderer(value);
 
             // 名前でリソースから検索（フォールバック）
-            var materials = Resources.FindObjectsOfTypeAll<Material>();
-            foreach (var mat in materials)
+            return ResolveMaterialByName(value);
+        }
+
+        private static Material ResolveMaterialByInstanceId(int instanceId, string originalValue)
+        {
+            // ロード済みアセットレジストリから検索
+            var entry = AssetManager.Instance.Registry.GetByInstanceId(instanceId);
+            if (entry != null && entry.Asset is Material regMat)
+                return regMat;
+
+            // Resources.FindObjectsOfTypeAllから検索
+            foreach (var mat in Resources.FindObjectsOfTypeAll<Material>())
             {
-                if (mat.name == value)
+                if (mat.GetInstanceID() == instanceId)
                     return mat;
             }
 
-            throw new FormatException($"Material not found: {value}");
+            throw new FormatException($"Material not found with instance ID: {originalValue}");
+        }
+
+        private static Material ResolveMaterialFromRenderer(string value)
+        {
+            var colonIdx = value.IndexOf(':');
+            var goPath = value.Substring(0, colonIdx);
+            var rest = value.Substring(colonIdx + 1);
+
+            var go = GameObjectPath.Resolve(goPath);
+            if (go == null)
+                throw new FormatException($"GameObject not found: {goPath}");
+
+            if (!rest.Contains(".material"))
+                throw new FormatException($"Invalid material reference format: {value}");
+
+            var dotIdx = rest.IndexOf('.');
+            var rendererTypeName = rest.Substring(0, dotIdx);
+            var propPart = rest.Substring(dotIdx + 1);
+
+            var renderer = ResolveRenderer(go, rendererTypeName, goPath);
+            return GetMaterialFromRenderer(renderer, propPart);
+        }
+
+        private static Renderer ResolveRenderer(GameObject go, string rendererTypeName, string goPath)
+        {
+            var rendererType = TypeResolver.ResolveComponentType(rendererTypeName);
+            if (rendererType == null || !typeof(Renderer).IsAssignableFrom(rendererType))
+                throw new FormatException($"'{rendererTypeName}' is not a Renderer type");
+
+            var renderer = go.GetComponent(rendererType) as Renderer;
+            if (renderer == null)
+                throw new FormatException($"Renderer '{rendererTypeName}' not found on {goPath}");
+
+            return renderer;
+        }
+
+        private static Material GetMaterialFromRenderer(Renderer renderer, string propPart)
+        {
+            // materials[n] 形式
+            if (propPart.StartsWith("materials["))
+            {
+                var indexStr = propPart.Substring(10, propPart.Length - 11);
+                if (int.TryParse(indexStr, out int index) && index >= 0 && index < renderer.sharedMaterials.Length)
+                    return renderer.sharedMaterials[index];
+                throw new FormatException($"Material index out of range: {index}");
+            }
+
+            // material 形式
+            if (propPart == "material" || propPart == "sharedMaterial")
+                return renderer.sharedMaterial;
+
+            throw new FormatException($"Invalid material property: {propPart}");
+        }
+
+        private static Material ResolveMaterialByName(string name)
+        {
+            foreach (var mat in Resources.FindObjectsOfTypeAll<Material>())
+            {
+                if (mat.name == name)
+                    return mat;
+            }
+            throw new FormatException($"Material not found: {name}");
         }
 
         /// <summary>
@@ -627,38 +681,45 @@ namespace Xeon.UniTerminal
         /// <returns>解決されたアセット</returns>
         private static UnityEngine.Object ParseAssetReference(string value, Type assetType)
         {
-            // null/none指定
-            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+            if (IsNullOrNone(value))
                 return null;
 
-            // インスタンスID指定 (#12345形式)
-            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
+            if (TryParseInstanceId(value, out int instanceId))
+                return ResolveAssetByInstanceId(instanceId, assetType, value);
+
+            return ResolveAssetByName(value, assetType);
+        }
+
+        private static UnityEngine.Object ResolveAssetByInstanceId(int instanceId, Type assetType, string originalValue)
+        {
+            // まずロード済みアセットレジストリから検索
+            var entry = AssetManager.Instance.Registry.GetByInstanceId(instanceId);
+            if (entry != null && assetType.IsAssignableFrom(entry.AssetType))
+                return entry.Asset;
+
+            // Resources.FindObjectsOfTypeAllから検索
+            foreach (var obj in Resources.FindObjectsOfTypeAll(assetType))
             {
-                // まずロード済みアセットレジストリから検索
-                var entry = AssetManager.Instance.Registry.GetByInstanceId(instanceId);
-                if (entry != null && assetType.IsAssignableFrom(entry.AssetType))
-                    return entry.Asset;
-
-                // Resources.FindObjectsOfTypeAllから検索
-                foreach (var obj in Resources.FindObjectsOfTypeAll(assetType))
-                {
-                    if (obj.GetInstanceID() == instanceId)
-                        return obj;
-                }
-
-                throw new FormatException($"{assetType.Name} not found with instance ID: {value}");
+                if (obj.GetInstanceID() == instanceId)
+                    return obj;
             }
 
-            // ロード済みアセットレジストリから名前で検索
+            throw new FormatException($"{assetType.Name} not found with instance ID: {originalValue}");
+        }
+
+        private static UnityEngine.Object ResolveAssetByName(string name, Type assetType)
+        {
             var registry = AssetManager.Instance.Registry;
-            if (registry.TryResolve(value, out var registryEntry))
+
+            // ロード済みアセットレジストリから名前で検索
+            if (registry.TryResolve(name, out var registryEntry))
             {
                 if (assetType.IsAssignableFrom(registryEntry.AssetType))
                     return registryEntry.Asset;
             }
 
             // 同名のアセットが複数ある場合
-            var byName = registry.GetByName(value);
+            var byName = registry.GetByName(name);
             if (byName.Count > 1)
             {
                 var matching = new System.Collections.Generic.List<LoadedAssetEntry>();
@@ -672,17 +733,17 @@ namespace Xeon.UniTerminal
                     return matching[0].Asset;
 
                 if (matching.Count > 1)
-                    throw new FormatException($"Multiple {assetType.Name} assets found with name '{value}'. Use instance ID (#xxxxx) to specify.");
+                    throw new FormatException($"Multiple {assetType.Name} assets found with name '{name}'. Use instance ID (#xxxxx) to specify.");
             }
 
             // Resources.FindObjectsOfTypeAllから名前で検索
             foreach (var obj in Resources.FindObjectsOfTypeAll(assetType))
             {
-                if (obj.name == value)
+                if (obj.name == name)
                     return obj;
             }
 
-            throw new FormatException($"{assetType.Name} not found: {value}");
+            throw new FormatException($"{assetType.Name} not found: {name}");
         }
 
         /// <summary>
@@ -690,34 +751,40 @@ namespace Xeon.UniTerminal
         /// </summary>
         private static Shader ParseShaderReference(string value)
         {
-            // null/none指定
-            if (value.ToLowerInvariant() == "null" || value.ToLowerInvariant() == "none")
+            if (IsNullOrNone(value))
                 return null;
 
-            // インスタンスID指定
-            if (value.StartsWith("#") && int.TryParse(value.Substring(1), out int instanceId))
-            {
-                foreach (var shader in Resources.FindObjectsOfTypeAll<Shader>())
-                {
-                    if (shader.GetInstanceID() == instanceId)
-                        return shader;
-                }
-                throw new FormatException($"Shader not found with instance ID: {value}");
-            }
+            if (TryParseInstanceId(value, out int instanceId))
+                return ResolveShaderByInstanceId(instanceId, value);
 
+            return ResolveShaderByName(value);
+        }
+
+        private static Shader ResolveShaderByInstanceId(int instanceId, string originalValue)
+        {
+            foreach (var shader in Resources.FindObjectsOfTypeAll<Shader>())
+            {
+                if (shader.GetInstanceID() == instanceId)
+                    return shader;
+            }
+            throw new FormatException($"Shader not found with instance ID: {originalValue}");
+        }
+
+        private static Shader ResolveShaderByName(string name)
+        {
             // Shader.Findで検索（シェーダー名で直接検索）
-            var found = Shader.Find(value);
+            var found = Shader.Find(name);
             if (found != null)
                 return found;
 
             // Resources.FindObjectsOfTypeAllから名前で検索
             foreach (var shader in Resources.FindObjectsOfTypeAll<Shader>())
             {
-                if (shader.name == value)
+                if (shader.name == name)
                     return shader;
             }
 
-            throw new FormatException($"Shader not found: {value}");
+            throw new FormatException($"Shader not found: {name}");
         }
     }
 }

@@ -223,7 +223,8 @@ namespace Xeon.UniTerminal.UnityCommands
             // 名前検索
             if (!string.IsNullOrEmpty(Name))
             {
-                var all = Object.FindObjectsOfType<GameObject>(IncludeInactive);
+                var findInactive = IncludeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
+                var all = Object.FindObjectsByType<GameObject>(findInactive, FindObjectsSortMode.None);
                 results.AddRange(all.Where(go =>
                     go.name.IndexOf(Name, StringComparison.OrdinalIgnoreCase) >= 0));
             }
@@ -257,7 +258,8 @@ namespace Xeon.UniTerminal.UnityCommands
                 var type = FindComponentType(Component);
                 if (type != null)
                 {
-                    var withComponent = Object.FindObjectsOfType(type, IncludeInactive)
+                    var findInactive = IncludeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
+                    var withComponent = Object.FindObjectsByType(type, findInactive, FindObjectsSortMode.None)
                         .Cast<UnityEngine.Component>()
                         .Select(c => c.gameObject)
                         .ToList();
