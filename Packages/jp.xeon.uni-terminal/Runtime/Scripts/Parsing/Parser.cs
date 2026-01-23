@@ -235,12 +235,12 @@ namespace Xeon.UniTerminal.Parsing
 
         private void ProcessShortOption(List<Token> tokens, ref int i, Token token, CommandParseContext context)
         {
-            var opts = ParseShortOptions(token.Value, ref i);
+            var opts = ParseShortOptions(token.Value);
 
             // 値のない単一のショートオプションの場合、スペース区切りの値をチェック
-            if (opts.Count == 1 && !opts[0].HasValue && i < tokens.Count)
+            if (opts.Count == 1 && !opts[0].HasValue && i + 1 < tokens.Count)
             {
-                var nextToken = tokens[i];
+                var nextToken = tokens[i + 1];
                 if (IsOptionValue(nextToken))
                 {
                     opts[0] = new ParsedOptionOccurrence(
@@ -276,12 +276,10 @@ namespace Xeon.UniTerminal.Parsing
             return new ParsedOptionOccurrence(withoutDashes, true);
         }
 
-        private List<ParsedOptionOccurrence> ParseShortOptions(string value, ref int index)
+        private List<ParsedOptionOccurrence> ParseShortOptions(string value)
         {
             var withoutDash = value.Substring(1);
             int eqIndex = withoutDash.IndexOf('=');
-
-            index++;
 
             if (eqIndex >= 0)
                 return ParseShortOptionsWithValue(withoutDash, eqIndex);

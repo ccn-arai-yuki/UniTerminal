@@ -89,7 +89,7 @@ namespace Xeon.UniTerminal.Parsing
         {
             int start = context.Position;
 
-            if (context.PeekNext() == '>')
+            if (context.HasNext && context.PeekNext() == '>')
             {
                 context.Advance(2);
                 return CreateToken(TokenKind.RedirectAppend, ">>", start, 2);
