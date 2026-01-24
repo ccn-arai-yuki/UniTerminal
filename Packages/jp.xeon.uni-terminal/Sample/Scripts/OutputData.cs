@@ -1,4 +1,4 @@
-namespace Xeon.UniTerminal
+namespace Xeon.UniTerminal.Sample
 {
     /// <summary>
     /// ターミナル出力のデータを表す構造体

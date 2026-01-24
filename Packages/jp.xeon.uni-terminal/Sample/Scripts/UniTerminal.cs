@@ -1,4 +1,3 @@
-#if UNI_TERMINAL_UNI_TASK_SUPPORT
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -7,10 +6,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using Xeon.Common.FlyweightScrollView;
 using Xeon.Common.FlyweightScrollView.Model;
-using Xeon.UniTerminal.UniTask;
 using Xeon.UniTerminal.Common;
+#if UNI_TERMINAL_UNI_TASK_SUPPORT
+using Xeon.UniTerminal.UniTask;
+#endif
 
-namespace Xeon.UniTerminal
+namespace Xeon.UniTerminal.Sample
 {
     using Cysharp.Threading.Tasks;
 
@@ -36,8 +37,13 @@ namespace Xeon.UniTerminal
         private Terminal terminal;
         private FlyweightScrollViewController<OutputData, OutputItem> scrollViewController;
         private CircularBuffer<OutputData> buffer = new(BufferSize);
+#if UNI_TERMINAL_UNI_TASK_SUPPORT
+        private OutputWriterUniTask normalOutput;
+        private OutputWriterUniTask errorOutput;
+#else
         private OutputWriter normalOutput;
         private OutputWriter errorOutput;
+#endif
 
         /// <summary>
         /// 現在の履歴インデックス（-1は履歴を参照していない状態）
@@ -48,6 +54,11 @@ namespace Xeon.UniTerminal
         /// 履歴参照前の入力内容を保持
         /// </summary>
         private string currentInput = string.Empty;
+
+        /// <summary>
+        /// 最後に表示したディレクトリパス（更新検知用）
+        /// </summary>
+        private string lastDisplayedDirectory = string.Empty;
 
         /// <summary>
         /// y/n確認待ち状態かどうか
@@ -66,16 +77,25 @@ namespace Xeon.UniTerminal
             terminal = new Terminal(Application.persistentDataPath, Application.persistentDataPath, maxHistorySize: BufferSize);
             scrollViewController = new FlyweightScrollViewController<OutputData, OutputItem>(messagePrefab, buffer);
             scrollView.Setup(scrollViewController);
-
+#if UNI_TERMINAL_UNI_TASK_SUPPORT
+            normalOutput = new OutputWriterUniTask(buffer, false, () => maxCharsPerLine);
+            errorOutput = new OutputWriterUniTask(buffer, true, () => maxCharsPerLine);
+#else
             normalOutput = new OutputWriter(buffer, false, () => maxCharsPerLine);
             errorOutput = new OutputWriter(buffer, true, () => maxCharsPerLine);
+#endif
 
             input.onEndEdit.AddListener(OnInputCommand);
         }
 
         private void Update()
         {
-            currentDirectoryLabel.text = terminal.WorkingDirectory.Replace(terminal.HomeDirectory, "~/");
+            if (lastDisplayedDirectory != terminal.WorkingDirectory)
+            {
+                lastDisplayedDirectory = terminal.WorkingDirectory;
+                currentDirectoryLabel.text = terminal.WorkingDirectory.Replace(terminal.HomeDirectory, "~/");
+            }
+
             if (maxCharsPerLine < 0)
             {
                 var sample = scrollViewController.GetSample();
@@ -310,7 +330,11 @@ namespace Xeon.UniTerminal
                 buffer.PushFront(new OutputData($"> {command}", false));
                 ScrollToBottom();
                 input.DeactivateInputField();
+#if UNI_TERMINAL_UNI_TASK_SUPPORT
                 await terminal.ExecuteUniTaskAsync(command, normalOutput, errorOutput, ct: destroyCancellationToken);
+#else
+                await terminal.ExecuteAsync(command, normalOutput, errorOutput, ct: destroyCancellationToken);
+#endif
             }
             catch (OperationCanceledException)
             {
@@ -349,4 +373,3 @@ namespace Xeon.UniTerminal
         }
     }
 }
-#endif
