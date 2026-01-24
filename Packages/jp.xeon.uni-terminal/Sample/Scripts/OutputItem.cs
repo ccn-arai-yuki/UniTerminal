@@ -15,13 +15,23 @@ namespace Xeon.UniTerminal.Sample
 
         public TMP_Text Label => label;
 
+        private OutputData currentData;
+        private bool isDataBound;
+
         /// <summary>
         /// 出力データをUIにバインドする
         /// </summary>
         /// <param name="data">バインドするデータ</param>
         public void Bind(OutputData data)
         {
-            if (label == null) return;
+            if (label == null)
+                return;
+
+            if (isDataBound && currentData.Message == data.Message && currentData.IsError == data.IsError)
+                return;
+
+            currentData = data;
+            isDataBound = true;
 
             if (data.IsError)
             {

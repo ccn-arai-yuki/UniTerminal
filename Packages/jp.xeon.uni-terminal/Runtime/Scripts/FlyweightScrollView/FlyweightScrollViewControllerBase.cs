@@ -257,11 +257,13 @@ namespace Xeon.Common.FlyweightScrollView
         /// <summary>
         /// スクロール位置を末尾に固定します
         /// </summary>
-        public virtual void FixToLast()
+        /// <param name="setDirty">IsDirtyフラグを設定するかどうか</param>
+        public virtual void FixToLast(bool setDirty = true)
         {
             tailIndex = ItemCount;
             headIndex = Mathf.Max(0, tailIndex - itemList.Count);
-            IsDirty = true;
+            if (setDirty)
+                IsDirty = true;
         }
 
         /// <summary>
@@ -446,7 +448,7 @@ namespace Xeon.Common.FlyweightScrollView
             if (isAtLastSticky && isPositionLast)
             {
                 scrollView.normalizedPosition = Vector2.zero;
-                FixToLast();
+                FixToLast(setDirty: false);
                 return;
             }
             if (tailIndex >= ItemCount - 1)
