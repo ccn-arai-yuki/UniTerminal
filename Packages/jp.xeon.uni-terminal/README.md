@@ -454,7 +454,9 @@ logBuffer.Add("New log entry");
 
 ## ライセンス
 
-MIT License
+MIT OR Apache-2.0（デュアルライセンス）
+
+詳細は [LICENSE.md](LICENSE.md) を参照してください。
 
 ## 作者
 
