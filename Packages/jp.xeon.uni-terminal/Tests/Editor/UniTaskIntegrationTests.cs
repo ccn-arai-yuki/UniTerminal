@@ -20,7 +20,8 @@ namespace Xeon.UniTerminal.Tests
         [SetUp]
         public void SetUp()
         {
-            testDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "UniTerminalUniTaskTest");
+            // パスをスラッシュで正規化（Terminal内部でスラッシュに統一されるため）
+            testDir = PathUtility.NormalizeToSlash(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "UniTerminalUniTaskTest"));
             if (!System.IO.Directory.Exists(testDir))
             {
                 System.IO.Directory.CreateDirectory(testDir);

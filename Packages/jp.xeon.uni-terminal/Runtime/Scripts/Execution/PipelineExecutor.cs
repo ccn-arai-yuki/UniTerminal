@@ -68,123 +68,244 @@ namespace Xeon.UniTerminal.Execution
             CancellationToken ct = default)
         {
             if (pipeline.Commands == null || pipeline.Commands.Count == 0)
-            {
                 return ExecutionResult.Successful;
-            }
 
             var disposables = new List<IDisposable>();
 
             try
             {
-                IAsyncTextReader currentStdin = stdin ?? EmptyTextReader.Instance;
-                ExitCode exitCode = ExitCode.Success;
-
-                for (int i = 0; i < pipeline.Commands.Count; i++)
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    var boundCmd = pipeline.Commands[i];
-                    bool isLast = i == pipeline.Commands.Count - 1;
-
-                    // stdinリダイレクションを解決
-                    IAsyncTextReader cmdStdin = currentStdin;
-                    if (boundCmd.Redirections.StdinPath != null)
-                    {
-                        var stdinPath = PathUtility.ResolvePath(
-                            boundCmd.Redirections.StdinPath,
-                            workingDirectory,
-                            homeDirectory);
-
-                        if (!System.IO.File.Exists(stdinPath))
-                        {
-                            await stderr.WriteLineAsync($"File not found: {stdinPath}", ct);
-                            return new ExecutionResult(ExitCode.RuntimeError);
-                        }
-
-                        cmdStdin = new FileTextReader(stdinPath);
-                    }
-
-                    // stdoutリダイレクションまたはパイプを解決
-                    IAsyncTextWriter cmdStdout;
-                    ListTextWriter pipeBuffer = null;
-
-                    if (boundCmd.Redirections.StdoutMode != RedirectMode.None)
-                    {
-                        var stdoutPath = PathUtility.ResolvePath(
-                            boundCmd.Redirections.StdoutPath,
-                            workingDirectory,
-                            homeDirectory);
-
-                        var fileWriter = new FileTextWriter(
-                            stdoutPath,
-                            boundCmd.Redirections.StdoutMode == RedirectMode.Append);
-                        disposables.Add(fileWriter);
-                        cmdStdout = fileWriter;
-                    }
-                    else if (isLast)
-                    {
-                        cmdStdout = stdout;
-                    }
-                    else
-                    {
-                        // 次のコマンドへパイプ
-                        pipeBuffer = new ListTextWriter();
-                        cmdStdout = pipeBuffer;
-                    }
-
-                    // コンテキストを作成
-                    var context = new CommandContext(
-                        cmdStdin,
-                        cmdStdout,
-                        stderr,
-                        workingDirectory,
-                        homeDirectory,
-                        boundCmd.PositionalArguments,
-                        registry,
-                        previousWorkingDirectory,
-                        ChangeWorkingDirectory,
-                        commandHistory,
-                        clearHistoryCallback,
-                        deleteHistoryEntryCallback);
-
-                    // コマンドを実行
-                    try
-                    {
-                        exitCode = await boundCmd.Command.ExecuteAsync(context, ct);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        await stderr.WriteLineAsync($"Error executing {boundCmd.Command.CommandName}: {ex.Message}", ct);
-                        return new ExecutionResult(ExitCode.RuntimeError);
-                    }
-
-                    // コマンドが失敗した場合、パイプラインを停止
-                    if (exitCode != ExitCode.Success)
-                    {
-                        return new ExecutionResult(exitCode);
-                    }
-
-                    // 次のコマンド用のstdinを準備
-                    if (pipeBuffer != null)
-                    {
-                        pipeBuffer.Flush();
-                        currentStdin = new ListTextReader(pipeBuffer.Lines);
-                    }
-                }
-
-                return new ExecutionResult(exitCode);
+                return await ExecutePipelineAsync(pipeline, stdin, stdout, stderr, disposables, ct);
             }
             finally
             {
-                foreach (var disposable in disposables)
-                {
-                    disposable.Dispose();
-                }
+                DisposeAll(disposables);
             }
         }
+
+        private async Task<ExecutionResult> ExecutePipelineAsync(
+            BoundPipeline pipeline,
+            IAsyncTextReader stdin,
+            IAsyncTextWriter stdout,
+            IAsyncTextWriter stderr,
+            List<IDisposable> disposables,
+            CancellationToken ct)
+        {
+            IAsyncTextReader currentStdin = stdin ?? EmptyTextReader.Instance;
+            ExitCode exitCode = ExitCode.Success;
+
+            for (int i = 0; i < pipeline.Commands.Count; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var boundCmd = pipeline.Commands[i];
+                bool isLast = i == pipeline.Commands.Count - 1;
+
+                // stdinリダイレクションを解決
+                var stdinResult = ResolveStdin(boundCmd, currentStdin);
+                if (!stdinResult.Success)
+                {
+                    await stderr.WriteLineAsync(stdinResult.ErrorMessage, ct);
+                    return new ExecutionResult(ExitCode.RuntimeError);
+                }
+
+                // stdoutリダイレクションまたはパイプを解決
+                var stdoutResult = ResolveStdout(boundCmd, stdout, isLast, disposables);
+
+                // コマンドを実行
+                var execResult = await ExecuteCommandAsync(
+                    boundCmd, stdinResult.Reader, stdoutResult.Writer, stderr, ct);
+
+                if (!execResult.Success)
+                {
+                    if (execResult.ErrorMessage != null)
+                        await stderr.WriteLineAsync(execResult.ErrorMessage, ct);
+                    return new ExecutionResult(execResult.ExitCode);
+                }
+
+                exitCode = execResult.ExitCode;
+
+                // コマンドが失敗した場合、パイプラインを停止
+                if (exitCode != ExitCode.Success)
+                    return new ExecutionResult(exitCode);
+
+                // 次のコマンド用のstdinを準備
+                currentStdin = PrepareNextStdin(stdoutResult.PipeBuffer, currentStdin);
+            }
+
+            return new ExecutionResult(exitCode);
+        }
+
+        private StdinResolutionResult ResolveStdin(BoundCommand boundCmd, IAsyncTextReader currentStdin)
+        {
+            if (boundCmd.Redirections.StdinPath == null)
+                return StdinResolutionResult.FromReader(currentStdin);
+
+            var stdinPath = PathUtility.ResolvePath(
+                boundCmd.Redirections.StdinPath,
+                workingDirectory,
+                homeDirectory);
+
+            if (!System.IO.File.Exists(stdinPath))
+                return StdinResolutionResult.FromError($"File not found: {stdinPath}");
+
+            return StdinResolutionResult.FromReader(new FileTextReader(stdinPath));
+        }
+
+        private StdoutResolutionResult ResolveStdout(
+            BoundCommand boundCmd,
+            IAsyncTextWriter stdout,
+            bool isLast,
+            List<IDisposable> disposables)
+        {
+            if (boundCmd.Redirections.StdoutMode != RedirectMode.None)
+                return ResolveStdoutToFile(boundCmd, disposables);
+
+            if (isLast)
+                return StdoutResolutionResult.FromWriter(stdout);
+
+            // 次のコマンドへパイプ
+            var pipeBuffer = new ListTextWriter();
+            return StdoutResolutionResult.FromPipe(pipeBuffer);
+        }
+
+        private StdoutResolutionResult ResolveStdoutToFile(BoundCommand boundCmd, List<IDisposable> disposables)
+        {
+            var stdoutPath = PathUtility.ResolvePath(
+                boundCmd.Redirections.StdoutPath,
+                workingDirectory,
+                homeDirectory);
+
+            var fileWriter = new FileTextWriter(
+                stdoutPath,
+                boundCmd.Redirections.StdoutMode == RedirectMode.Append);
+            disposables.Add(fileWriter);
+
+            return StdoutResolutionResult.FromWriter(fileWriter);
+        }
+
+        private async Task<CommandExecutionResult> ExecuteCommandAsync(
+            BoundCommand boundCmd,
+            IAsyncTextReader cmdStdin,
+            IAsyncTextWriter cmdStdout,
+            IAsyncTextWriter stderr,
+            CancellationToken ct)
+        {
+            var context = CreateCommandContext(boundCmd, cmdStdin, cmdStdout, stderr);
+
+            try
+            {
+                var exitCode = await boundCmd.Command.ExecuteAsync(context, ct);
+                return CommandExecutionResult.FromSuccess(exitCode);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return CommandExecutionResult.FromError(
+                    $"Error executing {boundCmd.Command.CommandName}: {ex.Message}");
+            }
+        }
+
+        private CommandContext CreateCommandContext(
+            BoundCommand boundCmd,
+            IAsyncTextReader cmdStdin,
+            IAsyncTextWriter cmdStdout,
+            IAsyncTextWriter stderr)
+        {
+            return new CommandContext(
+                cmdStdin,
+                cmdStdout,
+                stderr,
+                workingDirectory,
+                homeDirectory,
+                boundCmd.PositionalArguments,
+                registry,
+                previousWorkingDirectory,
+                ChangeWorkingDirectory,
+                commandHistory,
+                clearHistoryCallback,
+                deleteHistoryEntryCallback);
+        }
+
+        private static IAsyncTextReader PrepareNextStdin(ListTextWriter pipeBuffer, IAsyncTextReader currentStdin)
+        {
+            if (pipeBuffer == null)
+                return currentStdin;
+
+            pipeBuffer.Flush();
+            return new ListTextReader(pipeBuffer.Lines);
+        }
+
+        private static void DisposeAll(List<IDisposable> disposables)
+        {
+            foreach (var disposable in disposables)
+            {
+                disposable.Dispose();
+            }
+        }
+
+        #region Result Types
+
+        private readonly struct StdinResolutionResult
+        {
+            public bool Success { get; }
+            public IAsyncTextReader Reader { get; }
+            public string ErrorMessage { get; }
+
+            private StdinResolutionResult(bool success, IAsyncTextReader reader, string errorMessage)
+            {
+                Success = success;
+                Reader = reader;
+                ErrorMessage = errorMessage;
+            }
+
+            public static StdinResolutionResult FromReader(IAsyncTextReader reader)
+                => new StdinResolutionResult(true, reader, null);
+
+            public static StdinResolutionResult FromError(string message)
+                => new StdinResolutionResult(false, null, message);
+        }
+
+        private readonly struct StdoutResolutionResult
+        {
+            public IAsyncTextWriter Writer { get; }
+            public ListTextWriter PipeBuffer { get; }
+
+            private StdoutResolutionResult(IAsyncTextWriter writer, ListTextWriter pipeBuffer)
+            {
+                Writer = writer;
+                PipeBuffer = pipeBuffer;
+            }
+
+            public static StdoutResolutionResult FromWriter(IAsyncTextWriter writer)
+                => new StdoutResolutionResult(writer, null);
+
+            public static StdoutResolutionResult FromPipe(ListTextWriter pipeBuffer)
+                => new StdoutResolutionResult(pipeBuffer, pipeBuffer);
+        }
+
+        private readonly struct CommandExecutionResult
+        {
+            public bool Success { get; }
+            public ExitCode ExitCode { get; }
+            public string ErrorMessage { get; }
+
+            private CommandExecutionResult(bool success, ExitCode exitCode, string errorMessage)
+            {
+                Success = success;
+                ExitCode = exitCode;
+                ErrorMessage = errorMessage;
+            }
+
+            public static CommandExecutionResult FromSuccess(ExitCode exitCode)
+                => new CommandExecutionResult(true, exitCode, null);
+
+            public static CommandExecutionResult FromError(string message)
+                => new CommandExecutionResult(false, ExitCode.RuntimeError, message);
+        }
+
+        #endregion
     }
 }

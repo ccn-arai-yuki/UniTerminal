@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Xeon.Common.FlyweightScrollView
 {
@@ -27,6 +29,8 @@ namespace Xeon.Common.FlyweightScrollView
         /// アイテムのプレハブ
         /// </summary>
         private readonly TItem prefab;
+
+        private FlyweightScrollItem<TItem> sample;
 
         /// <summary>
         /// アイテムが生成されたときに発火するイベント
@@ -81,10 +85,18 @@ namespace Xeon.Common.FlyweightScrollView
             this.dataList.CollectionChanged += OnChangedItemCount;
         }
 
-
         // ====================================================================================================
         // Public Methods
         // ====================================================================================================
+
+        public override void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
+        {
+            base.Setup(scrollView, param, container, alignment);
+            var sampleObject = GameObject.Instantiate(prefab, container);
+            sample = new FlyweightScrollItem<TItem>(sampleObject, viewPort, horizontalAlignment);
+            sample.gameObject.SetActive(false);
+            layouter.SetItemSize(sample);
+        }
 
         /// <summary>
         /// 表示するデータリストを差し替えます
@@ -114,9 +126,16 @@ namespace Xeon.Common.FlyweightScrollView
                 dataList.CollectionChanged -= OnChangedItemCount;
                 dataList = null;
             }
+            if (sample != null)
+            {
+                GameObject.Destroy(sample.gameObject);
+                sample = null;
+            }
 
             base.Dispose();
         }
+
+        public TItem GetSample() => sample.Value;
 
         // ====================================================================================================
         // Protected Overrides (Base Class Implementation)

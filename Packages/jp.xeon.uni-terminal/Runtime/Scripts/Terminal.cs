@@ -41,10 +41,11 @@ namespace Xeon.UniTerminal
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                if (workingDirectory != value)
+                var normalizedValue = PathUtility.NormalizeToSlash(value);
+                if (workingDirectory != normalizedValue)
                 {
                     previousWorkingDirectory = workingDirectory;
-                    workingDirectory = value;
+                    workingDirectory = normalizedValue;
                 }
             }
         }
@@ -73,8 +74,8 @@ namespace Xeon.UniTerminal
         /// <param name="maxHistorySize">履歴の最大サイズ（デフォルトは1000）。</param>
         public Terminal(string homeDirectory = null, string workingDirectory = null, bool registerBuiltInCommands = true, int maxHistorySize = 1000)
         {
-            this.homeDirectory = homeDirectory ?? Application.persistentDataPath;
-            this.workingDirectory = workingDirectory ?? this.homeDirectory;
+            this.homeDirectory = PathUtility.NormalizeToSlash(homeDirectory ?? Application.persistentDataPath);
+            this.workingDirectory = PathUtility.NormalizeToSlash(workingDirectory ?? this.homeDirectory);
             this.maxHistorySize = maxHistorySize;
             commandHistory = new List<string>();
             registry = new CommandRegistry();
@@ -111,6 +112,17 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<TransformCommand>();
             registry.RegisterCommand<ComponentCommand>();
             registry.RegisterCommand<PropertyCommand>();
+            registry.RegisterCommand<SceneCommand>();
+
+            // アセット管理コマンド
+            registry.RegisterCommand<AssetCommand>();
+            registry.RegisterCommand<ResourcesCommand>();
+#if UNITY_ADDRESSABLES
+            registry.RegisterCommand<AddressableCommand>();
+#endif
+#if UNITY_EDITOR
+            registry.RegisterCommand<AssetDbCommand>();
+#endif
         }
 
         /// <summary>

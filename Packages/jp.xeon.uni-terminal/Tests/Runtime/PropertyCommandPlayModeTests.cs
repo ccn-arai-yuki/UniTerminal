@@ -15,6 +15,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
         private StringBuilderTextWriter stdout;
         private StringBuilderTextWriter stderr;
         private List<GameObject> createdObjects;
+        private List<Object> createdAssets;
 
         [SetUp]
         public void SetUp()
@@ -23,6 +24,7 @@ namespace Xeon.UniTerminal.Tests.Runtime
             stdout = new StringBuilderTextWriter();
             stderr = new StringBuilderTextWriter();
             createdObjects = new List<GameObject>();
+            createdAssets = new List<Object>();
         }
 
         [TearDown]
@@ -31,11 +33,16 @@ namespace Xeon.UniTerminal.Tests.Runtime
             foreach (var go in createdObjects)
             {
                 if (go != null)
-                {
                     Object.Destroy(go);
-                }
             }
             createdObjects.Clear();
+
+            foreach (var asset in createdAssets)
+            {
+                if (asset != null)
+                    Object.Destroy(asset);
+            }
+            createdAssets.Clear();
         }
 
         private GameObject CreateTestObject(string name, Transform parent = null)
@@ -256,6 +263,131 @@ namespace Xeon.UniTerminal.Tests.Runtime
 
             Assert.AreEqual(ExitCode.UsageError, task.Result);
             Assert.IsTrue(stderr.ToString().Contains("missing subcommand"));
+        }
+
+        // --- アセット参照テスト ---
+
+        [UnityTest]
+        public IEnumerator Property_Set_Material_ByInstanceId()
+        {
+            var target = CreateTestObject("PlayMode_PropMatId");
+            var renderer = target.AddComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Standard"));
+            material.name = "PlayMode_TestMaterial";
+            createdAssets.Add(material);
+
+            yield return null;
+
+            var specifier = $"#{material.GetInstanceID()}";
+            var task = terminal.ExecuteAsync($"property set /PlayMode_PropMatId MeshRenderer material {specifier}", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            Assert.AreEqual(material, renderer.sharedMaterial);
+        }
+
+        [UnityTest]
+        public IEnumerator Property_Set_Material_ByRegisteredName()
+        {
+            var target = CreateTestObject("PlayMode_PropMatName");
+            var renderer = target.AddComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Standard"));
+            material.name = "PlayMode_RegisteredMaterial";
+            createdAssets.Add(material);
+
+            Assets.AssetManager.Instance.Registry.Register(material, "test/path", "TestProvider");
+
+            yield return null;
+
+            var task = terminal.ExecuteAsync("property set /PlayMode_PropMatName MeshRenderer material PlayMode_RegisteredMaterial", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            Assert.AreEqual(material, renderer.sharedMaterial);
+
+            Assets.AssetManager.Instance.Registry.Clear();
+        }
+
+        [UnityTest]
+        public IEnumerator Property_Set_Material_Null()
+        {
+            var target = CreateTestObject("PlayMode_PropMatNull");
+            var renderer = target.AddComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Standard"));
+            renderer.sharedMaterial = material;
+            createdAssets.Add(material);
+
+            Assert.IsNotNull(renderer.sharedMaterial);
+
+            yield return null;
+
+            var task = terminal.ExecuteAsync("property set /PlayMode_PropMatNull MeshRenderer material null", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            Assert.IsNull(renderer.sharedMaterial);
+        }
+
+        [UnityTest]
+        public IEnumerator Property_Set_Component_ByInstanceId()
+        {
+            var target = CreateTestObject("PlayMode_PropCompId");
+            var joint = target.AddComponent<HingeJoint>();
+
+            var otherBody = CreateTestObject("PlayMode_PropCompOther");
+            var rb = otherBody.AddComponent<Rigidbody>();
+
+            yield return null;
+
+            var specifier = $"#{rb.GetInstanceID()}";
+            var task = terminal.ExecuteAsync($"property set /PlayMode_PropCompId HingeJoint connectedBody {specifier}", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            Assert.AreEqual(rb, joint.connectedBody);
+        }
+
+        [UnityTest]
+        public IEnumerator Property_Set_GameObject_ByInstanceId()
+        {
+            var target = CreateTestObject("PlayMode_PropGoId");
+            var constraint = target.AddComponent<UnityEngine.Animations.ParentConstraint>();
+
+            var sourceObj = CreateTestObject("PlayMode_PropGoSource");
+
+            yield return null;
+
+            // ParentConstraintのsourceにGameObjectを追加する代わりに、
+            // LookAtConstraintのworldUpObjectを使用
+            var lookAt = target.AddComponent<UnityEngine.Animations.LookAtConstraint>();
+
+            var specifier = $"#{sourceObj.transform.GetInstanceID()}";
+            var task = terminal.ExecuteAsync($"property set /PlayMode_PropGoId LookAtConstraint worldUpObject {specifier}", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            Assert.AreEqual(sourceObj.transform, lookAt.worldUpObject);
+        }
+
+        [UnityTest]
+        public IEnumerator Property_Get_Material_ShowsName()
+        {
+            var target = CreateTestObject("PlayMode_PropGetMat");
+            var renderer = target.AddComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Standard"));
+            material.name = "PlayMode_NamedMaterial";
+            renderer.sharedMaterial = material;
+            createdAssets.Add(material);
+
+            yield return null;
+
+            stdout = new StringBuilderTextWriter();
+            var task = terminal.ExecuteAsync("property get /PlayMode_PropGetMat MeshRenderer material", stdout, stderr);
+            while (!task.IsCompleted) yield return null;
+
+            Assert.AreEqual(ExitCode.Success, task.Result);
+            var output = stdout.ToString();
+            Assert.IsTrue(output.Contains("PlayMode_NamedMaterial") || output.Contains("material"));
         }
     }
 }

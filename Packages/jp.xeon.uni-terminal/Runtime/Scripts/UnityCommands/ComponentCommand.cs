@@ -15,6 +15,8 @@ namespace Xeon.UniTerminal.UnityCommands
     [Command("component", "Manage GameObject components (list, add, remove, info, enable, disable)")]
     public class ComponentCommand : ICommand
     {
+        #region Options
+
         [Option("all", "a", Description = "Include all / remove all matching components")]
         public bool All;
 
@@ -27,18 +29,17 @@ namespace Xeon.UniTerminal.UnityCommands
         [Option("namespace", "n", Description = "Component namespace for type resolution")]
         public string Namespace;
 
+        #endregion
+
+        #region ICommand
+
         public string CommandName => "component";
         public string Description => "Manage GameObject components";
 
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             if (context.PositionalArguments.Count == 0)
-            {
-                await context.Stderr.WriteLineAsync("component: missing subcommand", ct);
-                await context.Stderr.WriteLineAsync("Usage: component <subcommand> <path> [arguments]", ct);
-                await context.Stderr.WriteLineAsync("Subcommands: list, add, remove, info, enable, disable", ct);
-                return ExitCode.UsageError;
-            }
+                return await ShowUsageAsync(context, ct);
 
             var subCommand = context.PositionalArguments[0].ToLower();
             var args = context.PositionalArguments.Skip(1).ToList();
@@ -55,9 +56,27 @@ namespace Xeon.UniTerminal.UnityCommands
             };
         }
 
-        /// <summary>
-        /// コンポーネント一覧を表示します。
-        /// </summary>
+        public IEnumerable<string> GetCompletions(CompletionContext context)
+        {
+            var token = context.CurrentToken ?? "";
+            var tokens = context.InputLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (context.TokenIndex == 1)
+                return GetSubCommandCompletions(token);
+
+            if (context.TokenIndex == 2 && !token.StartsWith("-"))
+                return GameObjectPath.GetCompletions(token);
+
+            if (context.TokenIndex == 3 && tokens.Length >= 3)
+                return GetComponentCompletions(tokens, token, context.InputLine);
+
+            return Enumerable.Empty<string>();
+        }
+
+        #endregion
+
+        #region Subcommands
+
         private async Task<ExitCode> ListAsync(CommandContext context, List<string> args, CancellationToken ct)
         {
             if (args.Count == 0)
@@ -79,39 +98,12 @@ namespace Xeon.UniTerminal.UnityCommands
             for (int i = 0; i < components.Length; i++)
             {
                 ct.ThrowIfCancellationRequested();
-                var comp = components[i];
-
-                if (comp == null)
-                {
-                    await context.Stdout.WriteLineAsync($"  [{i}] (Missing Script)", ct);
-                    continue;
-                }
-
-                var type = comp.GetType();
-                string enabledStr = "";
-
-                // Behaviourの場合はenabled状態を表示
-                if (comp is Behaviour behaviour)
-                {
-                    enabledStr = behaviour.enabled ? " (enabled)" : " (disabled)";
-                }
-
-                if (Verbose)
-                {
-                    await context.Stdout.WriteLineAsync($"  [{i}] {type.Name,-30}{enabledStr} {type.FullName}", ct);
-                }
-                else
-                {
-                    await context.Stdout.WriteLineAsync($"  [{i}] {type.Name}{enabledStr}", ct);
-                }
+                await WriteComponentListEntry(context, components[i], i, ct);
             }
 
             return ExitCode.Success;
         }
 
-        /// <summary>
-        /// コンポーネントを追加します。
-        /// </summary>
         private async Task<ExitCode> AddAsync(CommandContext context, List<string> args, CancellationToken ct)
         {
             if (args.Count < 2)
@@ -127,12 +119,10 @@ namespace Xeon.UniTerminal.UnityCommands
                 return ExitCode.RuntimeError;
             }
 
-            var typeName = args[1];
-            var type = TypeResolver.ResolveComponentType(typeName, Namespace);
-
+            var type = TypeResolver.ResolveComponentType(args[1], Namespace);
             if (type == null)
             {
-                await context.Stderr.WriteLineAsync($"component: '{typeName}': Component type not found", ct);
+                await context.Stderr.WriteLineAsync($"component: '{args[1]}': Component type not found", ct);
                 return ExitCode.RuntimeError;
             }
 
@@ -153,9 +143,6 @@ namespace Xeon.UniTerminal.UnityCommands
             }
         }
 
-        /// <summary>
-        /// コンポーネントを削除します。
-        /// </summary>
         private async Task<ExitCode> RemoveAsync(CommandContext context, List<string> args, CancellationToken ct)
         {
             if (args.Count < 2)
@@ -174,36 +161,103 @@ namespace Xeon.UniTerminal.UnityCommands
             var identifier = args[1];
             var components = go.GetComponents<Component>();
 
-            // インデックス指定かどうか
+            // インデックス指定
             if (int.TryParse(identifier, out int index))
-            {
-                if (index < 0 || index >= components.Length)
-                {
-                    await context.Stderr.WriteLineAsync($"component: Index {index} out of range (0-{components.Length - 1})", ct);
-                    return ExitCode.UsageError;
-                }
-
-                var comp = components[index];
-                if (comp == null)
-                {
-                    await context.Stderr.WriteLineAsync($"component: Component at index {index} is missing", ct);
-                    return ExitCode.RuntimeError;
-                }
-
-                if (comp is Transform)
-                {
-                    await context.Stderr.WriteLineAsync("component: Cannot remove Transform component", ct);
-                    return ExitCode.RuntimeError;
-                }
-
-                return await DestroyComponentAsync(context, go, comp, ct);
-            }
+                return await RemoveByIndexAsync(context, go, components, index, ct);
 
             // 型名指定
-            var type = TypeResolver.ResolveComponentType(identifier, Namespace);
+            return await RemoveByTypeAsync(context, go, identifier, ct);
+        }
+
+        private async Task<ExitCode> InfoAsync(CommandContext context, List<string> args, CancellationToken ct)
+        {
+            if (args.Count < 2)
+            {
+                await context.Stderr.WriteLineAsync("component info: usage: component info <path> <type|index>", ct);
+                return ExitCode.UsageError;
+            }
+
+            var go = GameObjectPath.Resolve(args[0]);
+            if (go == null)
+            {
+                await context.Stderr.WriteLineAsync($"component: '{args[0]}': GameObject not found", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            var target = ResolveComponent(go, args[1]);
+            if (target == null)
+            {
+                await context.Stderr.WriteLineAsync($"component: '{args[1]}' not found on {go.name}", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            await WriteComponentInfo(context, go, target, ct);
+            return ExitCode.Success;
+        }
+
+        private async Task<ExitCode> SetEnabledAsync(CommandContext context, List<string> args, bool enabled, CancellationToken ct)
+        {
+            var cmd = enabled ? "enable" : "disable";
+
+            if (args.Count < 2)
+            {
+                await context.Stderr.WriteLineAsync($"component {cmd}: usage: component {cmd} <path> <type|index>", ct);
+                return ExitCode.UsageError;
+            }
+
+            var go = GameObjectPath.Resolve(args[0]);
+            if (go == null)
+            {
+                await context.Stderr.WriteLineAsync($"component: '{args[0]}': GameObject not found", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            var target = ResolveComponent(go, args[1]);
+            if (target == null)
+            {
+                await context.Stderr.WriteLineAsync($"component: '{args[1]}' not found on {go.name}", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            return await TrySetComponentEnabled(context, target, enabled, ct);
+        }
+
+        #endregion
+
+        #region Remove Helpers
+
+        private async Task<ExitCode> RemoveByIndexAsync(
+            CommandContext context, GameObject go, Component[] components, int index, CancellationToken ct)
+        {
+            if (index < 0 || index >= components.Length)
+            {
+                await context.Stderr.WriteLineAsync($"component: Index {index} out of range (0-{components.Length - 1})", ct);
+                return ExitCode.UsageError;
+            }
+
+            var comp = components[index];
+            if (comp == null)
+            {
+                await context.Stderr.WriteLineAsync($"component: Component at index {index} is missing", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            if (comp is Transform)
+            {
+                await context.Stderr.WriteLineAsync("component: Cannot remove Transform component", ct);
+                return ExitCode.RuntimeError;
+            }
+
+            return await DestroyComponentAsync(context, go, comp, ct);
+        }
+
+        private async Task<ExitCode> RemoveByTypeAsync(
+            CommandContext context, GameObject go, string typeName, CancellationToken ct)
+        {
+            var type = TypeResolver.ResolveComponentType(typeName, Namespace);
             if (type == null)
             {
-                await context.Stderr.WriteLineAsync($"component: '{identifier}': Component type not found", ct);
+                await context.Stderr.WriteLineAsync($"component: '{typeName}': Component type not found", ct);
                 return ExitCode.RuntimeError;
             }
 
@@ -214,14 +268,12 @@ namespace Xeon.UniTerminal.UnityCommands
             }
 
             var toRemove = All
-                ? go.GetComponents(type).ToList()
-                : new List<Component> { go.GetComponent(type) };
-
-            toRemove = toRemove.Where(c => c != null).ToList();
+                ? go.GetComponents(type).Where(c => c != null).ToList()
+                : new List<Component> { go.GetComponent(type) }.Where(c => c != null).ToList();
 
             if (toRemove.Count == 0)
             {
-                await context.Stderr.WriteLineAsync($"component: '{identifier}' not found on {go.name}", ct);
+                await context.Stderr.WriteLineAsync($"component: '{typeName}' not found on {go.name}", ct);
                 return ExitCode.RuntimeError;
             }
 
@@ -233,9 +285,6 @@ namespace Xeon.UniTerminal.UnityCommands
             return ExitCode.Success;
         }
 
-        /// <summary>
-        /// コンポーネントを削除します。
-        /// </summary>
         private async Task<ExitCode> DestroyComponentAsync(CommandContext context, GameObject go, Component comp, CancellationToken ct)
         {
             var typeName = comp.GetType().Name;
@@ -256,69 +305,107 @@ namespace Xeon.UniTerminal.UnityCommands
             return ExitCode.Success;
         }
 
-        /// <summary>
-        /// コンポーネントの詳細情報を表示します。
-        /// </summary>
-        private async Task<ExitCode> InfoAsync(CommandContext context, List<string> args, CancellationToken ct)
+        #endregion
+
+        #region Enable/Disable Helpers
+
+        private async Task<ExitCode> TrySetComponentEnabled(CommandContext context, Component target, bool enabled, CancellationToken ct)
         {
-            if (args.Count < 2)
+            var stateStr = enabled ? "enabled" : "disabled";
+
+#if UNITY_EDITOR
+            var undoName = enabled ? "Enable Component" : "Disable Component";
+#endif
+
+            switch (target)
             {
-                await context.Stderr.WriteLineAsync("component info: usage: component info <path> <type|index>", ct);
-                return ExitCode.UsageError;
+                case Behaviour behaviour:
+#if UNITY_EDITOR
+                    UnityEditor.Undo.RecordObject(behaviour, undoName);
+#endif
+                    behaviour.enabled = enabled;
+                    await context.Stdout.WriteLineAsync($"{target.GetType().Name}: {stateStr}", ct);
+                    return ExitCode.Success;
+
+                case Collider collider:
+#if UNITY_EDITOR
+                    UnityEditor.Undo.RecordObject(collider, undoName);
+#endif
+                    collider.enabled = enabled;
+                    await context.Stdout.WriteLineAsync($"{target.GetType().Name}: {stateStr}", ct);
+                    return ExitCode.Success;
+
+                case Renderer renderer:
+#if UNITY_EDITOR
+                    UnityEditor.Undo.RecordObject(renderer, undoName);
+#endif
+                    renderer.enabled = enabled;
+                    await context.Stdout.WriteLineAsync($"{target.GetType().Name}: {stateStr}", ct);
+                    return ExitCode.Success;
+
+                default:
+                    await context.Stderr.WriteLineAsync($"component: '{target.GetType().Name}' does not support enable/disable", ct);
+                    return ExitCode.RuntimeError;
             }
+        }
 
-            var go = GameObjectPath.Resolve(args[0]);
-            if (go == null)
-            {
-                await context.Stderr.WriteLineAsync($"component: '{args[0]}': GameObject not found", ct);
-                return ExitCode.RuntimeError;
-            }
+        #endregion
 
-            var identifier = args[1];
-            Component target;
+        #region Component Resolution
 
+        private Component ResolveComponent(GameObject go, string identifier)
+        {
             // インデックス指定
             if (int.TryParse(identifier, out int index))
             {
                 var components = go.GetComponents<Component>();
-                if (index < 0 || index >= components.Length)
-                {
-                    await context.Stderr.WriteLineAsync($"component: Index {index} out of range (0-{components.Length - 1})", ct);
-                    return ExitCode.UsageError;
-                }
-                target = components[index];
+                if (index >= 0 && index < components.Length)
+                    return components[index];
+                return null;
             }
+
+            // 型名指定
+            var type = TypeResolver.ResolveComponentType(identifier, Namespace);
+            if (type == null)
+                return null;
+
+            return go.GetComponent(type);
+        }
+
+        #endregion
+
+        #region Output Helpers
+
+        private async Task WriteComponentListEntry(CommandContext context, Component comp, int index, CancellationToken ct)
+        {
+            if (comp == null)
+            {
+                await context.Stdout.WriteLineAsync($"  [{index}] (Missing Script)", ct);
+                return;
+            }
+
+            var type = comp.GetType();
+            var enabledStr = comp is Behaviour behaviour
+                ? (behaviour.enabled ? " (enabled)" : " (disabled)")
+                : "";
+
+            if (Verbose)
+                await context.Stdout.WriteLineAsync($"  [{index}] {type.Name,-30}{enabledStr} {type.FullName}", ct);
             else
-            {
-                // 型名指定
-                var type = TypeResolver.ResolveComponentType(identifier, Namespace);
-                if (type == null)
-                {
-                    await context.Stderr.WriteLineAsync($"component: '{identifier}': Component type not found", ct);
-                    return ExitCode.RuntimeError;
-                }
-                target = go.GetComponent(type);
-            }
+                await context.Stdout.WriteLineAsync($"  [{index}] {type.Name}{enabledStr}", ct);
+        }
 
-            if (target == null)
-            {
-                await context.Stderr.WriteLineAsync($"component: '{identifier}' not found on {go.name}", ct);
-                return ExitCode.RuntimeError;
-            }
-
+        private async Task WriteComponentInfo(CommandContext context, GameObject go, Component target, CancellationToken ct)
+        {
             var targetType = target.GetType();
 
             await context.Stdout.WriteLineAsync($"Component: {targetType.Name}", ct);
             await context.Stdout.WriteLineAsync($"  Type: {targetType.FullName}", ct);
             await context.Stdout.WriteLineAsync($"  GameObject: {GameObjectPath.GetPath(go)}", ct);
 
-            // Behaviourの場合はenabled状態を表示
             if (target is Behaviour behaviour)
-            {
                 await context.Stdout.WriteLineAsync($"  Enabled: {behaviour.enabled}", ct);
-            }
 
-            // プロパティを表示
             await context.Stdout.WriteLineAsync("  Properties:", ct);
 
             var properties = targetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -329,113 +416,32 @@ namespace Xeon.UniTerminal.UnityCommands
             foreach (var prop in properties)
             {
                 ct.ThrowIfCancellationRequested();
-                try
-                {
-                    var value = prop.GetValue(target);
-                    var valueStr = FormatValue(value);
-                    await context.Stdout.WriteLineAsync($"    {prop.Name}: {valueStr} ({prop.PropertyType.Name})", ct);
-                }
-                catch
-                {
-                    // プロパティ取得エラーは無視
-                }
+                await WritePropertyValue(context, target, prop, ct);
             }
-
-            return ExitCode.Success;
         }
 
-        /// <summary>
-        /// コンポーネントの有効/無効を切り替えます。
-        /// </summary>
-        private async Task<ExitCode> SetEnabledAsync(CommandContext context, List<string> args, bool enabled, CancellationToken ct)
+        private async Task WritePropertyValue(CommandContext context, Component target, PropertyInfo prop, CancellationToken ct)
         {
-            if (args.Count < 2)
+            try
             {
-                var cmd = enabled ? "enable" : "disable";
-                await context.Stderr.WriteLineAsync($"component {cmd}: usage: component {cmd} <path> <type|index>", ct);
-                return ExitCode.UsageError;
+                var value = prop.GetValue(target);
+                var valueStr = FormatValue(value);
+                await context.Stdout.WriteLineAsync($"    {prop.Name}: {valueStr} ({prop.PropertyType.Name})", ct);
             }
-
-            var go = GameObjectPath.Resolve(args[0]);
-            if (go == null)
+            catch
             {
-                await context.Stderr.WriteLineAsync($"component: '{args[0]}': GameObject not found", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            var identifier = args[1];
-            Component target;
-
-            // インデックス指定
-            if (int.TryParse(identifier, out int index))
-            {
-                var components = go.GetComponents<Component>();
-                if (index < 0 || index >= components.Length)
-                {
-                    await context.Stderr.WriteLineAsync($"component: Index {index} out of range (0-{components.Length - 1})", ct);
-                    return ExitCode.UsageError;
-                }
-                target = components[index];
-            }
-            else
-            {
-                // 型名指定
-                var type = TypeResolver.ResolveComponentType(identifier, Namespace);
-                if (type == null)
-                {
-                    await context.Stderr.WriteLineAsync($"component: '{identifier}': Component type not found", ct);
-                    return ExitCode.RuntimeError;
-                }
-                target = go.GetComponent(type);
-            }
-
-            if (target == null)
-            {
-                await context.Stderr.WriteLineAsync($"component: '{identifier}' not found on {go.name}", ct);
-                return ExitCode.RuntimeError;
-            }
-
-            // Behaviour, Collider, Renderer はそれぞれ enabled プロパティを持つ
-            if (target is Behaviour behaviour)
-            {
-#if UNITY_EDITOR
-                UnityEditor.Undo.RecordObject(behaviour, enabled ? "Enable Component" : "Disable Component");
-#endif
-                behaviour.enabled = enabled;
-                var state = enabled ? "enabled" : "disabled";
-                await context.Stdout.WriteLineAsync($"{target.GetType().Name}: {state}", ct);
-                return ExitCode.Success;
-            }
-            else if (target is Collider collider)
-            {
-#if UNITY_EDITOR
-                UnityEditor.Undo.RecordObject(collider, enabled ? "Enable Component" : "Disable Component");
-#endif
-                collider.enabled = enabled;
-                var state = enabled ? "enabled" : "disabled";
-                await context.Stdout.WriteLineAsync($"{target.GetType().Name}: {state}", ct);
-                return ExitCode.Success;
-            }
-            else if (target is Renderer renderer)
-            {
-#if UNITY_EDITOR
-                UnityEditor.Undo.RecordObject(renderer, enabled ? "Enable Component" : "Disable Component");
-#endif
-                renderer.enabled = enabled;
-                var state = enabled ? "enabled" : "disabled";
-                await context.Stdout.WriteLineAsync($"{target.GetType().Name}: {state}", ct);
-                return ExitCode.Success;
-            }
-            else
-            {
-                await context.Stderr.WriteLineAsync($"component: '{target.GetType().Name}' does not support enable/disable", ct);
-                return ExitCode.RuntimeError;
+                // プロパティ取得エラーは無視
             }
         }
 
-        /// <summary>
-        /// 不明なサブコマンドのエラーを表示します。
-        /// </summary>
+        private async Task<ExitCode> ShowUsageAsync(CommandContext context, CancellationToken ct)
+        {
+            await context.Stderr.WriteLineAsync("component: missing subcommand", ct);
+            await context.Stderr.WriteLineAsync("Usage: component <subcommand> <path> [arguments]", ct);
+            await context.Stderr.WriteLineAsync("Subcommands: list, add, remove, info, enable, disable", ct);
+            return ExitCode.UsageError;
+        }
+
         private async Task<ExitCode> UnknownSubCommandAsync(CommandContext context, string subCommand, CancellationToken ct)
         {
             await context.Stderr.WriteLineAsync($"component: unknown subcommand '{subCommand}'", ct);
@@ -443,108 +449,65 @@ namespace Xeon.UniTerminal.UnityCommands
             return ExitCode.UsageError;
         }
 
-        /// <summary>
-        /// 値を表示用にフォーマットします。
-        /// </summary>
+        #endregion
+
+        #region Value Formatting
+
         private string FormatValue(object value)
         {
-            if (value == null)
-                return "null";
-
-            if (value is string s)
-                return $"\"{s}\"";
-
-            if (value is Vector3 v3)
-                return $"({v3.x:F2}, {v3.y:F2}, {v3.z:F2})";
-
-            if (value is Vector2 v2)
-                return $"({v2.x:F2}, {v2.y:F2})";
-
-            if (value is Quaternion q)
-                return $"({q.eulerAngles.x:F1}, {q.eulerAngles.y:F1}, {q.eulerAngles.z:F1})";
-
-            if (value is Color c)
-                return $"RGBA({c.r:F2}, {c.g:F2}, {c.b:F2}, {c.a:F2})";
-
-            if (value is bool b)
-                return b.ToString().ToLower();
-
-            if (value is float f)
-                return f.ToString("F2");
-
-            if (value is double d)
-                return d.ToString("F2");
-
-            if (value is UnityEngine.Object obj)
-                return obj != null ? obj.name : "null";
-
-            return value.ToString();
+            return value switch
+            {
+                null => "null",
+                string s => $"\"{s}\"",
+                Vector3 v3 => $"({v3.x:F2}, {v3.y:F2}, {v3.z:F2})",
+                Vector2 v2 => $"({v2.x:F2}, {v2.y:F2})",
+                Quaternion q => $"({q.eulerAngles.x:F1}, {q.eulerAngles.y:F1}, {q.eulerAngles.z:F1})",
+                Color c => $"RGBA({c.r:F2}, {c.g:F2}, {c.b:F2}, {c.a:F2})",
+                bool b => b.ToString().ToLower(),
+                float f => f.ToString("F2"),
+                double d => d.ToString("F2"),
+                UnityEngine.Object obj => obj != null ? obj.name : "null",
+                _ => value.ToString()
+            };
         }
 
-        public IEnumerable<string> GetCompletions(CompletionContext context)
+        #endregion
+
+        #region Completion Helpers
+
+        private static IEnumerable<string> GetSubCommandCompletions(string token)
         {
-            var token = context.CurrentToken ?? "";
-            var tokens = context.InputLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-            // サブコマンド補完
-            if (context.TokenIndex == 1)
-            {
-                var subCommands = new[] { "list", "add", "remove", "info", "enable", "disable" };
-                foreach (var cmd in subCommands)
-                {
-                    if (cmd.StartsWith(token, StringComparison.OrdinalIgnoreCase))
-                        yield return cmd;
-                }
-                yield break;
-            }
-
-            // パス補完（サブコマンドの後の最初の引数）
-            if (context.TokenIndex == 2 && !token.StartsWith("-"))
-            {
-                foreach (var path in GameObjectPath.GetCompletions(token))
-                {
-                    yield return path;
-                }
-                yield break;
-            }
-
-            // 型名補完（TokenIndex == 3）
-            if (context.TokenIndex == 3 && tokens.Length >= 3)
-            {
-                var inputLower = context.InputLine?.ToLower() ?? "";
-
-                // addサブコマンドの場合は追加可能なコンポーネント
-                if (inputLower.Contains(" add "))
-                {
-                    foreach (var typeName in TypeResolver.GetCommonComponentNames())
-                    {
-                        if (typeName.StartsWith(token, StringComparison.OrdinalIgnoreCase))
-                            yield return typeName;
-                    }
-                    yield break;
-                }
-
-                // remove/info/enable/disableサブコマンドの場合は既存のコンポーネント
-                if (inputLower.Contains(" remove ") || inputLower.Contains(" info ") ||
-                    inputLower.Contains(" enable ") || inputLower.Contains(" disable "))
-                {
-                    var go = GameObjectPath.Resolve(tokens[2]);
-                    if (go != null)
-                    {
-                        var components = go.GetComponents<Component>();
-                        var seenTypes = new HashSet<string>();
-                        foreach (var comp in components)
-                        {
-                            if (comp == null) continue;
-                            var typeName = comp.GetType().Name;
-                            if (seenTypes.Add(typeName) && typeName.StartsWith(token, StringComparison.OrdinalIgnoreCase))
-                            {
-                                yield return typeName;
-                            }
-                        }
-                    }
-                }
-            }
+            var subCommands = new[] { "list", "add", "remove", "info", "enable", "disable" };
+            return subCommands.Where(cmd => cmd.StartsWith(token, StringComparison.OrdinalIgnoreCase));
         }
+
+        private IEnumerable<string> GetComponentCompletions(string[] tokens, string token, string inputLine)
+        {
+            var inputLower = inputLine?.ToLower() ?? "";
+
+            // addサブコマンドの場合は追加可能なコンポーネント
+            if (inputLower.Contains(" add "))
+                return TypeResolver.GetCommonComponentNames()
+                    .Where(t => t.StartsWith(token, StringComparison.OrdinalIgnoreCase));
+
+            // remove/info/enable/disableサブコマンドの場合は既存のコンポーネント
+            if (inputLower.Contains(" remove ") || inputLower.Contains(" info ") ||
+                inputLower.Contains(" enable ") || inputLower.Contains(" disable "))
+            {
+                var go = GameObjectPath.Resolve(tokens[2]);
+                if (go == null)
+                    return Enumerable.Empty<string>();
+
+                return go.GetComponents<Component>()
+                    .Where(c => c != null)
+                    .Select(c => c.GetType().Name)
+                    .Distinct()
+                    .Where(t => t.StartsWith(token, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return Enumerable.Empty<string>();
+        }
+
+        #endregion
     }
 }

@@ -31,7 +31,7 @@ namespace Xeon.UniTerminal.UniTask
         /// <inheritdoc/>
         public async IAsyncEnumerable<string> ReadLinesAsync([EnumeratorCancellation] CancellationToken ct = default)
         {
-            await foreach (var line in inner.ReadLinesAsync(ct).WithCancellation(ct))
+            await foreach (var line in inner.ReadLinesAsync(ct))
             {
                 yield return line;
             }

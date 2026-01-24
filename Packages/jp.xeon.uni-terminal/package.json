@@ -31,5 +31,8 @@
       "description": "Basic terminal usage and custom command examples",
       "path": "Samples~/BasicUsage"
     }
-  ]
+  ],
+  "dependencies": {
+    "com.unity.ugui": "2.0.0"
+  }
 }

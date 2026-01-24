@@ -12,6 +12,8 @@ namespace Xeon.UniTerminal.UnityCommands
     [Command("transform", "Manipulate GameObject Transform")]
     public class TransformCommand : ICommand
     {
+        #region Options
+
         [Option("position", "p", Description = "Set world position (x,y,z)")]
         public string Position;
 
@@ -32,6 +34,10 @@ namespace Xeon.UniTerminal.UnityCommands
 
         [Option("world", "w", Description = "Maintain world position when changing parent")]
         public bool WorldPositionStays = true;
+
+        #endregion
+
+        #region ICommand
 
         public string CommandName => "transform";
         public string Description => "Manipulate GameObject Transform";
@@ -59,123 +65,154 @@ namespace Xeon.UniTerminal.UnityCommands
 
             await context.Stdout.WriteLineAsync($"Transform: {go.name}", ct);
 
+            // 各オプションを順次適用
+            var result = await ApplyPositionOptions(context, transform, ct);
+            if (result.exitCode != ExitCode.Success) return result.exitCode;
+            modified |= result.modified;
+
+            result = await ApplyRotationOptions(context, transform, ct);
+            if (result.exitCode != ExitCode.Success) return result.exitCode;
+            modified |= result.modified;
+
+            result = await ApplyScaleOption(context, transform, ct);
+            if (result.exitCode != ExitCode.Success) return result.exitCode;
+            modified |= result.modified;
+
+            result = await ApplyParentOption(context, transform, ct);
+            if (result.exitCode != ExitCode.Success) return result.exitCode;
+            modified |= result.modified;
+
+            // 変更なしの場合は情報を表示
+            if (!modified)
+                await DisplayTransformInfoAsync(context, go, ct);
+
+            return ExitCode.Success;
+        }
+
+        public IEnumerable<string> GetCompletions(CompletionContext context)
+        {
+            var token = context.CurrentToken ?? "";
+
+            if (!token.StartsWith("-"))
+                return GameObjectPath.GetCompletions(token);
+
+            return Array.Empty<string>();
+        }
+
+        #endregion
+
+        #region Apply Options
+
+        private async Task<(ExitCode exitCode, bool modified)> ApplyPositionOptions(
+            CommandContext context, Transform transform, CancellationToken ct)
+        {
+            bool modified = false;
+
             // ワールド位置設定
             if (!string.IsNullOrEmpty(Position))
             {
-                if (TryParseVector3(Position, out var pos))
-                {
-                    var oldPos = transform.position;
-                    transform.position = pos;
-                    await context.Stdout.WriteLineAsync($"  Position: {FormatVector3(oldPos)} -> {FormatVector3(transform.position)}", ct);
-                    modified = true;
-                }
-                else
+                if (!TryParseVector3(Position, out var pos))
                 {
                     await context.Stderr.WriteLineAsync($"transform: invalid position: '{Position}'", ct);
-                    return ExitCode.UsageError;
+                    return (ExitCode.UsageError, false);
                 }
+
+                var oldPos = transform.position;
+                transform.position = pos;
+                await context.Stdout.WriteLineAsync($"  Position: {FormatVector3(oldPos)} -> {FormatVector3(transform.position)}", ct);
+                modified = true;
             }
 
             // ローカル位置設定
             if (!string.IsNullOrEmpty(LocalPosition))
             {
-                if (TryParseVector3(LocalPosition, out var pos))
-                {
-                    var oldPos = transform.localPosition;
-                    transform.localPosition = pos;
-                    await context.Stdout.WriteLineAsync($"  Local Position: {FormatVector3(oldPos)} -> {FormatVector3(transform.localPosition)}", ct);
-                    modified = true;
-                }
-                else
+                if (!TryParseVector3(LocalPosition, out var pos))
                 {
                     await context.Stderr.WriteLineAsync($"transform: invalid local-position: '{LocalPosition}'", ct);
-                    return ExitCode.UsageError;
+                    return (ExitCode.UsageError, false);
                 }
+
+                var oldPos = transform.localPosition;
+                transform.localPosition = pos;
+                await context.Stdout.WriteLineAsync($"  Local Position: {FormatVector3(oldPos)} -> {FormatVector3(transform.localPosition)}", ct);
+                modified = true;
             }
+
+            return (ExitCode.Success, modified);
+        }
+
+        private async Task<(ExitCode exitCode, bool modified)> ApplyRotationOptions(
+            CommandContext context, Transform transform, CancellationToken ct)
+        {
+            bool modified = false;
 
             // ワールド回転設定
             if (!string.IsNullOrEmpty(Rotation))
             {
-                if (TryParseVector3(Rotation, out var rot))
-                {
-                    var oldRot = transform.eulerAngles;
-                    transform.eulerAngles = rot;
-                    await context.Stdout.WriteLineAsync($"  Rotation: {FormatVector3(oldRot)} -> {FormatVector3(transform.eulerAngles)}", ct);
-                    modified = true;
-                }
-                else
+                if (!TryParseVector3(Rotation, out var rot))
                 {
                     await context.Stderr.WriteLineAsync($"transform: invalid rotation: '{Rotation}'", ct);
-                    return ExitCode.UsageError;
+                    return (ExitCode.UsageError, false);
                 }
+
+                var oldRot = transform.eulerAngles;
+                transform.eulerAngles = rot;
+                await context.Stdout.WriteLineAsync($"  Rotation: {FormatVector3(oldRot)} -> {FormatVector3(transform.eulerAngles)}", ct);
+                modified = true;
             }
 
             // ローカル回転設定
             if (!string.IsNullOrEmpty(LocalRotation))
             {
-                if (TryParseVector3(LocalRotation, out var rot))
-                {
-                    var oldRot = transform.localEulerAngles;
-                    transform.localEulerAngles = rot;
-                    await context.Stdout.WriteLineAsync($"  Local Rotation: {FormatVector3(oldRot)} -> {FormatVector3(transform.localEulerAngles)}", ct);
-                    modified = true;
-                }
-                else
+                if (!TryParseVector3(LocalRotation, out var rot))
                 {
                     await context.Stderr.WriteLineAsync($"transform: invalid local-rotation: '{LocalRotation}'", ct);
-                    return ExitCode.UsageError;
+                    return (ExitCode.UsageError, false);
                 }
-            }
 
-            // スケール設定
-            if (!string.IsNullOrEmpty(Scale))
-            {
-                if (TryParseVector3(Scale, out var scale))
-                {
-                    var oldScale = transform.localScale;
-                    transform.localScale = scale;
-                    await context.Stdout.WriteLineAsync($"  Scale: {FormatVector3(oldScale)} -> {FormatVector3(transform.localScale)}", ct);
-                    modified = true;
-                }
-                else
-                {
-                    await context.Stderr.WriteLineAsync($"transform: invalid scale: '{Scale}'", ct);
-                    return ExitCode.UsageError;
-                }
-            }
-
-            // 親の変更
-            if (!string.IsNullOrEmpty(Parent))
-            {
-                var result = await SetParentAsync(transform, context, ct);
-                if (result != ExitCode.Success)
-                    return result;
+                var oldRot = transform.localEulerAngles;
+                transform.localEulerAngles = rot;
+                await context.Stdout.WriteLineAsync($"  Local Rotation: {FormatVector3(oldRot)} -> {FormatVector3(transform.localEulerAngles)}", ct);
                 modified = true;
             }
 
-            // 変更なしの場合は情報を表示
-            if (!modified)
-            {
-                await DisplayTransformInfoAsync(context, go, ct);
-            }
-
-            return ExitCode.Success;
+            return (ExitCode.Success, modified);
         }
 
-        /// <summary>
-        /// 親を設定します。
-        /// </summary>
-        private async Task<ExitCode> SetParentAsync(Transform transform, CommandContext context, CancellationToken ct)
+        private async Task<(ExitCode exitCode, bool modified)> ApplyScaleOption(
+            CommandContext context, Transform transform, CancellationToken ct)
         {
-            Transform newParent = null;
-            string oldParentPath = transform.parent != null ? GameObjectPath.GetPath(transform.parent.gameObject) : "(none)";
+            if (string.IsNullOrEmpty(Scale))
+                return (ExitCode.Success, false);
+
+            if (!TryParseVector3(Scale, out var scale))
+            {
+                await context.Stderr.WriteLineAsync($"transform: invalid scale: '{Scale}'", ct);
+                return (ExitCode.UsageError, false);
+            }
+
+            var oldScale = transform.localScale;
+            transform.localScale = scale;
+            await context.Stdout.WriteLineAsync($"  Scale: {FormatVector3(oldScale)} -> {FormatVector3(transform.localScale)}", ct);
+            return (ExitCode.Success, true);
+        }
+
+        private async Task<(ExitCode exitCode, bool modified)> ApplyParentOption(
+            CommandContext context, Transform transform, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(Parent))
+                return (ExitCode.Success, false);
+
+            string oldParentPath = transform.parent != null
+                ? GameObjectPath.GetPath(transform.parent.gameObject)
+                : "(none)";
 
             // 親を解除
             if (Parent == "/" || Parent.ToLower() == "null" || Parent.ToLower() == "none")
             {
                 transform.SetParent(null, WorldPositionStays);
                 await context.Stdout.WriteLineAsync($"  Parent: {oldParentPath} -> (none)", ct);
-                return ExitCode.Success;
+                return (ExitCode.Success, true);
             }
 
             // 親を解決
@@ -183,28 +220,26 @@ namespace Xeon.UniTerminal.UnityCommands
             if (parentGo == null)
             {
                 await context.Stderr.WriteLineAsync($"transform: '{Parent}': Parent not found", ct);
-                return ExitCode.RuntimeError;
+                return (ExitCode.RuntimeError, false);
             }
 
             // 循環参照チェック
             if (parentGo.transform == transform || parentGo.transform.IsChildOf(transform))
             {
                 await context.Stderr.WriteLineAsync("transform: cannot set parent to self or descendant", ct);
-                return ExitCode.RuntimeError;
+                return (ExitCode.RuntimeError, false);
             }
 
-            newParent = parentGo.transform;
-            transform.SetParent(newParent, WorldPositionStays);
-
-            string newParentPath = GameObjectPath.GetPath(newParent.gameObject);
+            transform.SetParent(parentGo.transform, WorldPositionStays);
+            string newParentPath = GameObjectPath.GetPath(parentGo);
             await context.Stdout.WriteLineAsync($"  Parent: {oldParentPath} -> {newParentPath}", ct);
-
-            return ExitCode.Success;
+            return (ExitCode.Success, true);
         }
 
-        /// <summary>
-        /// Transform情報を表示します。
-        /// </summary>
+        #endregion
+
+        #region Display
+
         private async Task DisplayTransformInfoAsync(CommandContext context, GameObject go, CancellationToken ct)
         {
             var t = go.transform;
@@ -221,9 +256,10 @@ namespace Xeon.UniTerminal.UnityCommands
             await context.Stdout.WriteLineAsync($"  Sibling Index:   {t.GetSiblingIndex()}", ct);
         }
 
-        /// <summary>
-        /// Vector3文字列をパースします。
-        /// </summary>
+        #endregion
+
+        #region Utility
+
         private bool TryParseVector3(string input, out Vector3 result)
         {
             result = Vector3.zero;
@@ -234,21 +270,13 @@ namespace Xeon.UniTerminal.UnityCommands
 
             try
             {
-                switch (parts.Length)
+                return parts.Length switch
                 {
-                    case 1:
-                        float single = float.Parse(parts[0]);
-                        result = new Vector3(single, single, single);
-                        return true;
-                    case 2:
-                        result = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), 0);
-                        return true;
-                    case 3:
-                        result = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
-                        return true;
-                    default:
-                        return false;
-                }
+                    1 => ParseSingle(parts[0], out result),
+                    2 => ParseTwo(parts, out result),
+                    3 => ParseThree(parts, out result),
+                    _ => false
+                };
             }
             catch
             {
@@ -256,26 +284,27 @@ namespace Xeon.UniTerminal.UnityCommands
             }
         }
 
-        /// <summary>
-        /// Vector3を文字列にフォーマットします。
-        /// </summary>
-        private string FormatVector3(Vector3 v)
+        private static bool ParseSingle(string value, out Vector3 result)
         {
-            return $"({v.x:F2}, {v.y:F2}, {v.z:F2})";
+            var single = float.Parse(value);
+            result = new Vector3(single, single, single);
+            return true;
         }
 
-        public IEnumerable<string> GetCompletions(CompletionContext context)
+        private static bool ParseTwo(string[] parts, out Vector3 result)
         {
-            var token = context.CurrentToken ?? "";
-
-            // パス補完
-            if (!token.StartsWith("-"))
-            {
-                foreach (var path in GameObjectPath.GetCompletions(token))
-                {
-                    yield return path;
-                }
-            }
+            result = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), 0);
+            return true;
         }
+
+        private static bool ParseThree(string[] parts, out Vector3 result)
+        {
+            result = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+            return true;
+        }
+
+        private static string FormatVector3(Vector3 v) => $"({v.x:F2}, {v.y:F2}, {v.z:F2})";
+
+        #endregion
     }
 }

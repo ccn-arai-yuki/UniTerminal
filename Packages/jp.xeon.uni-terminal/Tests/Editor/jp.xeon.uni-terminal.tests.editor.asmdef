@@ -3,9 +3,12 @@
     "rootNamespace": "Xeon.UniTerminal.Tests",
     "references": [
         "jp.xeon.uni-terminal.runtime",
+        "Unity.Addressables",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "UniTask"
+        "UniTask",
+        "UniTask.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [
         "Editor"

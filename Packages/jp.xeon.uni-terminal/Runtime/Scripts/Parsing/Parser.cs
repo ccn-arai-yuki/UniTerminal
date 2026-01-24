@@ -29,13 +29,13 @@ namespace Xeon.UniTerminal.Parsing
             var result = new ParsedInput();
 
             if (tokens == null || tokens.Count == 0)
-            {
                 return result;
-            }
 
             result.Pipeline = ParsePipeline(tokens);
             return result;
         }
+
+        #region Pipeline Parsing
 
         private ParsedPipeline ParsePipeline(List<Token> tokens)
         {
@@ -49,233 +49,223 @@ namespace Xeon.UniTerminal.Parsing
 
                 if (token.Kind == TokenKind.Pipe)
                 {
-                    // 出力リダイレクトの後にパイプがある場合はエラー
-                    if (lastWasRedirectOut)
-                    {
-                        throw new ParseException("Cannot use pipe after stdout redirection (>)");
-                    }
-
-                    // 現在のコマンドを終了
-                    if (commandTokens.Count == 0)
-                    {
-                        throw new ParseException("Empty command before pipe");
-                    }
-
-                    var command = ParseCommand(commandTokens);
-
-                    // このコマンドに標準出力リダイレクトがあるかチェック
-                    if (command.Redirections.StdoutMode != RedirectMode.None)
-                    {
-                        throw new ParseException("Cannot use pipe after stdout redirection (>)");
-                    }
-
-                    pipeline.Commands.Add(command);
+                    ProcessPipeToken(pipeline, commandTokens, lastWasRedirectOut);
                     commandTokens.Clear();
                     lastWasRedirectOut = false;
                 }
                 else
                 {
-                    if (token.Kind == TokenKind.RedirectOut || token.Kind == TokenKind.RedirectAppend)
-                    {
-                        lastWasRedirectOut = true;
-                    }
-                    else if (token.Kind == TokenKind.Word || token.Kind == TokenKind.EndOfOptions)
-                    {
-                        lastWasRedirectOut = false;
-                    }
-
+                    lastWasRedirectOut = UpdateRedirectOutState(token, lastWasRedirectOut);
                     commandTokens.Add(token);
                 }
             }
 
-            // 残りのトークンを処理
-            if (commandTokens.Count == 0)
-            {
-                throw new ParseException("Empty command after pipe");
-            }
-
-            pipeline.Commands.Add(ParseCommand(commandTokens));
-
+            FinalizeLastCommand(pipeline, commandTokens);
             return pipeline;
         }
 
+        private void ProcessPipeToken(ParsedPipeline pipeline, List<Token> commandTokens, bool lastWasRedirectOut)
+        {
+            if (lastWasRedirectOut)
+                throw new ParseException("Cannot use pipe after stdout redirection (>)");
+
+            if (commandTokens.Count == 0)
+                throw new ParseException("Empty command before pipe");
+
+            var command = ParseCommand(commandTokens);
+
+            if (command.Redirections.StdoutMode != RedirectMode.None)
+                throw new ParseException("Cannot use pipe after stdout redirection (>)");
+
+            pipeline.Commands.Add(command);
+        }
+
+        private static bool UpdateRedirectOutState(Token token, bool lastWasRedirectOut)
+        {
+            if (token.Kind == TokenKind.RedirectOut || token.Kind == TokenKind.RedirectAppend)
+                return true;
+
+            if (token.Kind == TokenKind.Word || token.Kind == TokenKind.EndOfOptions)
+                return false;
+
+            return lastWasRedirectOut;
+        }
+
+        private void FinalizeLastCommand(ParsedPipeline pipeline, List<Token> commandTokens)
+        {
+            if (commandTokens.Count == 0)
+                throw new ParseException("Empty command after pipe");
+
+            pipeline.Commands.Add(ParseCommand(commandTokens));
+        }
+
+        #endregion
+
+        #region Command Parsing
+
         private ParsedCommand ParseCommand(List<Token> tokens)
         {
-            var command = new ParsedCommand();
-            bool afterEndOfOptions = false;
-            int i = 0;
-
-            // リダイレクション用のローカル変数
-            string stdinPath = null;
-            string stdoutPath = null;
-            var stdoutMode = RedirectMode.None;
-
-            // 最初のトークンはコマンド名であるべき
             if (tokens.Count == 0)
-            {
                 throw new ParseException("Empty command");
+
+            var context = new CommandParseContext();
+
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                ProcessToken(tokens, ref i, context);
             }
 
-            while (i < tokens.Count)
-            {
-                var token = tokens[i];
-
-                // リダイレクションの処理
-                if (token.Kind == TokenKind.RedirectIn)
-                {
-                    i++;
-                    if (i >= tokens.Count || tokens[i].Kind != TokenKind.Word)
-                    {
-                        throw new ParseException("Expected file path after <");
-                    }
-                    stdinPath = tokens[i].Value;
-                    i++;
-                    continue;
-                }
-
-                if (token.Kind == TokenKind.RedirectOut)
-                {
-                    i++;
-                    if (i >= tokens.Count || tokens[i].Kind != TokenKind.Word)
-                    {
-                        throw new ParseException("Expected file path after >");
-                    }
-                    stdoutPath = tokens[i].Value;
-                    stdoutMode = RedirectMode.Overwrite;
-                    i++;
-                    continue;
-                }
-
-                if (token.Kind == TokenKind.RedirectAppend)
-                {
-                    i++;
-                    if (i >= tokens.Count || tokens[i].Kind != TokenKind.Word)
-                    {
-                        throw new ParseException("Expected file path after >>");
-                    }
-                    stdoutPath = tokens[i].Value;
-                    stdoutMode = RedirectMode.Append;
-                    i++;
-                    continue;
-                }
-
-                // オプション終端の処理
-                if (token.Kind == TokenKind.EndOfOptions)
-                {
-                    afterEndOfOptions = true;
-                    i++;
-                    continue;
-                }
-
-                // ワードトークンの処理
-                if (token.Kind == TokenKind.Word)
-                {
-                    // 最初のワードはコマンド名
-                    if (command.CommandName == null)
-                    {
-                        command.CommandName = token.Value;
-                        i++;
-                        continue;
-                    }
-
-                    // --の後はすべて位置引数
-                    if (afterEndOfOptions)
-                    {
-                        command.PositionalArguments.Add(token.Value);
-                        i++;
-                        continue;
-                    }
-
-                    // オプションかどうかをチェック
-                    if (token.Value.StartsWith("--"))
-                    {
-                        var opt = ParseLongOption(token.Value, token.WasQuoted);
-
-                        // スペース区切りの値をチェック (--name value)
-                        if (!opt.HasValue && i + 1 < tokens.Count)
-                        {
-                            var nextToken = tokens[i + 1];
-                            // 次のトークンがワードでオプションのように見えない場合、値として使用
-                            if (nextToken.Kind == TokenKind.Word &&
-                                !nextToken.Value.StartsWith("-"))
-                            {
-                                opt = new ParsedOptionOccurrence(
-                                    opt.Name, true, nextToken.Value, true, nextToken.WasQuoted, isValueSpaceSeparated: true);
-                                i++; // Skip the value token
-                            }
-                        }
-
-                        command.Options.Add(opt);
-                        i++;
-                        continue;
-                    }
-
-                    if (token.Value.StartsWith("-") && token.Value.Length > 1 && !IsNumber(token.Value))
-                    {
-                        // ショートオプション
-                        var opts = ParseShortOptions(token.Value, tokens, ref i);
-
-                        // 値のない単一のショートオプションの場合、スペース区切りの値をチェック
-                        if (opts.Count == 1 && !opts[0].HasValue && i < tokens.Count)
-                        {
-                            var nextToken = tokens[i];
-                            if (nextToken.Kind == TokenKind.Word &&
-                                !nextToken.Value.StartsWith("-"))
-                            {
-                                opts[0] = new ParsedOptionOccurrence(
-                                    opts[0].Name, false, nextToken.Value, true, nextToken.WasQuoted, isValueSpaceSeparated: true);
-                                i++; // 値トークンをスキップ
-                            }
-                        }
-
-                        command.Options.AddRange(opts);
-                        continue;
-                    }
-
-                    // 通常の位置引数
-                    command.PositionalArguments.Add(token.Value);
-                    i++;
-                    continue;
-                }
-
-                i++;
-            }
-
-            if (command.CommandName == null)
-            {
+            if (context.Command.CommandName == null)
                 throw new ParseException("Command name is missing");
-            }
 
-            // リダイレクションを設定
-            command.Redirections = new ParsedRedirections(stdinPath, stdoutPath, stdoutMode);
+            context.Command.Redirections = new ParsedRedirections(
+                context.StdinPath, context.StdoutPath, context.StdoutMode);
 
-            return command;
+            return context.Command;
         }
 
-        private bool IsNumber(string value)
+        private void ProcessToken(List<Token> tokens, ref int i, CommandParseContext context)
         {
-            if (string.IsNullOrEmpty(value)) return false;
-            int start = 0;
-            if (value[0] == '-' || value[0] == '+')
+            var token = tokens[i];
+
+            if (TryProcessRedirection(tokens, ref i, token, context))
+                return;
+
+            if (token.Kind == TokenKind.EndOfOptions)
             {
-                if (value.Length == 1) return false;
-                start = 1;
+                context.AfterEndOfOptions = true;
+                return;
             }
-            for (int i = start; i < value.Length; i++)
+
+            if (token.Kind == TokenKind.Word)
+                ProcessWordToken(tokens, ref i, token, context);
+        }
+
+        private bool TryProcessRedirection(List<Token> tokens, ref int i, Token token, CommandParseContext context)
+        {
+            switch (token.Kind)
             {
-                char c = value[i];
-                if (!char.IsDigit(c) && c != '.')
+                case TokenKind.RedirectIn:
+                    context.StdinPath = ParseRedirectionPath(tokens, ref i, "<");
+                    return true;
+
+                case TokenKind.RedirectOut:
+                    context.StdoutPath = ParseRedirectionPath(tokens, ref i, ">");
+                    context.StdoutMode = RedirectMode.Overwrite;
+                    return true;
+
+                case TokenKind.RedirectAppend:
+                    context.StdoutPath = ParseRedirectionPath(tokens, ref i, ">>");
+                    context.StdoutMode = RedirectMode.Append;
+                    return true;
+
+                default:
                     return false;
             }
-            return true;
         }
+
+        private static string ParseRedirectionPath(List<Token> tokens, ref int i, string symbol)
+        {
+            i++;
+            if (i >= tokens.Count || tokens[i].Kind != TokenKind.Word)
+                throw new ParseException($"Expected file path after {symbol}");
+
+            return tokens[i].Value;
+        }
+
+        private void ProcessWordToken(List<Token> tokens, ref int i, Token token, CommandParseContext context)
+        {
+            // 最初のワードはコマンド名
+            if (context.Command.CommandName == null)
+            {
+                context.Command.CommandName = token.Value;
+                return;
+            }
+
+            // --の後はすべて位置引数
+            if (context.AfterEndOfOptions)
+            {
+                context.Command.PositionalArguments.Add(token.Value);
+                return;
+            }
+
+            // オプションまたは位置引数の処理
+            if (TryProcessOption(tokens, ref i, token, context))
+                return;
+
+            // 通常の位置引数
+            context.Command.PositionalArguments.Add(token.Value);
+        }
+
+        private bool TryProcessOption(List<Token> tokens, ref int i, Token token, CommandParseContext context)
+        {
+            if (token.Value.StartsWith("--"))
+            {
+                ProcessLongOption(tokens, ref i, token, context);
+                return true;
+            }
+
+            if (token.Value.StartsWith("-") && token.Value.Length > 1 && !IsNumber(token.Value))
+            {
+                ProcessShortOption(tokens, ref i, token, context);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void ProcessLongOption(List<Token> tokens, ref int i, Token token, CommandParseContext context)
+        {
+            var opt = ParseLongOption(token.Value, token.WasQuoted);
+
+            // スペース区切りの値をチェック (--name value)
+            if (!opt.HasValue && i + 1 < tokens.Count)
+            {
+                var nextToken = tokens[i + 1];
+                if (IsOptionValue(nextToken))
+                {
+                    opt = new ParsedOptionOccurrence(
+                        opt.Name, true, nextToken.Value, true, nextToken.WasQuoted, isValueSpaceSeparated: true);
+                    i++;
+                }
+            }
+
+            context.Command.Options.Add(opt);
+        }
+
+        private void ProcessShortOption(List<Token> tokens, ref int i, Token token, CommandParseContext context)
+        {
+            var opts = ParseShortOptions(token.Value);
+
+            // 値のない単一のショートオプションの場合、スペース区切りの値をチェック
+            if (opts.Count == 1 && !opts[0].HasValue && i + 1 < tokens.Count)
+            {
+                var nextToken = tokens[i + 1];
+                if (IsOptionValue(nextToken))
+                {
+                    opts[0] = new ParsedOptionOccurrence(
+                        opts[0].Name, false, nextToken.Value, true, nextToken.WasQuoted, isValueSpaceSeparated: true);
+                    i++;
+                }
+            }
+
+            context.Command.Options.AddRange(opts);
+        }
+
+        private static bool IsOptionValue(Token token)
+        {
+            return token.Kind == TokenKind.Word && !token.Value.StartsWith("-");
+        }
+
+        #endregion
+
+        #region Option Parsing
 
         private ParsedOptionOccurrence ParseLongOption(string value, bool wasQuoted)
         {
-            // --name または --name=value
             var withoutDashes = value.Substring(2);
-
             int eqIndex = withoutDashes.IndexOf('=');
+
             if (eqIndex >= 0)
             {
                 var name = withoutDashes.Substring(0, eqIndex);
@@ -286,51 +276,88 @@ namespace Xeon.UniTerminal.Parsing
             return new ParsedOptionOccurrence(withoutDashes, true);
         }
 
-        private List<ParsedOptionOccurrence> ParseShortOptions(string value, List<Token> tokens, ref int index)
+        private List<ParsedOptionOccurrence> ParseShortOptions(string value)
+        {
+            var withoutDash = value.Substring(1);
+            int eqIndex = withoutDash.IndexOf('=');
+
+            if (eqIndex >= 0)
+                return ParseShortOptionsWithValue(withoutDash, eqIndex);
+
+            return ParseShortOptionsWithoutValue(withoutDash);
+        }
+
+        private List<ParsedOptionOccurrence> ParseShortOptionsWithValue(string withoutDash, int eqIndex)
+        {
+            if (eqIndex == 0)
+                throw new ParseException("Invalid option format: -=");
+
+            var results = new List<ParsedOptionOccurrence>();
+            var name = withoutDash.Substring(0, eqIndex);
+            var rawValue = withoutDash.Substring(eqIndex + 1);
+
+            // -abc=value - 最後のオプションのみが値を取得
+            for (int i = 0; i < name.Length - 1; i++)
+            {
+                results.Add(new ParsedOptionOccurrence(name[i].ToString(), false));
+            }
+            results.Add(new ParsedOptionOccurrence(name[name.Length - 1].ToString(), false, rawValue, true));
+
+            return results;
+        }
+
+        private static List<ParsedOptionOccurrence> ParseShortOptionsWithoutValue(string withoutDash)
         {
             var results = new List<ParsedOptionOccurrence>();
-            var withoutDash = value.Substring(1);
 
-            // オプション内の=をチェック
-            int eqIndex = withoutDash.IndexOf('=');
-            if (eqIndex >= 0)
-            {
-                // -x=value 形式
-                if (eqIndex == 0)
-                {
-                    throw new ParseException("Invalid option format: -=");
-                }
-
-                var name = withoutDash.Substring(0, eqIndex);
-                var rawValue = withoutDash.Substring(eqIndex + 1);
-
-                if (name.Length > 1)
-                {
-                    // -abc=value - 最後のオプションのみが値を取得
-                    for (int i = 0; i < name.Length - 1; i++)
-                    {
-                        results.Add(new ParsedOptionOccurrence(name[i].ToString(), false));
-                    }
-                    results.Add(new ParsedOptionOccurrence(name[name.Length - 1].ToString(), false, rawValue, true));
-                }
-                else
-                {
-                    results.Add(new ParsedOptionOccurrence(name, false, rawValue, true));
-                }
-                index++;
-                return results;
-            }
-
-            // =記号なし - 結合されたboolオプションまたはスペース区切りの値を持つ単一オプションの可能性
-            // ここでは型が不明なため、各文字を個別のオプションとして扱う
-            // バインディング層が値の割り当てを処理する
             foreach (char c in withoutDash)
             {
                 results.Add(new ParsedOptionOccurrence(c.ToString(), false));
             }
 
-            index++;
             return results;
         }
+
+        #endregion
+
+        #region Utility
+
+        private static bool IsNumber(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            int start = 0;
+            if (value[0] == '-' || value[0] == '+')
+            {
+                if (value.Length == 1)
+                    return false;
+                start = 1;
+            }
+
+            for (int i = start; i < value.Length; i++)
+            {
+                char c = value[i];
+                if (!char.IsDigit(c) && c != '.')
+                    return false;
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region Parse Context
+
+        private class CommandParseContext
+        {
+            public ParsedCommand Command { get; } = new ParsedCommand();
+            public bool AfterEndOfOptions { get; set; }
+            public string StdinPath { get; set; }
+            public string StdoutPath { get; set; }
+            public RedirectMode StdoutMode { get; set; } = RedirectMode.None;
+        }
+
+        #endregion
     }
 }

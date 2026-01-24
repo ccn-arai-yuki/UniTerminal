@@ -1,79 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Xeon.UniTerminal.Completion
 {
-    /// <summary>
-    /// 補完対象の種別。
-    /// </summary>
-    public enum CompletionTarget
-    {
-        CommandName,
-        OptionName,
-        Path,
-        Argument
-    }
-
-    /// <summary>
-    /// 補完候補。
-    /// </summary>
-    public class CompletionCandidate
-    {
-        /// <summary>
-        /// 挿入する補完テキスト。
-        /// </summary>
-        public string Text { get; }
-
-        /// <summary>
-        /// 表示テキスト（説明を含む場合あり）。
-        /// </summary>
-        public string DisplayText { get; }
-
-        /// <summary>
-        /// 補完の種別。
-        /// </summary>
-        public CompletionTarget Target { get; }
-
-        public CompletionCandidate(string text, string displayText = null, CompletionTarget target = CompletionTarget.Argument)
-        {
-            Text = text;
-            DisplayText = displayText ?? text;
-            Target = target;
-        }
-    }
-
-    /// <summary>
-    /// 補完結果。
-    /// </summary>
-    public class CompletionResult
-    {
-        /// <summary>
-        /// 補完候補。
-        /// </summary>
-        public IReadOnlyList<CompletionCandidate> Candidates { get; }
-
-        /// <summary>
-        /// 補完中のトークンの開始位置。
-        /// </summary>
-        public int TokenStart { get; }
-
-        /// <summary>
-        /// 補完中のトークンの長さ。
-        /// </summary>
-        public int TokenLength { get; }
-
-        public CompletionResult(List<CompletionCandidate> candidates, int tokenStart, int tokenLength)
-        {
-            Candidates = candidates;
-            TokenStart = tokenStart;
-            TokenLength = tokenLength;
-        }
-
-        public static CompletionResult Empty => new CompletionResult(new List<CompletionCandidate>(), 0, 0);
-    }
-
     /// <summary>
     /// タブ補完用エンジン。
     /// </summary>
@@ -219,16 +149,11 @@ namespace Xeon.UniTerminal.Completion
 
             foreach (var name in registry.GetCommandNames())
             {
-                if (name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (registry.TryGetCommand(name, out var meta))
-                    {
-                        candidates.Add(new CompletionCandidate(
-                            name,
-                            $"{name} - {meta.Description}",
-                            CompletionTarget.CommandName));
-                    }
-                }
+                if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (!registry.TryGetCommand(name, out var meta))
+                    continue;
+                candidates.Add(new CompletionCandidate(name, $"{name} - {meta.Description}", CompletionTarget.CommandName));
             }
 
             // アルファベット順にソート
@@ -259,17 +184,15 @@ namespace Xeon.UniTerminal.Completion
                 }
 
                 // ショートオプション
-                if (!string.IsNullOrEmpty(opt.ShortName))
-                {
-                    var shortOpt = $"-{opt.ShortName}";
-                    if (shortOpt.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    {
-                        candidates.Add(new CompletionCandidate(
-                            shortOpt,
-                            $"{shortOpt} (--{opt.LongName}) - {opt.Description}",
-                            CompletionTarget.OptionName));
-                    }
-                }
+                if (string.IsNullOrEmpty(opt.ShortName))
+                    continue;
+                var shortOpt = $"-{opt.ShortName}";
+                if (!shortOpt.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                candidates.Add(new CompletionCandidate(
+                    shortOpt,
+                    $"{shortOpt} (--{opt.LongName}) - {opt.Description}",
+                    CompletionTarget.OptionName));
             }
 
             // アルファベット順にソート
@@ -298,7 +221,7 @@ namespace Xeon.UniTerminal.Completion
                     // ホームディレクトリ展開
                     var expandedPath = prefix.Length == 1
                         ? homeDirectory
-                        : Path.Combine(homeDirectory, prefix.Substring(2));
+                        : PathUtility.Combine(homeDirectory, prefix.Substring(2));
 
                     if (Directory.Exists(expandedPath))
                     {
@@ -307,7 +230,7 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(expandedPath) ?? homeDirectory;
+                        basePath = PathUtility.GetDirectoryName(expandedPath) ?? homeDirectory;
                         searchPattern = Path.GetFileName(expandedPath);
                     }
                 }
@@ -320,13 +243,13 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(prefix) ?? workingDirectory;
+                        basePath = PathUtility.GetDirectoryName(prefix) ?? workingDirectory;
                         searchPattern = Path.GetFileName(prefix);
                     }
                 }
                 else
                 {
-                    var fullPath = Path.Combine(workingDirectory, prefix);
+                    var fullPath = PathUtility.Combine(workingDirectory, prefix);
                     if (Directory.Exists(fullPath))
                     {
                         basePath = fullPath;
@@ -334,7 +257,7 @@ namespace Xeon.UniTerminal.Completion
                     }
                     else
                     {
-                        basePath = Path.GetDirectoryName(fullPath);
+                        basePath = PathUtility.GetDirectoryName(fullPath);
                         if (string.IsNullOrEmpty(basePath))
                             basePath = workingDirectory;
                         searchPattern = Path.GetFileName(prefix);
@@ -350,29 +273,27 @@ namespace Xeon.UniTerminal.Completion
                 foreach (var dir in Directory.GetDirectories(basePath))
                 {
                     var name = Path.GetFileName(dir);
-                    if (string.IsNullOrEmpty(searchPattern) ||
-                        name.StartsWith(searchPattern, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var completionPath = GetCompletionPath(prefix, basePath, name, true);
-                        candidates.Add(new CompletionCandidate(
-                            completionPath,
-                            $"{name}/",
-                            CompletionTarget.Path));
-                    }
+                    if (!string.IsNullOrEmpty(searchPattern) &&
+                        !name.StartsWith(searchPattern, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var completionPath = GetCompletionPath(prefix, basePath, name, true);
+                    candidates.Add(new CompletionCandidate(
+                        completionPath,
+                        $"{name}/",
+                        CompletionTarget.Path));
                 }
 
                 foreach (var file in Directory.GetFiles(basePath))
                 {
                     var name = Path.GetFileName(file);
-                    if (string.IsNullOrEmpty(searchPattern) ||
-                        name.StartsWith(searchPattern, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var completionPath = GetCompletionPath(prefix, basePath, name, false);
-                        candidates.Add(new CompletionCandidate(
-                            completionPath,
-                            name,
-                            CompletionTarget.Path));
-                    }
+                    if (!string.IsNullOrEmpty(searchPattern) &&
+                        !name.StartsWith(searchPattern, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var completionPath = GetCompletionPath(prefix, basePath, name, false);
+                    candidates.Add(new CompletionCandidate(
+                        completionPath,
+                        name,
+                        CompletionTarget.Path));
                 }
             }
             catch
@@ -393,8 +314,10 @@ namespace Xeon.UniTerminal.Completion
             }
             else if (prefix.StartsWith("~"))
             {
-                var relativeTohome = basePath.StartsWith(homeDirectory)
-                    ? basePath.Substring(homeDirectory.Length).TrimStart(Path.DirectorySeparatorChar)
+                var normalizedBasePath = PathUtility.NormalizeToSlash(basePath);
+                var normalizedHome = PathUtility.NormalizeToSlash(homeDirectory);
+                var relativeTohome = normalizedBasePath.StartsWith(normalizedHome)
+                    ? normalizedBasePath.Substring(normalizedHome.Length).TrimStart('/')
                     : "";
                 result = string.IsNullOrEmpty(relativeTohome)
                     ? $"~/{name}"
@@ -402,11 +325,11 @@ namespace Xeon.UniTerminal.Completion
             }
             else if (Path.IsPathRooted(prefix))
             {
-                result = Path.Combine(basePath, name);
+                result = PathUtility.Combine(basePath, name);
             }
             else
             {
-                var prefixDir = Path.GetDirectoryName(prefix);
+                var prefixDir = PathUtility.GetDirectoryName(prefix);
                 result = string.IsNullOrEmpty(prefixDir)
                     ? name
                     : $"{prefixDir}/{name}";
@@ -454,13 +377,6 @@ namespace Xeon.UniTerminal.Completion
             }
 
             return new CompletionResult(candidates, tokenStart, prefix.Length);
-        }
-
-        private class CompletionAnalysis
-        {
-            public CompletionTarget Target { get; set; }
-            public string CommandName { get; set; }
-            public int TokenIndex { get; set; }
         }
     }
 }

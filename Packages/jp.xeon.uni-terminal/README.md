@@ -351,6 +351,62 @@ public class MyUniTaskCommand : IUniTaskCommand
 }
 ```
 
+### 位置引数の扱い
+
+コマンドに渡されたオプション以外の引数は「位置引数」として `context.PositionalArguments` に格納されます。
+
+```csharp
+// 例: echo Hello World
+// → context.PositionalArguments = ["Hello", "World"]
+
+public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
+{
+    // 位置引数の数をチェック
+    if (context.PositionalArguments.Count == 0)
+    {
+        await context.Stderr.WriteLineAsync("引数が必要です", ct);
+        return ExitCode.UsageError;
+    }
+
+    // 最初の位置引数を取得
+    var firstArg = context.PositionalArguments[0];
+
+    // すべての位置引数を連結
+    var allArgs = string.Join(" ", context.PositionalArguments);
+
+    return ExitCode.Success;
+}
+```
+
+#### サブコマンドパターン
+
+サブコマンドを持つコマンドでは、最初の位置引数をサブコマンドとして使用し、残りを引数として処理できます。
+
+```csharp
+// 例: go create MyObject -p Cube
+// → PositionalArguments[0] = "create" (サブコマンド)
+// → PositionalArguments[1] = "MyObject" (引数)
+
+public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
+{
+    if (context.PositionalArguments.Count == 0)
+    {
+        await context.Stderr.WriteLineAsync("サブコマンドを指定してください", ct);
+        return ExitCode.UsageError;
+    }
+
+    var subCommand = context.PositionalArguments[0].ToLower();
+    var args = context.PositionalArguments.Skip(1).ToList();
+
+    return subCommand switch
+    {
+        "create" => await CreateAsync(context, args, ct),
+        "delete" => await DeleteAsync(context, args, ct),
+        _ => ExitCode.UsageError
+    };
+}
+```
+
 ### コマンドの登録
 
 ```csharp

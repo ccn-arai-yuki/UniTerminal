@@ -20,199 +20,265 @@ namespace Xeon.UniTerminal.Parsing
             if (string.IsNullOrEmpty(input))
                 return tokens;
 
-            int i = 0;
-            int length = input.Length;
+            var context = new TokenizeContext(input);
 
-            while (i < length)
+            while (context.HasMore)
             {
-                char c = input[i];
+                SkipSpaces(context);
 
-                // スペースをスキップ
-                if (c == ' ')
-                {
-                    i++;
-                    continue;
-                }
+                if (!context.HasMore)
+                    break;
 
-                // タブはエラー
-                if (c == '\t')
-                {
-                    throw new ParseException($"Tab character is not allowed in input at position {i}");
-                }
-
-                // 演算子のチェック
-                if (c == '|')
-                {
-                    tokens.Add(new Token(TokenKind.Pipe, "|", new SourceSpan(i, 1)));
-                    i++;
-                    continue;
-                }
-
-                if (c == '<')
-                {
-                    tokens.Add(new Token(TokenKind.RedirectIn, "<", new SourceSpan(i, 1)));
-                    i++;
-                    continue;
-                }
-
-                if (c == '>')
-                {
-                    // >>のチェック
-                    if (i + 1 < length && input[i + 1] == '>')
-                    {
-                        tokens.Add(new Token(TokenKind.RedirectAppend, ">>", new SourceSpan(i, 2)));
-                        i += 2;
-                    }
-                    else
-                    {
-                        tokens.Add(new Token(TokenKind.RedirectOut, ">", new SourceSpan(i, 1)));
-                        i++;
-                    }
-                    continue;
-                }
-
-                // ワードトークンをパース
-                var (token, newIndex) = ParseWord(input, i);
-                tokens.Add(token);
-                i = newIndex;
+                tokens.Add(ReadNextToken(context));
             }
 
             return tokens;
         }
 
-        private (Token token, int newIndex) ParseWord(string input, int start)
+        #region Token Reading
+
+        private static void SkipSpaces(TokenizeContext context)
+        {
+            while (context.HasMore && context.Current == ' ')
+            {
+                context.Advance();
+            }
+        }
+
+        private Token ReadNextToken(TokenizeContext context)
+        {
+            char c = context.Current;
+
+            if (c == '\t')
+                throw new ParseException($"Tab character is not allowed in input at position {context.Position}");
+
+            if (IsOperatorChar(c))
+                return ReadOperator(context);
+
+            return ReadWord(context);
+        }
+
+        private static bool IsOperatorChar(char c)
+        {
+            return c == '|' || c == '<' || c == '>';
+        }
+
+        private Token ReadOperator(TokenizeContext context)
+        {
+            char c = context.Current;
+
+            switch (c)
+            {
+                case '|':
+                    context.Advance();
+                    return CreateToken(TokenKind.Pipe, "|", context.Position - 1, 1);
+
+                case '<':
+                    context.Advance();
+                    return CreateToken(TokenKind.RedirectIn, "<", context.Position - 1, 1);
+
+                case '>':
+                    return ReadRedirectOut(context);
+
+                default:
+                    throw new ParseException($"Unexpected operator character: {c}");
+            }
+        }
+
+        private Token ReadRedirectOut(TokenizeContext context)
+        {
+            int start = context.Position;
+
+            if (context.HasNext && context.PeekNext() == '>')
+            {
+                context.Advance(2);
+                return CreateToken(TokenKind.RedirectAppend, ">>", start, 2);
+            }
+
+            context.Advance();
+            return CreateToken(TokenKind.RedirectOut, ">", start, 1);
+        }
+
+        private static Token CreateToken(TokenKind kind, string value, int start, int length)
+        {
+            return new Token(kind, value, new SourceSpan(start, length));
+        }
+
+        #endregion
+
+        #region Word Parsing
+
+        private Token ReadWord(TokenizeContext context)
         {
             var builder = new StringBuilder();
-            int i = start;
-            int length = input.Length;
+            int start = context.Position;
             bool wasQuoted = false;
 
-            while (i < length)
+            while (context.HasMore && !IsWordTerminator(context.Current))
             {
-                char c = input[i];
-
-                // スペースまたは演算子でワード終了
-                if (c == ' ' || c == '|' || c == '<' || c == '>')
-                {
-                    break;
-                }
-
-                // タブはエラー
-                if (c == '\t')
-                {
-                    throw new ParseException($"Tab character is not allowed in input at position {i}");
-                }
-
-                // クォート外のエスケープ処理
-                if (c == '\\')
-                {
-                    if (i + 1 >= length)
-                    {
-                        throw new ParseException($"Escape character at end of input at position {i}");
-                    }
-                    // 次の文字をエスケープ
-                    builder.Append(input[i + 1]);
-                    i += 2;
-                    continue;
-                }
-
-                // ダブルクォートの処理
-                if (c == '"')
-                {
-                    wasQuoted = true;
-                    i++;
-                    i = ParseDoubleQuoted(input, i, builder);
-                    continue;
-                }
-
-                // シングルクォートの処理
-                if (c == '\'')
-                {
-                    wasQuoted = true;
-                    i++;
-                    i = ParseSingleQuoted(input, i, builder);
-                    continue;
-                }
-
-                // 通常の文字
-                builder.Append(c);
-                i++;
+                ProcessWordCharacter(context, builder, ref wasQuoted);
             }
 
-            string value = builder.ToString();
-            var span = new SourceSpan(start, i - start);
+            return CreateWordToken(builder.ToString(), start, context.Position, wasQuoted);
+        }
 
-            // オプション終端マーカーかどうかをチェック
+        private void ProcessWordCharacter(TokenizeContext context, StringBuilder builder, ref bool wasQuoted)
+        {
+            char c = context.Current;
+
+            if (c == '\t')
+                throw new ParseException($"Tab character is not allowed in input at position {context.Position}");
+
+            if (c == '\\')
+            {
+                ProcessEscape(context, builder);
+                return;
+            }
+
+            if (c == '"')
+            {
+                wasQuoted = true;
+                context.Advance();
+                ReadDoubleQuotedContent(context, builder);
+                return;
+            }
+
+            if (c == '\'')
+            {
+                wasQuoted = true;
+                context.Advance();
+                ReadSingleQuotedContent(context, builder);
+                return;
+            }
+
+            builder.Append(c);
+            context.Advance();
+        }
+
+        private static bool IsWordTerminator(char c)
+        {
+            return c == ' ' || c == '|' || c == '<' || c == '>';
+        }
+
+        private static Token CreateWordToken(string value, int start, int end, bool wasQuoted)
+        {
+            var span = new SourceSpan(start, end - start);
+
             if (value == "--" && !wasQuoted)
-            {
-                return (new Token(TokenKind.EndOfOptions, "--", span), i);
-            }
+                return new Token(TokenKind.EndOfOptions, "--", span);
 
-            return (new Token(TokenKind.Word, value, span, wasQuoted), i);
+            return new Token(TokenKind.Word, value, span, wasQuoted);
         }
 
-        private int ParseDoubleQuoted(string input, int start, StringBuilder builder)
-        {
-            int i = start;
-            int length = input.Length;
+        #endregion
 
-            while (i < length)
+        #region Escape Processing
+
+        private static void ProcessEscape(TokenizeContext context, StringBuilder builder)
+        {
+            if (!context.HasNext)
+                throw new ParseException($"Escape character at end of input at position {context.Position}");
+
+            context.Advance();
+            builder.Append(context.Current);
+            context.Advance();
+        }
+
+        #endregion
+
+        #region Quote Processing
+
+        private void ReadDoubleQuotedContent(TokenizeContext context, StringBuilder builder)
+        {
+            int quoteStart = context.Position - 1;
+
+            while (context.HasMore)
             {
-                char c = input[i];
+                char c = context.Current;
 
                 if (c == '"')
                 {
-                    // ダブルクォート文字列の終了
-                    return i + 1;
+                    context.Advance();
+                    return;
                 }
 
                 if (c == '\\')
                 {
-                    // ダブルクォート内で有効なエスケープは\"と\\のみ
-                    if (i + 1 < length)
-                    {
-                        char next = input[i + 1];
-                        if (next == '"' || next == '\\')
-                        {
-                            builder.Append(next);
-                            i += 2;
-                            continue;
-                        }
-                    }
-                    // それ以外の場合、バックスラッシュはリテラル
-                    builder.Append(c);
-                    i++;
+                    ProcessDoubleQuoteEscape(context, builder);
                     continue;
                 }
 
                 builder.Append(c);
-                i++;
+                context.Advance();
             }
 
-            throw new ParseException($"Unclosed double quote starting at position {start - 1}");
+            throw new ParseException($"Unclosed double quote starting at position {quoteStart}");
         }
 
-        private int ParseSingleQuoted(string input, int start, StringBuilder builder)
+        private static void ProcessDoubleQuoteEscape(TokenizeContext context, StringBuilder builder)
         {
-            int i = start;
-            int length = input.Length;
-
-            while (i < length)
+            if (context.HasNext)
             {
-                char c = input[i];
+                char next = context.PeekNext();
+                if (next == '"' || next == '\\')
+                {
+                    context.Advance(2);
+                    builder.Append(next);
+                    return;
+                }
+            }
+
+            builder.Append(context.Current);
+            context.Advance();
+        }
+
+        private void ReadSingleQuotedContent(TokenizeContext context, StringBuilder builder)
+        {
+            int quoteStart = context.Position - 1;
+
+            while (context.HasMore)
+            {
+                char c = context.Current;
 
                 if (c == '\'')
                 {
-                    // シングルクォート文字列の終了
-                    return i + 1;
+                    context.Advance();
+                    return;
                 }
 
-                // シングルクォート内ではエスケープなし - すべてリテラル
                 builder.Append(c);
-                i++;
+                context.Advance();
             }
 
-            throw new ParseException($"Unclosed single quote starting at position {start - 1}");
+            throw new ParseException($"Unclosed single quote starting at position {quoteStart}");
         }
+
+        #endregion
+
+        #region Context
+
+        private class TokenizeContext
+        {
+            private readonly string input;
+            private readonly int length;
+
+            public int Position { get; private set; }
+            public bool HasMore => Position < length;
+            public bool HasNext => Position + 1 < length;
+            public char Current => input[Position];
+
+            public TokenizeContext(string input)
+            {
+                this.input = input;
+                this.length = input.Length;
+                Position = 0;
+            }
+
+            public char PeekNext() => input[Position + 1];
+
+            public void Advance(int count = 1) => Position += count;
+        }
+
+        #endregion
     }
 }

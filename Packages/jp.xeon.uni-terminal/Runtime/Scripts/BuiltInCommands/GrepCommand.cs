@@ -47,27 +47,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 return ExitCode.UsageError;
             }
 
-            int matchCount = 0;
-            bool hasMatch = false;
-
-            await foreach (var line in context.Stdin.ReadLinesAsync(ct))
-            {
-                bool isMatch = regex.IsMatch(line);
-
-                if (InvertMatch)
-                    isMatch = !isMatch;
-
-                if (isMatch)
-                {
-                    hasMatch = true;
-                    matchCount++;
-
-                    if (!CountOnly)
-                    {
-                        await context.Stdout.WriteLineAsync(line, ct);
-                    }
-                }
-            }
+            var (matchCount, hasMatch) = await ProcessLines(context, regex, ct);
 
             if (CountOnly)
             {
@@ -75,6 +55,30 @@ namespace Xeon.UniTerminal.BuiltInCommands
             }
 
             return hasMatch ? ExitCode.Success : ExitCode.RuntimeError;
+        }
+
+        private async Task<(int matchCount, bool hasMatch)> ProcessLines(CommandContext context, Regex regex, CancellationToken ct)
+        {
+            var matchCount = 0;
+            await foreach (var line in context.Stdin.ReadLinesAsync(ct))
+            {
+                bool isMatch = regex.IsMatch(line);
+
+                if (InvertMatch)
+                    isMatch = !isMatch;
+
+                if (!isMatch)
+                    continue;
+                
+                matchCount++;
+
+                if (!CountOnly)
+                {
+                    await context.Stdout.WriteLineAsync(line, ct);
+                }
+            }
+
+            return (matchCount, matchCount > 0);
         }
 
         public IEnumerable<string> GetCompletions(CompletionContext context)
