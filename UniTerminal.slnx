@@ -3,4 +3,5 @@
   <Project Path="jp.xeon.uni-terminal.tests.runtime.csproj" />
   <Project Path="jp.xeon.uni-terminal.tests.editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="xeon.jp.uni-terminal.sample.csproj" />
 </Solution>
