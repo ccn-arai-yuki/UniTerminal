@@ -327,7 +327,9 @@
       "version": "file:jp.xeon.uni-terminal",
       "depth": 0,
       "source": "embedded",
-      "dependencies": {}
+      "dependencies": {
+        "com.unity.ugui": "2.0.0"
+      }
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
