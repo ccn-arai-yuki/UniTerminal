@@ -1,0 +1,22 @@
+{
+    "name": "xeon.jp.uni-terminal.sample",
+    "rootNamespace": "",
+    "references": [
+        "jp.xeon.uni-terminal.runtime",
+        "UniTask",
+        "UniTask.Linq",
+        "Unity.Addressables",
+        "UniTask.Addressables",
+        "Unity.ResourceManager",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
