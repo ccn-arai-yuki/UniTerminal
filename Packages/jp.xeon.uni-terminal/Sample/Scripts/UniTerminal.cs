@@ -13,7 +13,11 @@ using Xeon.UniTerminal.UniTask;
 
 namespace Xeon.UniTerminal.Sample
 {
+#if UNI_TERMINAL_UNI_TASK_SUPPORT
     using Cysharp.Threading.Tasks;
+#else
+    using System.Threading.Tasks;
+#endif
 
     /// <summary>
     /// UniTerminalのUIコントローラー
@@ -33,6 +37,9 @@ namespace Xeon.UniTerminal.Sample
         [SerializeField] private FlyweightVerticalScrollView scrollView;
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private TMP_Text currentDirectoryLabel;
+
+        [SerializeField]
+        private ConfirmDialog confirmDialog;
 
         private Terminal terminal;
         private FlyweightScrollViewController<OutputData, OutputItem> scrollViewController;
@@ -60,16 +67,6 @@ namespace Xeon.UniTerminal.Sample
         /// </summary>
         private string lastDisplayedDirectory = string.Empty;
 
-        /// <summary>
-        /// y/n確認待ち状態かどうか
-        /// </summary>
-        private bool waitingForCompletionConfirmation;
-
-        /// <summary>
-        /// 確認待ち中の補完候補（表示テキストのリスト）
-        /// </summary>
-        private List<string> pendingCompletionCandidates;
-
         private int maxCharsPerLine = -1;
 
         private void Awake()
@@ -88,7 +85,7 @@ namespace Xeon.UniTerminal.Sample
             input.onEndEdit.AddListener(OnInputCommand);
         }
 
-        private void Update()
+        private async void Update()
         {
             if (lastDisplayedDirectory != terminal.WorkingDirectory)
             {
@@ -101,44 +98,20 @@ namespace Xeon.UniTerminal.Sample
                 var sample = scrollViewController.GetSample();
                 maxCharsPerLine = GetMaxCharsPerLine(sample);
             }
-            // y/n確認待ち状態の処理
-            if (waitingForCompletionConfirmation)
-            {
-                if (InputHandler.IsPressedY())
-                {
-                    waitingForCompletionConfirmation = false;
-                    DisplayCompletionCandidates(pendingCompletionCandidates);
-                    pendingCompletionCandidates = null;
-                    FocusInputFieldAsync().Forget();
-                }
-                else if (InputHandler.IsPressedN())
-                {
-                    waitingForCompletionConfirmation = false;
-                    pendingCompletionCandidates = null;
-                    FocusInputFieldAsync().Forget();
-                }
-                return;
-            }
 
             // 入力フィールドがアクティブでない場合は無視
             if (!input.isFocused || !input.interactable)
-            {
                 return;
-            }
 
             if (InputHandler.IsPressedTab())
-                ProcessCompletions();
+                await ProcessCompletions();
 
             // 上キーで履歴を遡る
             if (InputHandler.IsPressedUpArrow())
-            {
                 NavigateHistoryUp();
-            }
             // 下キーで履歴を進む
             else if (InputHandler.IsPressedDownArrow())
-            {
                 NavigateHistoryDown();
-            }
         }
 
         /// <summary>
@@ -194,7 +167,11 @@ namespace Xeon.UniTerminal.Sample
             }
         }
 
-        private void ProcessCompletions()
+#if UNI_TERMINAL_UNI_TASK_SUPPORT
+        private async UniTask ProcessCompletions()
+#else
+        private async Task ProcessCompletions()
+#endif
         {
             var completions = terminal.GetCompletions(input.text);
             var candidates = completions.Candidates;
@@ -208,11 +185,14 @@ namespace Xeon.UniTerminal.Sample
                 // 候補数がしきい値を超える場合はy/n確認を求める
                 if (candidates.Count >= CompletionConfirmThreshold)
                 {
-                    buffer.PushFront(new OutputData($"Display all {candidates.Count} possibilities? (y or n)", false));
-                    ScrollToBottom();
-                    pendingCompletionCandidates = displayTexts;
-                    waitingForCompletionConfirmation = true;
+                    input.interactable = false;
                     input.DeactivateInputField();
+                    var result = await confirmDialog.ShowAsync($"Display all {candidates.Count} possibilities? (y or n)", destroyCancellationToken);
+                    if (result)
+                        DisplayCompletionCandidates(displayTexts);
+                    ScrollToBottom();
+                    input.interactable = true;
+                    FocusInputFieldAsync().Forget();
                     return;
                 }
 
@@ -236,6 +216,8 @@ namespace Xeon.UniTerminal.Sample
 
             var sample = scrollViewController.GetSample();
 
+            buffer.PushFront(new OutputData($"> {input.text}", false));
+
             var displayText = string.Empty;
             for (var index = 0; index < displayTexts.Count; index++)
             {
@@ -250,6 +232,10 @@ namespace Xeon.UniTerminal.Sample
                 }
                 displayText = tmp;
             }
+
+            // 最後の行を追加
+            if (!string.IsNullOrEmpty(displayText))
+                buffer.PushFront(new OutputData(displayText, false));
 
             ScrollToBottom();
         }
