@@ -11,7 +11,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// AssetDatabase経由でアセットを管理するコマンド（エディタ専用）。
+    /// AssetDatabase経由でアセットを管理するコマンド（エディタ専用）
     /// </summary>
     [Command("assetdb", "Load and find assets via AssetDatabase (Editor only)")]
     public class AssetDbCommand : ICommand

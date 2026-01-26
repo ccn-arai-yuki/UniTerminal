@@ -5,86 +5,86 @@ using System.Collections.Generic;
 namespace Xeon.UniTerminal.UniTask
 {
     /// <summary>
-    /// UniTask版のコマンド実行コンテキスト。
-    /// stdin/stdout/stderrストリーム、作業ディレクトリ、位置引数を含みます。
+    /// UniTask版のコマンド実行コンテキスト
+    /// stdin/stdout/stderrストリーム、作業ディレクトリ、位置引数を含みます
     /// </summary>
     public class UniTaskCommandContext
     {
         /// <summary>
-        /// 標準入力リーダー（行単位）。
+        /// 標準入力リーダー（行単位）
         /// </summary>
         public IUniTaskTextReader Stdin { get; }
 
         /// <summary>
-        /// 標準出力ライター。
+        /// 標準出力ライター
         /// </summary>
         public IUniTaskTextWriter Stdout { get; }
 
         /// <summary>
-        /// 標準エラー出力ライター。
+        /// 標準エラー出力ライター
         /// </summary>
         public IUniTaskTextWriter Stderr { get; }
 
         /// <summary>
-        /// 現在の作業ディレクトリ。
+        /// 現在の作業ディレクトリ
         /// </summary>
         public string WorkingDirectory { get; }
 
         /// <summary>
-        /// 前の作業ディレクトリ（cd - で使用）。
+        /// 前の作業ディレクトリ（cd - で使用）
         /// </summary>
         public string PreviousWorkingDirectory { get; }
 
         /// <summary>
-        /// ホームディレクトリ。
+        /// ホームディレクトリ
         /// </summary>
         public string HomeDirectory { get; }
 
         /// <summary>
-        /// 作業ディレクトリを変更するコールバック。
+        /// 作業ディレクトリを変更するコールバック
         /// </summary>
         public Action<string> ChangeWorkingDirectory { get; }
 
         /// <summary>
-        /// コマンドに渡された位置引数。
+        /// コマンドに渡された位置引数
         /// </summary>
         public IReadOnlyList<string> PositionalArguments { get; }
 
         /// <summary>
-        /// コマンドレジストリ。
+        /// コマンドレジストリ
         /// </summary>
         public CommandRegistry Registry { get; }
 
         /// <summary>
-        /// コマンド履歴への参照。
+        /// コマンド履歴への参照
         /// </summary>
         public IReadOnlyList<string> CommandHistory { get; }
 
         /// <summary>
-        /// 履歴をクリアするコールバック。
+        /// 履歴をクリアするコールバック
         /// </summary>
         public Action ClearHistory { get; }
 
         /// <summary>
-        /// 指定番号の履歴を削除するコールバック。
+        /// 指定番号の履歴を削除するコールバック
         /// </summary>
         public Action<int> DeleteHistoryEntry { get; }
 
         /// <summary>
-        /// コマンド実行に必要なコンテキスト情報を初期化します。
+        /// コマンド実行に必要なコンテキスト情報を初期化します
         /// </summary>
-        /// <param name="stdin">標準入力リーダー。</param>
-        /// <param name="stdout">標準出力ライター。</param>
-        /// <param name="stderr">標準エラー出力ライター。</param>
-        /// <param name="workingDirectory">作業ディレクトリ。</param>
-        /// <param name="homeDirectory">ホームディレクトリ。</param>
-        /// <param name="positionalArguments">位置引数。</param>
-        /// <param name="registry">コマンドレジストリ。</param>
-        /// <param name="previousWorkingDirectory">前の作業ディレクトリ。</param>
-        /// <param name="changeWorkingDirectory">作業ディレクトリ変更コールバック。</param>
-        /// <param name="commandHistory">コマンド履歴。</param>
-        /// <param name="clearHistory">履歴クリアコールバック。</param>
-        /// <param name="deleteHistoryEntry">履歴削除コールバック。</param>
+        /// <param name="stdin">標準入力リーダー</param>
+        /// <param name="stdout">標準出力ライター</param>
+        /// <param name="stderr">標準エラー出力ライター</param>
+        /// <param name="workingDirectory">作業ディレクトリ</param>
+        /// <param name="homeDirectory">ホームディレクトリ</param>
+        /// <param name="positionalArguments">位置引数</param>
+        /// <param name="registry">コマンドレジストリ</param>
+        /// <param name="previousWorkingDirectory">前の作業ディレクトリ</param>
+        /// <param name="changeWorkingDirectory">作業ディレクトリ変更コールバック</param>
+        /// <param name="commandHistory">コマンド履歴</param>
+        /// <param name="clearHistory">履歴クリアコールバック</param>
+        /// <param name="deleteHistoryEntry">履歴削除コールバック</param>
         public UniTaskCommandContext(
             IUniTaskTextReader stdin,
             IUniTaskTextWriter stdout,

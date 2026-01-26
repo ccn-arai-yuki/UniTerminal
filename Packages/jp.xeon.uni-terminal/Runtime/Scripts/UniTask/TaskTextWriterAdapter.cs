@@ -6,21 +6,21 @@ namespace Xeon.UniTerminal.UniTask
     using Cysharp.Threading.Tasks;
     
     /// <summary>
-    /// Task版のIAsyncTextWriterをUniTask版のIUniTaskTextWriterに変換するアダプター。
+    /// Task版のIAsyncTextWriterをUniTask版のIUniTaskTextWriterに変換するアダプター
     /// </summary>
     public class TaskTextWriterAdapter : IUniTaskTextWriter
     {
         private readonly IAsyncTextWriter inner;
 
         /// <summary>
-        /// 内部のTask版ライター。
+        /// 内部のTask版ライター
         /// </summary>
         public IAsyncTextWriter Inner => inner;
 
         /// <summary>
-        /// Task版ライターをラップしてUniTask版として使用できるようにします。
+        /// Task版ライターをラップしてUniTask版として使用できるようにします
         /// </summary>
-        /// <param name="inner">ラップするTask版ライター。</param>
+        /// <param name="inner">ラップするTask版ライター</param>
         public TaskTextWriterAdapter(IAsyncTextWriter inner)
         {
             this.inner = inner;
@@ -39,7 +39,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// 内部ライターのバッファをクリアします。
+        /// 内部ライターのバッファをクリアします
         /// </summary>
         public void Clear() => inner.Clear();
     }

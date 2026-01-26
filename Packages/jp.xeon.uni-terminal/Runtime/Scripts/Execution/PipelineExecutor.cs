@@ -8,7 +8,7 @@ using Xeon.UniTerminal.Parsing;
 namespace Xeon.UniTerminal.Execution
 {
     /// <summary>
-    /// バインドされたパイプラインを実行します。
+    /// バインドされたパイプラインを実行します
     /// </summary>
     public class PipelineExecutor
     {
@@ -22,16 +22,16 @@ namespace Xeon.UniTerminal.Execution
         private readonly Action<int> deleteHistoryEntryCallback;
 
         /// <summary>
-        /// パイプライン実行に必要な環境情報を初期化します。
+        /// パイプライン実行に必要な環境情報を初期化します
         /// </summary>
-        /// <param name="workingDirectory">作業ディレクトリ。</param>
-        /// <param name="homeDirectory">ホームディレクトリ。</param>
-        /// <param name="registry">コマンドレジストリ。</param>
-        /// <param name="previousWorkingDirectory">前の作業ディレクトリ。</param>
-        /// <param name="changeWorkingDirectoryCallback">作業ディレクトリ変更コールバック。</param>
-        /// <param name="commandHistory">コマンド履歴。</param>
-        /// <param name="clearHistoryCallback">履歴クリアコールバック。</param>
-        /// <param name="deleteHistoryEntryCallback">履歴削除コールバック。</param>
+        /// <param name="workingDirectory">作業ディレクトリ</param>
+        /// <param name="homeDirectory">ホームディレクトリ</param>
+        /// <param name="registry">コマンドレジストリ</param>
+        /// <param name="previousWorkingDirectory">前の作業ディレクトリ</param>
+        /// <param name="changeWorkingDirectoryCallback">作業ディレクトリ変更コールバック</param>
+        /// <param name="commandHistory">コマンド履歴</param>
+        /// <param name="clearHistoryCallback">履歴クリアコールバック</param>
+        /// <param name="deleteHistoryEntryCallback">履歴削除コールバック</param>
         public PipelineExecutor(
             string workingDirectory,
             string homeDirectory,
@@ -53,7 +53,7 @@ namespace Xeon.UniTerminal.Execution
         }
 
         /// <summary>
-        /// 作業ディレクトリを変更します（cdコマンドから呼び出される）。
+        /// 作業ディレクトリを変更します（cdコマンドから呼び出される）
         /// </summary>
         private void ChangeWorkingDirectory(string newPath)
         {
@@ -63,14 +63,14 @@ namespace Xeon.UniTerminal.Execution
         }
 
         /// <summary>
-        /// バインドされたパイプラインを実行します。
+        /// バインドされたパイプラインを実行します
         /// </summary>
-        /// <param name="pipeline">実行するバインドされたパイプライン。</param>
-        /// <param name="stdin">初期stdin（空の場合はnull）。</param>
-        /// <param name="stdout">最終stdout。</param>
-        /// <param name="stderr">すべてのコマンド用のstderr。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>終了コードを含む実行結果。</returns>
+        /// <param name="pipeline">実行するバインドされたパイプライン</param>
+        /// <param name="stdin">初期stdin（空の場合はnull）</param>
+        /// <param name="stdout">最終stdout</param>
+        /// <param name="stderr">すべてのコマンド用のstderr</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コードを含む実行結果</returns>
         public async Task<ExecutionResult> ExecuteAsync(
             BoundPipeline pipeline,
             IAsyncTextReader stdin,
@@ -262,17 +262,17 @@ namespace Xeon.UniTerminal.Execution
         private readonly struct StdinResolutionResult
         {
             /// <summary>
-            /// 解決が成功したかどうか。
+            /// 解決が成功したかどうか
             /// </summary>
             public bool Success { get; }
 
             /// <summary>
-            /// 解決された入力リーダー。
+            /// 解決された入力リーダー
             /// </summary>
             public IAsyncTextReader Reader { get; }
 
             /// <summary>
-            /// エラーメッセージ。
+            /// エラーメッセージ
             /// </summary>
             public string ErrorMessage { get; }
 
@@ -284,16 +284,16 @@ namespace Xeon.UniTerminal.Execution
             }
 
             /// <summary>
-            /// 成功結果を生成します。
+            /// 成功結果を生成します
             /// </summary>
-            /// <param name="reader">入力リーダー。</param>
+            /// <param name="reader">入力リーダー</param>
             public static StdinResolutionResult FromReader(IAsyncTextReader reader)
                 => new StdinResolutionResult(true, reader, null);
 
             /// <summary>
-            /// 失敗結果を生成します。
+            /// 失敗結果を生成します
             /// </summary>
-            /// <param name="message">エラーメッセージ。</param>
+            /// <param name="message">エラーメッセージ</param>
             public static StdinResolutionResult FromError(string message)
                 => new StdinResolutionResult(false, null, message);
         }
@@ -301,12 +301,12 @@ namespace Xeon.UniTerminal.Execution
         private readonly struct StdoutResolutionResult
         {
             /// <summary>
-            /// 解決された出力ライター。
+            /// 解決された出力ライター
             /// </summary>
             public IAsyncTextWriter Writer { get; }
 
             /// <summary>
-            /// パイプ用のバッファ。
+            /// パイプ用のバッファ
             /// </summary>
             public ListTextWriter PipeBuffer { get; }
 
@@ -317,16 +317,16 @@ namespace Xeon.UniTerminal.Execution
             }
 
             /// <summary>
-            /// 出力ライターの結果を生成します。
+            /// 出力ライターの結果を生成します
             /// </summary>
-            /// <param name="writer">出力ライター。</param>
+            /// <param name="writer">出力ライター</param>
             public static StdoutResolutionResult FromWriter(IAsyncTextWriter writer)
                 => new StdoutResolutionResult(writer, null);
 
             /// <summary>
-            /// パイプ用の結果を生成します。
+            /// パイプ用の結果を生成します
             /// </summary>
-            /// <param name="pipeBuffer">パイプバッファ。</param>
+            /// <param name="pipeBuffer">パイプバッファ</param>
             public static StdoutResolutionResult FromPipe(ListTextWriter pipeBuffer)
                 => new StdoutResolutionResult(pipeBuffer, pipeBuffer);
         }
@@ -334,17 +334,17 @@ namespace Xeon.UniTerminal.Execution
         private readonly struct CommandExecutionResult
         {
             /// <summary>
-            /// 実行が成功したかどうか。
+            /// 実行が成功したかどうか
             /// </summary>
             public bool Success { get; }
 
             /// <summary>
-            /// 終了コード。
+            /// 終了コード
             /// </summary>
             public ExitCode ExitCode { get; }
 
             /// <summary>
-            /// エラーメッセージ。
+            /// エラーメッセージ
             /// </summary>
             public string ErrorMessage { get; }
 
@@ -356,16 +356,16 @@ namespace Xeon.UniTerminal.Execution
             }
 
             /// <summary>
-            /// 成功結果を生成します。
+            /// 成功結果を生成します
             /// </summary>
-            /// <param name="exitCode">終了コード。</param>
+            /// <param name="exitCode">終了コード</param>
             public static CommandExecutionResult FromSuccess(ExitCode exitCode)
                 => new CommandExecutionResult(true, exitCode, null);
 
             /// <summary>
-            /// 失敗結果を生成します。
+            /// 失敗結果を生成します
             /// </summary>
-            /// <param name="message">エラーメッセージ。</param>
+            /// <param name="message">エラーメッセージ</param>
             public static CommandExecutionResult FromError(string message)
                 => new CommandExecutionResult(false, ExitCode.RuntimeError, message);
         }

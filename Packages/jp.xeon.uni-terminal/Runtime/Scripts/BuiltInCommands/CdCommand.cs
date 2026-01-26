@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// 作業ディレクトリを変更します。
+    /// 作業ディレクトリを変更します
     /// </summary>
     [Command("cd", "Change working directory")]
     public class CdCommand : ICommand

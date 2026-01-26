@@ -6,13 +6,13 @@ using UnityEngine.SceneManagement;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// GameObjectのパス解決用ユーティリティ。
-    /// /Parent/Child/Target のようなパス形式でGameObjectを参照します。
+    /// GameObjectのパス解決用ユーティリティ
+    /// /Parent/Child/Target のようなパス形式でGameObjectを参照します
     /// </summary>
     public static class GameObjectPath
     {
         /// <summary>
-        /// パス文字列からGameObjectを解決します。
+        /// パス文字列からGameObjectを解決します
         /// </summary>
         /// <param name="path">GameObjectのパス（例: /Parent/Child）</param>
         /// <param name="scene">対象シーン（nullの場合はアクティブシーン）</param>
@@ -43,7 +43,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// GameObjectのパス文字列を取得します。
+        /// GameObjectのパス文字列を取得します
         /// </summary>
         /// <param name="go">対象のGameObject</param>
         /// <returns>パス文字列（例: /Parent/Child/Target）</returns>
@@ -65,7 +65,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 指定されたパスにGameObjectが存在するかどうかを確認します。
+        /// 指定されたパスにGameObjectが存在するかどうかを確認します
         /// </summary>
         /// <param name="path">確認するパス</param>
         /// <param name="scene">対象シーン（nullの場合はアクティブシーン）</param>
@@ -76,7 +76,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 指定されたシーンのルートGameObjectを取得します。
+        /// 指定されたシーンのルートGameObjectを取得します
         /// </summary>
         /// <param name="scene">対象シーン（nullの場合はアクティブシーン）</param>
         /// <returns>ルートGameObjectの配列</returns>
@@ -90,7 +90,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 指定されたパスの子GameObjectのパス一覧を取得します（補完用）。
+        /// 指定されたパスの子GameObjectのパス一覧を取得します（補完用）
         /// </summary>
         /// <param name="prefix">パスのプレフィックス</param>
         /// <param name="scene">対象シーン（nullの場合はアクティブシーン）</param>
@@ -157,7 +157,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// シーンを名前で取得します。
+        /// シーンを名前で取得します
         /// </summary>
         /// <param name="sceneName">シーン名</param>
         /// <returns>見つかったシーン（見つからない場合はnull）</returns>
@@ -179,7 +179,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// ロード済みのシーン一覧を取得します。
+        /// ロード済みのシーン一覧を取得します
         /// </summary>
         /// <returns>シーン情報の列挙（名前、アクティブかどうか）</returns>
         public static IEnumerable<(string name, bool isActive)> GetLoadedScenes()

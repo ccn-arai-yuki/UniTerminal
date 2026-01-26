@@ -7,7 +7,7 @@ using UnityEngine.TestTools;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// goコマンドのPlayModeテスト。
+    /// goコマンドのPlayModeテスト
     /// </summary>
     public class GoCommandPlayModeTests
     {

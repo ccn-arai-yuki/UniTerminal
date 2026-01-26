@@ -6,45 +6,45 @@ using Xeon.UniTerminal.Parsing;
 namespace Xeon.UniTerminal.Binding
 {
     /// <summary>
-    /// コマンドのオプションを解析し、バインド結果を構築するためのコンテキスト。
+    /// コマンドのオプションを解析し、バインド結果を構築するためのコンテキスト
     /// </summary>
     public class CommandBindingContext
     {
         /// <summary>
-        /// オプション値を目的の型へ変換するデリゲート。
+        /// オプション値を目的の型へ変換するデリゲート
         /// </summary>
         public delegate object ConvertValueDelegate(string rawValue, OptionMetadata metaData, bool wasQuoted);
 
         /// <summary>
-        /// オプション解析中に追加された位置引数。
+        /// オプション解析中に追加された位置引数
         /// </summary>
         public List<string> ExtraPositionalArgs { get; }
 
         /// <summary>
-        /// 対象コマンドのメタデータ。
+        /// 対象コマンドのメタデータ
         /// </summary>
         public CommandMetadata MetaData { get; }
 
         /// <summary>
-        /// パース済みコマンド。
+        /// パース済みコマンド
         /// </summary>
         public ParsedCommand ParsedCommand { get; }
         /// <summary>重複検出用の設定されたオプションのリスト</summary>
         public HashSet<string> SetOptions { get; }
 
         /// <summary>
-        /// バインド対象のコマンドインスタンス。
+        /// バインド対象のコマンドインスタンス
         /// </summary>
         public ICommand Command { get; }
 
         private ConvertValueDelegate convertValueFunc;
 
         /// <summary>
-        /// バインド処理に必要な情報を初期化します。
+        /// バインド処理に必要な情報を初期化します
         /// </summary>
-        /// <param name="parsedCommand">パース済みコマンド。</param>
-        /// <param name="metaData">コマンドのメタデータ。</param>
-        /// <param name="convertValueFunc">オプション値変換処理。</param>
+        /// <param name="parsedCommand">パース済みコマンド</param>
+        /// <param name="metaData">コマンドのメタデータ</param>
+        /// <param name="convertValueFunc">オプション値変換処理</param>
         public CommandBindingContext(ParsedCommand parsedCommand, CommandMetadata metaData, ConvertValueDelegate convertValueFunc)
         {
             ParsedCommand = parsedCommand;
@@ -56,9 +56,9 @@ namespace Xeon.UniTerminal.Binding
         }
 
         /// <summary>
-        /// オプションを適用し、バインド済みコマンドを生成します。
+        /// オプションを適用し、バインド済みコマンドを生成します
         /// </summary>
-        /// <returns>バインド済みコマンド。</returns>
+        /// <returns>バインド済みコマンド</returns>
         public BoundCommand Process()
         {
             foreach (var option in ParsedCommand.Options)

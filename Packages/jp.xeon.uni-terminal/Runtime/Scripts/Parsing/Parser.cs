@@ -3,18 +3,18 @@ using System.Collections.Generic;
 namespace Xeon.UniTerminal.Parsing
 {
     /// <summary>
-    /// トークン化された入力をAST構造にパースします。
+    /// トークン化された入力をAST構造にパースします
     /// </summary>
     public class Parser
     {
         private readonly Tokenizer tokenizer = new Tokenizer();
 
         /// <summary>
-        /// 入力文字列をParsedInput構造にパースします。
+        /// 入力文字列をParsedInput構造にパースします
         /// </summary>
-        /// <param name="input">パースする入力文字列。</param>
-        /// <returns>パースされた入力構造。</returns>
-        /// <exception cref="ParseException">パースエラー時にスローされます。</exception>
+        /// <param name="input">パースする入力文字列</param>
+        /// <returns>パースされた入力構造</returns>
+        /// <exception cref="ParseException">パースエラー時にスローされます</exception>
         public ParsedInput Parse(string input)
         {
             var tokens = tokenizer.Tokenize(input);
@@ -22,7 +22,7 @@ namespace Xeon.UniTerminal.Parsing
         }
 
         /// <summary>
-        /// トークンをParsedInput構造にパースします。
+        /// トークンをParsedInput構造にパースします
         /// </summary>
         public ParsedInput ParseTokens(List<Token> tokens)
         {
@@ -352,27 +352,27 @@ namespace Xeon.UniTerminal.Parsing
         private class CommandParseContext
         {
             /// <summary>
-            /// 現在解析中のコマンド。
+            /// 現在解析中のコマンド
             /// </summary>
             public ParsedCommand Command { get; } = new ParsedCommand();
 
             /// <summary>
-            /// オプション終端（--）以降を解析中かどうか。
+            /// オプション終端（--）以降を解析中かどうか
             /// </summary>
             public bool AfterEndOfOptions { get; set; }
 
             /// <summary>
-            /// 標準入力リダイレクトのパス。
+            /// 標準入力リダイレクトのパス
             /// </summary>
             public string StdinPath { get; set; }
 
             /// <summary>
-            /// 標準出力リダイレクトのパス。
+            /// 標準出力リダイレクトのパス
             /// </summary>
             public string StdoutPath { get; set; }
 
             /// <summary>
-            /// 標準出力リダイレクトのモード。
+            /// 標準出力リダイレクトのモード
             /// </summary>
             public RedirectMode StdoutMode { get; set; } = RedirectMode.None;
         }

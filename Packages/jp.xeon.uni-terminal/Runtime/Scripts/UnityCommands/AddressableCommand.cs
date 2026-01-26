@@ -9,7 +9,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// Addressables経由でアセットを管理するコマンド。
+    /// Addressables経由でアセットを管理するコマンド
     /// </summary>
     [Command("adr", "Load, release, and find assets via Addressables")]
     public class AddressableCommand : ICommand

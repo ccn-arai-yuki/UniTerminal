@@ -8,57 +8,57 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// 2つのファイルの差分を比較・表示するコマンド。
+    /// 2つのファイルの差分を比較・表示するコマンド
     /// </summary>
     [Command("diff", "Compare files line by line")]
     public class DiffCommand : ICommand
     {
         /// <summary>
-        /// Unified形式のコンテキスト行数。
+        /// Unified形式のコンテキスト行数
         /// </summary>
         [Option("unified", "u", Description = "Output in unified format with N lines of context")]
         public int UnifiedContext = -1;
 
         /// <summary>
-        /// 大文字小文字を無視するかどうか。
+        /// 大文字小文字を無視するかどうか
         /// </summary>
         [Option("ignore-case", "i", Description = "Ignore case differences")]
         public bool IgnoreCase;
 
         /// <summary>
-        /// 空白の増減を無視するかどうか。
+        /// 空白の増減を無視するかどうか
         /// </summary>
         [Option("ignore-space", "b", Description = "Ignore changes in whitespace amount")]
         public bool IgnoreSpaceChange;
 
         /// <summary>
-        /// すべての空白を無視するかどうか。
+        /// すべての空白を無視するかどうか
         /// </summary>
         [Option("ignore-all-space", "w", Description = "Ignore all whitespace")]
         public bool IgnoreAllSpace;
 
         /// <summary>
-        /// 差分があるかどうかのみを出力するかどうか。
+        /// 差分があるかどうかのみを出力するかどうか
         /// </summary>
         [Option("brief", "q", Description = "Report only when files differ")]
         public bool Brief;
 
         /// <summary>
-        /// コマンド名。
+        /// コマンド名
         /// </summary>
         public string CommandName => "diff";
 
         /// <summary>
-        /// コマンドの説明。
+        /// コマンドの説明
         /// </summary>
         public string Description => "Compare files line by line";
 
         /// <summary>
-        /// コマンドを実行します。
+        /// コマンドを実行します
         /// </summary>
-        /// <param name="context">実行コンテキスト。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>終了コード。</returns>
+        /// <param name="context">実行コンテキスト</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             if (context.PositionalArguments.Count < 2)
@@ -125,7 +125,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ファイルを読み込みます。
+        /// ファイルを読み込みます
         /// </summary>
         private async Task<string[]> ReadFileAsync(string path, CommandContext context, CancellationToken ct)
         {
@@ -159,7 +159,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 差分を計算します（LCSアルゴリズム）。
+        /// 差分を計算します（LCSアルゴリズム）
         /// </summary>
         private DiffResult ComputeDiff(string[] lines1, string[] lines2)
         {
@@ -169,7 +169,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// LCS（最長共通部分列）テーブルを計算します。
+        /// LCS（最長共通部分列）テーブルを計算します
         /// </summary>
         private int[,] ComputeLcsTable(string[] lines1, string[] lines2)
         {
@@ -192,7 +192,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// LCSテーブルをバックトラックして差分行を生成します。
+        /// LCSテーブルをバックトラックして差分行を生成します
         /// </summary>
         private List<DiffLine> BacktrackDiff(string[] lines1, string[] lines2, int[,] lcs)
         {
@@ -210,7 +210,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// バックトラック中の次の差分行を取得します。
+        /// バックトラック中の次の差分行を取得します
         /// </summary>
         private DiffLine GetNextDiffLine(string[] lines1, string[] lines2, int[,] lcs, ref int x, ref int y)
         {
@@ -235,7 +235,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 行が等しいかどうかを比較します。
+        /// 行が等しいかどうかを比較します
         /// </summary>
         private bool LinesEqual(string line1, string line2)
         {
@@ -248,7 +248,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 行を正規化します。
+        /// 行を正規化します
         /// </summary>
         private string NormalizeLine(string line)
         {
@@ -260,7 +260,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// Normal形式で出力します。
+        /// Normal形式で出力します
         /// </summary>
         private async Task OutputNormalAsync(CommandContext context, DiffResult diff, CancellationToken ct)
         {
@@ -274,7 +274,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 単一のハンクをNormal形式で出力します。
+        /// 単一のハンクをNormal形式で出力します
         /// </summary>
         private async Task OutputHunkAsync(CommandContext context, DiffHunk hunk, CancellationToken ct)
         {
@@ -291,7 +291,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ハンクの範囲文字列を生成します。
+        /// ハンクの範囲文字列を生成します
         /// </summary>
         private string FormatHunkRange(DiffHunk hunk)
         {
@@ -305,7 +305,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// Unified形式で出力します。
+        /// Unified形式で出力します
         /// </summary>
         private async Task OutputUnifiedAsync(
             CommandContext context,
@@ -331,7 +331,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 単一のハンクをUnified形式で出力します。
+        /// 単一のハンクをUnified形式で出力します
         /// </summary>
         private async Task OutputUnifiedHunkAsync(CommandContext context, UnifiedHunk hunk, CancellationToken ct)
         {
@@ -343,7 +343,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 差分タイプに応じたプレフィックスを取得します。
+        /// 差分タイプに応じたプレフィックスを取得します
         /// </summary>
         private string GetDiffLinePrefix(DiffType type)
         {
@@ -356,7 +356,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 範囲を文字列にフォーマットします。
+        /// 範囲を文字列にフォーマットします
         /// </summary>
         private string FormatRange(int start, int count)
         {
@@ -372,7 +372,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
     }
 
     /// <summary>
-    /// 差分の種類。
+    /// 差分の種類
     /// </summary>
     public enum DiffType
     {
@@ -382,7 +382,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
     }
 
     /// <summary>
-    /// 差分行。
+    /// 差分行
     /// </summary>
     public class DiffLine
     {
@@ -401,7 +401,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
     }
 
     /// <summary>
-    /// 差分結果。
+    /// 差分結果
     /// </summary>
     public class DiffResult
     {
@@ -414,7 +414,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// Normal形式用のハンクを取得します。
+        /// Normal形式用のハンクを取得します
         /// </summary>
         public List<DiffHunk> GetHunks()
         {
@@ -466,7 +466,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// Unified形式用のハンクを取得します。
+        /// Unified形式用のハンクを取得します
         /// </summary>
         public List<UnifiedHunk> GetUnifiedHunks(string[] lines1, string[] lines2, int contextLines)
         {
@@ -489,7 +489,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 差分がある行のインデックスを収集します。
+        /// 差分がある行のインデックスを収集します
         /// </summary>
         private List<int> CollectDiffIndexes()
         {
@@ -505,7 +505,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 連続する差分グループの終端インデックスを検索します。
+        /// 連続する差分グループの終端インデックスを検索します
         /// </summary>
         private int FindGroupEndIndex(List<int> diffIndexes, int groupStart, int contextLines)
         {
@@ -522,7 +522,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 指定範囲からUnifiedハンクを作成します。
+        /// 指定範囲からUnifiedハンクを作成します
         /// </summary>
         private UnifiedHunk CreateUnifiedHunkFromRange(List<int> diffIndexes, int groupStart, int groupEnd, int contextLines)
         {
@@ -536,7 +536,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ハンクの開始位置（oldStart, newStart）を計算します。
+        /// ハンクの開始位置（oldStart, newStart）を計算します
         /// </summary>
         private (int oldStart, int newStart) CalculateHunkStartPositions(int startIdx)
         {
@@ -555,7 +555,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ハンクの行を収集し、行数をカウントします。
+        /// ハンクの行を収集し、行数をカウントします
         /// </summary>
         private (List<DiffLine> lines, int oldCount, int newCount) CollectHunkLinesWithCounts(int startIdx, int endIdx)
         {

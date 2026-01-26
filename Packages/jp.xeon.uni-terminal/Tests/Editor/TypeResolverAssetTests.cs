@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// TypeResolverのアセット型解決機能のテスト。
+    /// TypeResolverのアセット型解決機能のテスト
     /// </summary>
     public class TypeResolverAssetTests
     {

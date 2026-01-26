@@ -7,13 +7,13 @@ namespace Xeon.UniTerminal.UniTask
     using Cysharp.Threading.Tasks.Linq;
 
     /// <summary>
-    /// UniTask版の空テキストリーダー。
-    /// 何も返さないstdinとして使用します。
+    /// UniTask版の空テキストリーダー
+    /// 何も返さないstdinとして使用します
     /// </summary>
     public class UniTaskEmptyTextReader : IUniTaskTextReader
     {
         /// <summary>
-        /// シングルトンインスタンス。
+        /// シングルトンインスタンス
         /// </summary>
         public static readonly UniTaskEmptyTextReader Instance = new UniTaskEmptyTextReader();
 

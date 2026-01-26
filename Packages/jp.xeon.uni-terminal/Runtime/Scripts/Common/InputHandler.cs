@@ -5,12 +5,12 @@ using UnityEngine.InputSystem;
 namespace Xeon.UniTerminal.Common
 {
     /// <summary>
-    /// 入力システムの差異を吸収するユーティリティ。
+    /// 入力システムの差異を吸収するユーティリティ
     /// </summary>
     public static class InputHandler
     {
         /// <summary>
-        /// 上矢印キーが押下されたかを取得します。
+        /// 上矢印キーが押下されたかを取得します
         /// </summary>
         public static bool IsPressedUpArrow()
         {
@@ -25,7 +25,7 @@ namespace Xeon.UniTerminal.Common
         }
 
         /// <summary>
-        /// 下矢印キーが押下されたかを取得します。
+        /// 下矢印キーが押下されたかを取得します
         /// </summary>
         public static bool IsPressedDownArrow()
         {
@@ -40,7 +40,7 @@ namespace Xeon.UniTerminal.Common
         }
 
         /// <summary>
-        /// Enterキーが押下されたかを取得します。
+        /// Enterキーが押下されたかを取得します
         /// </summary>
         public static bool IsPressedReturn()
         {
@@ -55,7 +55,7 @@ namespace Xeon.UniTerminal.Common
         }
 
         /// <summary>
-        /// Tabキーが押下されたかを取得します。
+        /// Tabキーが押下されたかを取得します
         /// </summary>
         public static bool IsPressedTab()
         {
@@ -70,7 +70,7 @@ namespace Xeon.UniTerminal.Common
         }
 
         /// <summary>
-        /// Yキーが押下されたかを取得します。
+        /// Yキーが押下されたかを取得します
         /// </summary>
         public static bool IsPressedY()
         {
@@ -85,7 +85,7 @@ namespace Xeon.UniTerminal.Common
         }
 
         /// <summary>
-        /// Nキーが押下されたかを取得します。
+        /// Nキーが押下されたかを取得します
         /// </summary>
         public static bool IsPressedN()
         {

@@ -3,16 +3,16 @@ using System.IO;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// パス解決用ユーティリティ。
+    /// パス解決用ユーティリティ
     /// </summary>
     public static class PathUtility
     {
         /// <summary>
-        /// パスの区切り文字をスラッシュに正規化します。
-        /// 連続するスラッシュも1つにまとめます（UNCパスの先頭は保持）。
+        /// パスの区切り文字をスラッシュに正規化します
+        /// 連続するスラッシュも1つにまとめます（UNCパスの先頭は保持）
         /// </summary>
-        /// <param name="path">正規化するパス。</param>
-        /// <returns>スラッシュで統一されたパス。</returns>
+        /// <param name="path">正規化するパス</param>
+        /// <returns>スラッシュで統一されたパス</returns>
         public static string NormalizeToSlash(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -52,21 +52,21 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// パスを結合し、スラッシュで正規化します。
+        /// パスを結合し、スラッシュで正規化します
         /// </summary>
-        /// <param name="path1">最初のパス。</param>
-        /// <param name="path2">結合するパス。</param>
-        /// <returns>スラッシュで統一された結合パス。</returns>
+        /// <param name="path1">最初のパス</param>
+        /// <param name="path2">結合するパス</param>
+        /// <returns>スラッシュで統一された結合パス</returns>
         public static string Combine(string path1, string path2)
         {
             return NormalizeToSlash(Path.Combine(path1, path2));
         }
 
         /// <summary>
-        /// パスの親ディレクトリを取得し、スラッシュで正規化します。
+        /// パスの親ディレクトリを取得し、スラッシュで正規化します
         /// </summary>
-        /// <param name="path">パス。</param>
-        /// <returns>スラッシュで統一された親ディレクトリパス。</returns>
+        /// <param name="path">パス</param>
+        /// <returns>スラッシュで統一された親ディレクトリパス</returns>
         public static string GetDirectoryName(string path)
         {
             var dir = Path.GetDirectoryName(path);
@@ -74,12 +74,12 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 作業ディレクトリを基準にパスを解決します（~展開付き）。
+        /// 作業ディレクトリを基準にパスを解決します（~展開付き）
         /// </summary>
-        /// <param name="path">解決するパス。</param>
-        /// <param name="workingDirectory">現在の作業ディレクトリ。</param>
-        /// <param name="homeDirectory">~展開用のホームディレクトリ。</param>
-        /// <returns>解決された絶対パス（スラッシュで統一）。</returns>
+        /// <param name="path">解決するパス</param>
+        /// <param name="workingDirectory">現在の作業ディレクトリ</param>
+        /// <param name="homeDirectory">~展開用のホームディレクトリ</param>
+        /// <returns>解決された絶対パス（スラッシュで統一）</returns>
         public static string ResolvePath(string path, string workingDirectory, string homeDirectory)
         {
             if (string.IsNullOrEmpty(path))

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// lsコマンドのソート方法。
+    /// lsコマンドのソート方法
     /// </summary>
     public enum LsSortType
     {
@@ -18,7 +18,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
     }
 
     /// <summary>
-    /// ディレクトリの内容を一覧表示します。
+    /// ディレクトリの内容を一覧表示します
     /// </summary>
     [Command("ls", "List directory contents")]
     public class LsCommand : ICommand
@@ -76,7 +76,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 単一パスを処理します。
+        /// 単一パスを処理します
         /// </summary>
         private async Task<PathCheckResult> ProcessPathAsync(
             CommandContext context,
@@ -117,7 +117,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// パスの存在とタイプを確認します。
+        /// パスの存在とタイプを確認します
         /// </summary>
         private async Task<PathCheckResult> CheckPathAsync(
             CommandContext context,
@@ -149,7 +149,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ディレクトリの内容を一覧表示します。
+        /// ディレクトリの内容を一覧表示します
         /// </summary>
         private async Task ListDirectoryAsync(CommandContext context, string directoryPath, LsParams param, CancellationToken ct)
         {
@@ -170,7 +170,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 再帰的にサブディレクトリを表示します。
+        /// 再帰的にサブディレクトリを表示します
         /// </summary>
         private async Task ListRecursiveAsync(CommandContext context, string directoryPath, LsParams param, CancellationToken ct)
         {
@@ -196,7 +196,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// エントリを詳細形式で出力します。
+        /// エントリを詳細形式で出力します
         /// </summary>
         private async Task PrintEntryAsync(CommandContext context, FileSystemInfo entry, CancellationToken ct)
         {
@@ -225,7 +225,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// パーミッション文字列を取得します。
+        /// パーミッション文字列を取得します
         /// </summary>
         private string GetPermissionString(FileSystemInfo entry)
         {
@@ -240,7 +240,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ファイルサイズを人間が読みやすい形式にフォーマットします。
+        /// ファイルサイズを人間が読みやすい形式にフォーマットします
         /// </summary>
         private string FormatSize(long bytes)
         {

@@ -7,7 +7,7 @@ using UnityEngine.TestTools;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// hierarchyコマンドのPlayModeテスト。
+    /// hierarchyコマンドのPlayModeテスト
     /// </summary>
     public class HierarchyCommandPlayModeTests
     {

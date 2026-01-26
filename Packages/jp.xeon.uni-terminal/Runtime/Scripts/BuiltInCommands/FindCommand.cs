@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// ファイルタイプ（findコマンド用）。
+    /// ファイルタイプ（findコマンド用）
     /// </summary>
     public enum FindFileType
     {
@@ -18,57 +18,57 @@ namespace Xeon.UniTerminal.BuiltInCommands
     }
 
     /// <summary>
-    /// ディレクトリ階層内でファイルを検索するコマンド。
+    /// ディレクトリ階層内でファイルを検索するコマンド
     /// </summary>
     [Command("find", "Search for files in a directory hierarchy")]
     public class FindCommand : ICommand
     {
         /// <summary>
-        /// ファイル名の検索パターン。
+        /// ファイル名の検索パターン
         /// </summary>
         [Option("name", "n", Description = "File name pattern (supports wildcards)")]
         public string NamePattern;
 
         /// <summary>
-        /// 大文字小文字を無視する検索パターン。
+        /// 大文字小文字を無視する検索パターン
         /// </summary>
         [Option("iname", "i", Description = "Case-insensitive file name pattern")]
         public string INamePattern;
 
         /// <summary>
-        /// 検索対象のファイル種別。
+        /// 検索対象のファイル種別
         /// </summary>
         [Option("type", "t", Description = "File type: f (file), d (directory)")]
         public string FileType;
 
         /// <summary>
-        /// 探索の最大深さ。
+        /// 探索の最大深さ
         /// </summary>
         [Option("maxdepth", "d", Description = "Maximum search depth (-1 = unlimited)")]
         public int MaxDepth = -1;
 
         /// <summary>
-        /// 探索の最小深さ。
+        /// 探索の最小深さ
         /// </summary>
         [Option("mindepth", "", Description = "Minimum search depth")]
         public int MinDepth = 0;
 
         /// <summary>
-        /// コマンド名。
+        /// コマンド名
         /// </summary>
         public string CommandName => "find";
 
         /// <summary>
-        /// コマンドの説明。
+        /// コマンドの説明
         /// </summary>
         public string Description => "Search for files in a directory hierarchy";
 
         /// <summary>
-        /// コマンドを実行します。
+        /// コマンドを実行します
         /// </summary>
-        /// <param name="context">実行コンテキスト。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>終了コード。</returns>
+        /// <param name="context">実行コンテキスト</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             try
@@ -131,7 +131,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ファイルタイプを解析します。
+        /// ファイルタイプを解析します
         /// </summary>
         private FindFileType ParseFileType(string type)
         {
@@ -153,7 +153,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ディレクトリを再帰的に検索します。
+        /// ディレクトリを再帰的に検索します
         /// </summary>
         private async IAsyncEnumerable<string> SearchAsync(
             string basePath,
@@ -217,7 +217,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ワイルドカードパターンとマッチするか確認します。
+        /// ワイルドカードパターンとマッチするか確認します
         /// </summary>
         private bool MatchWildcard(string name, FindParams param)
         {
@@ -232,7 +232,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ベースパスからの相対パスを取得します。
+        /// ベースパスからの相対パスを取得します
         /// </summary>
         private string GetRelativePath(string basePath, string fullPath)
         {

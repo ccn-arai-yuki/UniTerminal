@@ -4,64 +4,64 @@ using System.Reflection;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// OptionAttributeから抽出されたコマンドオプションのメタデータ。
+    /// OptionAttributeから抽出されたコマンドオプションのメタデータ
     /// </summary>
     public class OptionMetadata
     {
         /// <summary>
-        /// ロングオプション名（--なし）。
+        /// ロングオプション名（--なし）
         /// </summary>
         public string LongName { get; }
 
         /// <summary>
-        /// ショートオプション名（単一文字、-なし）。
+        /// ショートオプション名（単一文字、-なし）
         /// </summary>
         public string ShortName { get; }
 
         /// <summary>
-        /// このオプションが必須かどうか。
+        /// このオプションが必須かどうか
         /// </summary>
         public bool IsRequired { get; }
 
         /// <summary>
-        /// オプションの説明。
+        /// オプションの説明
         /// </summary>
         public string Description { get; }
 
         /// <summary>
-        /// オプションの型。
+        /// オプションの型
         /// </summary>
         public Type OptionType { get; }
 
         /// <summary>
-        /// このオプションがマップされるメンバー（フィールドまたはプロパティ）。
+        /// このオプションがマップされるメンバー（フィールドまたはプロパティ）
         /// </summary>
         public MemberInfo Member { get; }
 
         /// <summary>
-        /// このオプションがboolフラグかどうか。
+        /// このオプションがboolフラグかどうか
         /// </summary>
         public bool IsBool { get; }
 
         /// <summary>
-        /// このオプションがリスト型かどうか。
+        /// このオプションがリスト型かどうか
         /// </summary>
         public bool IsList { get; }
 
         /// <summary>
-        /// リストオプションの要素型。
+        /// リストオプションの要素型
         /// </summary>
         public Type ListElementType { get; }
 
         /// <summary>
-        /// オプションメタデータを初期化します。
+        /// オプションメタデータを初期化します
         /// </summary>
-        /// <param name="longName">ロングオプション名。</param>
-        /// <param name="shortName">ショートオプション名。</param>
-        /// <param name="isRequired">必須オプションかどうか。</param>
-        /// <param name="description">オプション説明。</param>
-        /// <param name="optionType">オプション型。</param>
-        /// <param name="member">対象のメンバー。</param>
+        /// <param name="longName">ロングオプション名</param>
+        /// <param name="shortName">ショートオプション名</param>
+        /// <param name="isRequired">必須オプションかどうか</param>
+        /// <param name="description">オプション説明</param>
+        /// <param name="optionType">オプション型</param>
+        /// <param name="member">対象のメンバー</param>
         public OptionMetadata(
             string longName,
             string shortName,
@@ -85,7 +85,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンドインスタンスからこのオプションの値を取得します。
+        /// コマンドインスタンスからこのオプションの値を取得します
         /// </summary>
         public object GetValue(object instance)
         {
@@ -98,7 +98,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンドインスタンスにこのオプションの値を設定します。
+        /// コマンドインスタンスにこのオプションの値を設定します
         /// </summary>
         public void SetValue(object instance, object value)
         {
@@ -114,7 +114,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 表示用文字列を生成します。
+        /// 表示用文字列を生成します
         /// </summary>
         public override string ToString()
         {

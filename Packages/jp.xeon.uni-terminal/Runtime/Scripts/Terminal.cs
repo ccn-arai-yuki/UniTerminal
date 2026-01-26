@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// ターミナルCLIのメインエントリポイント。
+    /// ターミナルCLIのメインエントリポイント
     /// </summary>
     public class Terminal
     {
@@ -27,12 +27,12 @@ namespace Xeon.UniTerminal
         private readonly int maxHistorySize;
 
         /// <summary>
-        /// コマンドレジストリ。
+        /// コマンドレジストリ
         /// </summary>
         public CommandRegistry Registry => registry;
 
         /// <summary>
-        /// 現在の作業ディレクトリ。
+        /// 現在の作業ディレクトリ
         /// </summary>
         public string WorkingDirectory
         {
@@ -51,27 +51,27 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 前の作業ディレクトリ（cd - で使用）。
+        /// 前の作業ディレクトリ（cd - で使用）
         /// </summary>
         public string PreviousWorkingDirectory => previousWorkingDirectory;
 
         /// <summary>
-        /// ホームディレクトリ。
+        /// ホームディレクトリ
         /// </summary>
         public string HomeDirectory => homeDirectory;
 
         /// <summary>
-        /// コマンド履歴。
+        /// コマンド履歴
         /// </summary>
         public IReadOnlyList<string> CommandHistory => commandHistory;
 
         /// <summary>
-        /// 新しいTerminalインスタンスを作成します。
+        /// 新しいTerminalインスタンスを作成します
         /// </summary>
-        /// <param name="homeDirectory">ホームディレクトリ（デフォルトはApplication.persistentDataPath）。</param>
-        /// <param name="workingDirectory">初期作業ディレクトリ（デフォルトはホームディレクトリ）。</param>
-        /// <param name="registerBuiltInCommands">組み込みコマンドを登録するかどうか。</param>
-        /// <param name="maxHistorySize">履歴の最大サイズ（デフォルトは1000）。</param>
+        /// <param name="homeDirectory">ホームディレクトリ（デフォルトはApplication.persistentDataPath）</param>
+        /// <param name="workingDirectory">初期作業ディレクトリ（デフォルトはホームディレクトリ）</param>
+        /// <param name="registerBuiltInCommands">組み込みコマンドを登録するかどうか</param>
+        /// <param name="maxHistorySize">履歴の最大サイズ（デフォルトは1000）</param>
         public Terminal(string homeDirectory = null, string workingDirectory = null, bool registerBuiltInCommands = true, int maxHistorySize = 1000)
         {
             this.homeDirectory = PathUtility.NormalizeToSlash(homeDirectory ?? Application.persistentDataPath);
@@ -89,7 +89,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 組み込みコマンドを登録します。
+        /// 組み込みコマンドを登録します
         /// </summary>
         public void RegisterBuiltInCommands()
         {
@@ -128,9 +128,9 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンドを履歴に追加します。
+        /// コマンドを履歴に追加します
         /// </summary>
-        /// <param name="command">追加するコマンド。</param>
+        /// <param name="command">追加するコマンド</param>
         public void AddHistory(string command)
         {
             if (string.IsNullOrWhiteSpace(command))
@@ -150,7 +150,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 履歴をクリアします。
+        /// 履歴をクリアします
         /// </summary>
         public void ClearHistory()
         {
@@ -158,9 +158,9 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 指定番号の履歴を削除します。
+        /// 指定番号の履歴を削除します
         /// </summary>
-        /// <param name="index">削除する履歴のインデックス（1ベース）。</param>
+        /// <param name="index">削除する履歴のインデックス（1ベース）</param>
         public void DeleteHistoryEntry(int index)
         {
             // 1ベースから0ベースに変換
@@ -172,10 +172,10 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 指定された入力に対する補完候補を取得します。
+        /// 指定された入力に対する補完候補を取得します
         /// </summary>
-        /// <param name="input">現在の入力行。</param>
-        /// <returns>候補を含む補完結果。</returns>
+        /// <param name="input">現在の入力行</param>
+        /// <returns>候補を含む補完結果</returns>
         public CompletionResult GetCompletions(string input)
         {
             var engine = new CompletionEngine(registry, workingDirectory, homeDirectory);
@@ -183,14 +183,14 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンドラインを実行します。
+        /// コマンドラインを実行します
         /// </summary>
-        /// <param name="input">コマンドライン入力。</param>
-        /// <param name="stdout">標準出力ライター。</param>
-        /// <param name="stderr">標準エラー出力ライター。</param>
-        /// <param name="stdin">標準入力リーダー（オプション）。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>終了コード（成功の場合はSuccess）。</returns>
+        /// <param name="input">コマンドライン入力</param>
+        /// <param name="stdout">標準出力ライター</param>
+        /// <param name="stderr">標準エラー出力ライター</param>
+        /// <param name="stdin">標準入力リーダー（オプション）</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード（成功の場合はSuccess）</returns>
         public async Task<ExitCode> ExecuteAsync(
             string input,
             IAsyncTextWriter stdout,

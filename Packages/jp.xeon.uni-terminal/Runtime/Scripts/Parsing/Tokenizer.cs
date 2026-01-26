@@ -4,16 +4,16 @@ using System.Text;
 namespace Xeon.UniTerminal.Parsing
 {
     /// <summary>
-    /// CLI入力をトークンに分割します。
+    /// CLI入力をトークンに分割します
     /// </summary>
     public class Tokenizer
     {
         /// <summary>
-        /// 入力文字列をトークンのリストに分割します。
+        /// 入力文字列をトークンのリストに分割します
         /// </summary>
-        /// <param name="input">トークン化する入力文字列。</param>
-        /// <returns>トークンのリスト。</returns>
-        /// <exception cref="ParseException">トークン化エラー時にスローされます。</exception>
+        /// <param name="input">トークン化する入力文字列</param>
+        /// <returns>トークンのリスト</returns>
+        /// <exception cref="ParseException">トークン化エラー時にスローされます</exception>
         public List<Token> Tokenize(string input)
         {
             var tokens = new List<Token>();
@@ -263,29 +263,29 @@ namespace Xeon.UniTerminal.Parsing
             private readonly int length;
 
             /// <summary>
-            /// 現在の位置。
+            /// 現在の位置
             /// </summary>
             public int Position { get; private set; }
 
             /// <summary>
-            /// まだ読み取り可能な文字が残っているか。
+            /// まだ読み取り可能な文字が残っているか
             /// </summary>
             public bool HasMore => Position < length;
 
             /// <summary>
-            /// 次の文字が存在するか。
+            /// 次の文字が存在するか
             /// </summary>
             public bool HasNext => Position + 1 < length;
 
             /// <summary>
-            /// 現在の文字。
+            /// 現在の文字
             /// </summary>
             public char Current => input[Position];
 
             /// <summary>
-            /// トークナイズ用コンテキストを初期化します。
+            /// トークナイズ用コンテキストを初期化します
             /// </summary>
-            /// <param name="input">入力文字列。</param>
+            /// <param name="input">入力文字列</param>
             public TokenizeContext(string input)
             {
                 this.input = input;
@@ -294,14 +294,14 @@ namespace Xeon.UniTerminal.Parsing
             }
 
             /// <summary>
-            /// 次の文字を取得します。
+            /// 次の文字を取得します
             /// </summary>
             public char PeekNext() => input[Position + 1];
 
             /// <summary>
-            /// 指定数だけ位置を進めます。
+            /// 指定数だけ位置を進めます
             /// </summary>
-            /// <param name="count">進める文字数。</param>
+            /// <param name="count">進める文字数</param>
             public void Advance(int count = 1) => Position += count;
         }
 

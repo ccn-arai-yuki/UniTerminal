@@ -7,7 +7,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// LoadedAssetRegistryのテスト。
+    /// LoadedAssetRegistryのテスト
     /// </summary>
     public class LoadedAssetRegistryTests
     {

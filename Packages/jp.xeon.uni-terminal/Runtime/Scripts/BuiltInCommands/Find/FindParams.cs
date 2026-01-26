@@ -3,23 +3,23 @@ using System.Text.RegularExpressions;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// findコマンドの検索条件。
+    /// findコマンドの検索条件
     /// </summary>
     public readonly struct FindParams
     {
         /// <summary>
-        /// 検索パターン。
+        /// 検索パターン
         /// </summary>
         public string pattern { get; }
         private readonly bool ignoreCase;
         private readonly FindFileType fileType;
 
         /// <summary>
-        /// 検索条件を初期化します。
+        /// 検索条件を初期化します
         /// </summary>
-        /// <param name="pattern">検索パターン。</param>
-        /// <param name="ignoreCase">大文字小文字を無視するかどうか。</param>
-        /// <param name="fileType">検索対象のファイル種別。</param>
+        /// <param name="pattern">検索パターン</param>
+        /// <param name="ignoreCase">大文字小文字を無視するかどうか</param>
+        /// <param name="fileType">検索対象のファイル種別</param>
         public FindParams(string pattern, bool ignoreCase, FindFileType fileType)
         {
             this.pattern = pattern;
@@ -28,11 +28,11 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ファイル種別が条件に合致するか判定します。
+        /// ファイル種別が条件に合致するか判定します
         /// </summary>
-        /// <param name="isFile">ファイルかどうか。</param>
-        /// <param name="isDirectory">ディレクトリかどうか。</param>
-        /// <returns>合致する場合はtrue。</returns>
+        /// <param name="isFile">ファイルかどうか</param>
+        /// <param name="isDirectory">ディレクトリかどうか</param>
+        /// <returns>合致する場合はtrue</returns>
         public bool MatchType(bool isFile, bool isDirectory)
         {
             if (fileType is FindFileType.All)
@@ -45,7 +45,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 正規表現オプション。
+        /// 正規表現オプション
         /// </summary>
         public RegexOptions RegexOption => ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
     }

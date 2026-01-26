@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// diffコマンドのテスト。
+    /// diffコマンドのテスト
     /// </summary>
     public class DiffCommandTests
     {

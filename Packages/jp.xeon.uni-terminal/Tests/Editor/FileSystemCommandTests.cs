@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// ファイルシステム関連コマンド（pwd, cd, ls）のテスト。
+    /// ファイルシステム関連コマンド（pwd, cd, ls）のテスト
     /// </summary>
     public class FileSystemCommandTests
     {

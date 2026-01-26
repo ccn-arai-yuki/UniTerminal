@@ -350,9 +350,9 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// ビューポートに収まるアイテムサイズを取得します。
+        /// ビューポートに収まるアイテムサイズを取得します
         /// </summary>
-        /// <returns>表示に適したアイテムサイズ。</returns>
+        /// <returns>表示に適したアイテムサイズ</returns>
         public Vector2 GetFitItemSize() => layouter.GetFitItemSize();
 
 

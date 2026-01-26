@@ -5,7 +5,7 @@ using System.IO;
 namespace Xeon.UniTerminal.Completion
 {
     /// <summary>
-    /// タブ補完用エンジン。
+    /// タブ補完用エンジン
     /// </summary>
     public class CompletionEngine
     {
@@ -14,11 +14,11 @@ namespace Xeon.UniTerminal.Completion
         private readonly string homeDirectory;
 
         /// <summary>
-        /// 補完エンジンを初期化します。
+        /// 補完エンジンを初期化します
         /// </summary>
-        /// <param name="registry">コマンドレジストリ。</param>
-        /// <param name="workingDirectory">現在の作業ディレクトリ。</param>
-        /// <param name="homeDirectory">ホームディレクトリ。</param>
+        /// <param name="registry">コマンドレジストリ</param>
+        /// <param name="workingDirectory">現在の作業ディレクトリ</param>
+        /// <param name="homeDirectory">ホームディレクトリ</param>
         public CompletionEngine(CommandRegistry registry, string workingDirectory, string homeDirectory)
         {
             this.registry = registry ?? throw new ArgumentNullException(nameof(registry));
@@ -27,10 +27,10 @@ namespace Xeon.UniTerminal.Completion
         }
 
         /// <summary>
-        /// 指定された入力に対する補完候補を取得します。
+        /// 指定された入力に対する補完候補を取得します
         /// </summary>
-        /// <param name="input">現在の入力行。</param>
-        /// <returns>候補を含む補完結果。</returns>
+        /// <param name="input">現在の入力行</param>
+        /// <returns>候補を含む補完結果</returns>
         public CompletionResult GetCompletions(string input)
         {
             if (string.IsNullOrEmpty(input))

@@ -9,29 +9,29 @@ using Object = UnityEngine.Object;
 namespace Xeon.UniTerminal.Assets
 {
     /// <summary>
-    /// Resources経由のアセットプロバイダー。
-    /// 注意: Resources APIはUnityが非推奨としています。
-    /// 可能であればAddressablesの使用を推奨します。
+    /// Resources経由のアセットプロバイダー
+    /// 注意: Resources APIはUnityが非推奨としています
+    /// 可能であればAddressablesの使用を推奨します
     /// </summary>
     public class ResourcesAssetProvider : IAssetProvider
     {
         /// <summary>
-        /// プロバイダー名。
+        /// プロバイダー名
         /// </summary>
         public string ProviderName => "Resources";
 
         /// <summary>
-        /// 利用可能かどうかを返します。
+        /// 利用可能かどうかを返します
         /// </summary>
         public bool IsAvailable => true;
 
         /// <summary>
-        /// アセットを非同期でロードします。
+        /// アセットを非同期でロードします
         /// </summary>
-        /// <typeparam name="T">アセット型。</typeparam>
-        /// <param name="key">アセットキー。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>ロード済みアセット。</returns>
+        /// <typeparam name="T">アセット型</typeparam>
+        /// <param name="key">アセットキー</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>ロード済みアセット</returns>
         public Task<T> LoadAsync<T>(string key, CancellationToken ct) where T : Object
         {
             ct.ThrowIfCancellationRequested();
@@ -41,12 +41,12 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 型指定でアセットを非同期ロードします。
+        /// 型指定でアセットを非同期ロードします
         /// </summary>
-        /// <param name="key">アセットキー。</param>
-        /// <param name="assetType">アセット型。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>ロード済みアセット。</returns>
+        /// <param name="key">アセットキー</param>
+        /// <param name="assetType">アセット型</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>ロード済みアセット</returns>
         public Task<Object> LoadAsync(string key, Type assetType, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
@@ -56,9 +56,9 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// ロード済みアセットを解放します。
+        /// ロード済みアセットを解放します
         /// </summary>
-        /// <param name="asset">解放対象アセット。</param>
+        /// <param name="asset">解放対象アセット</param>
         public void Release(Object asset)
         {
             if (asset != null)
@@ -66,11 +66,11 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// パターンに一致するアセット情報を取得します。
+        /// パターンに一致するアセット情報を取得します
         /// </summary>
-        /// <param name="pattern">検索パターン。</param>
-        /// <param name="assetType">アセット型。</param>
-        /// <returns>アセット情報列挙。</returns>
+        /// <param name="pattern">検索パターン</param>
+        /// <param name="assetType">アセット型</param>
+        /// <returns>アセット情報列挙</returns>
         public IEnumerable<AssetInfo> Find(string pattern, Type assetType = null)
         {
             // Resourcesでは実行時にファイル一覧を取得する標準的な方法がない
@@ -107,11 +107,11 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 指定パスのアセット情報を列挙します。
+        /// 指定パスのアセット情報を列挙します
         /// </summary>
-        /// <param name="path">検索パス。</param>
-        /// <param name="assetType">アセット型。</param>
-        /// <returns>アセット情報列挙。</returns>
+        /// <param name="path">検索パス</param>
+        /// <param name="assetType">アセット型</param>
+        /// <returns>アセット情報列挙</returns>
         public IEnumerable<AssetInfo> List(string path = null, Type assetType = null)
         {
             // Resourcesでは指定パス以下のアセット一覧を取得する方法がない
@@ -120,7 +120,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 未使用のアセットをアンロードします。
+        /// 未使用のアセットをアンロードします
         /// </summary>
         public void UnloadUnusedAssets()
         {

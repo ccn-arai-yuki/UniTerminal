@@ -14,18 +14,18 @@ namespace Xeon.UniTerminal.Sample
         private CanvasGroup canvasGroup;
 
         /// <summary>
-        /// アニメーション制御用のコンストラクタ。
+        /// アニメーション制御用のコンストラクタ
         /// </summary>
-        /// <param name="canvasGroup">対象のCanvasGroup。</param>
+        /// <param name="canvasGroup">対象のCanvasGroup</param>
         public AnimationControllerUniTask(CanvasGroup canvasGroup)
         {
             this.canvasGroup = canvasGroup;
         }
 
         /// <summary>
-        /// フェードインを実行します。
+        /// フェードインを実行します
         /// </summary>
-        /// <param name="token">キャンセルトークン。</param>
+        /// <param name="token">キャンセルトークン</param>
         public async UniTask OpenAsync(CancellationToken token = default)
         {
             canvasGroup.gameObject.SetActive(true);
@@ -41,9 +41,9 @@ namespace Xeon.UniTerminal.Sample
         }
 
         /// <summary>
-        /// フェードアウトを実行します。
+        /// フェードアウトを実行します
         /// </summary>
-        /// <param name="token">キャンセルトークン。</param>
+        /// <param name="token">キャンセルトークン</param>
         public async UniTask CloseAsync(CancellationToken token = default)
         {
             var elapsed = 0f;

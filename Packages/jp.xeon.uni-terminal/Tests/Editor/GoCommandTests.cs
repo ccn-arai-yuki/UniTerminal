@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// goコマンドのテスト。
+    /// goコマンドのテスト
     /// </summary>
     public class GoCommandTests
     {

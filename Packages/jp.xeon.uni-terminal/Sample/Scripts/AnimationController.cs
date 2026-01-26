@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Sample
 {
     /// <summary>
-    /// CanvasGroupのフェードアニメーションを制御します。
+    /// CanvasGroupのフェードアニメーションを制御します
     /// </summary>
     public class AnimationController
     {
@@ -16,10 +16,10 @@ namespace Xeon.UniTerminal.Sample
         private MonoBehaviour taskRunner;
 
         /// <summary>
-        /// アニメーション制御用のコンストラクタ。
+        /// アニメーション制御用のコンストラクタ
         /// </summary>
-        /// <param name="canvasGroup">対象のCanvasGroup。</param>
-        /// <param name="taskRunner">コルーチン実行用のMonoBehaviour。</param>
+        /// <param name="canvasGroup">対象のCanvasGroup</param>
+        /// <param name="taskRunner">コルーチン実行用のMonoBehaviour</param>
         public AnimationController(CanvasGroup canvasGroup, MonoBehaviour taskRunner)
         {
             this.canvasGroup = canvasGroup;
@@ -27,9 +27,9 @@ namespace Xeon.UniTerminal.Sample
         }
 
         /// <summary>
-        /// フェードインを実行します。
+        /// フェードインを実行します
         /// </summary>
-        /// <param name="token">キャンセルトークン。</param>
+        /// <param name="token">キャンセルトークン</param>
         public async Task OpenAsync(CancellationToken token = default)
         {
             var completionSource = new TaskCompletionSource<bool>();
@@ -38,9 +38,9 @@ namespace Xeon.UniTerminal.Sample
         }
 
         /// <summary>
-        /// フェードアウトを実行します。
+        /// フェードアウトを実行します
         /// </summary>
-        /// <param name="token">キャンセルトークン。</param>
+        /// <param name="token">キャンセルトークン</param>
         public async Task CloseAsync(CancellationToken token = default)
         {
             var completionSource = new TaskCompletionSource<bool>();

@@ -7,7 +7,7 @@ using UnityEngine.TestTools;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// propertyコマンドのPlayModeテスト。
+    /// propertyコマンドのPlayModeテスト
     /// </summary>
     public class PropertyCommandPlayModeTests
     {

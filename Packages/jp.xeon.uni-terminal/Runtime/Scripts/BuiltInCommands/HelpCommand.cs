@@ -6,27 +6,27 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// コマンドのヘルプを表示します。
+    /// コマンドのヘルプを表示します
     /// </summary>
     [Command("help", "Display help for commands")]
     public class HelpCommand : ICommand
     {
         /// <summary>
-        /// コマンド名。
+        /// コマンド名
         /// </summary>
         public string CommandName => "help";
 
         /// <summary>
-        /// コマンドの説明。
+        /// コマンドの説明
         /// </summary>
         public string Description => "Display help for commands";
 
         /// <summary>
-        /// コマンドを実行します。
+        /// コマンドを実行します
         /// </summary>
-        /// <param name="context">実行コンテキスト。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>終了コード。</returns>
+        /// <param name="context">実行コンテキスト</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             var registry = context.Registry;
@@ -57,10 +57,10 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 補完候補を返します。
+        /// 補完候補を返します
         /// </summary>
-        /// <param name="context">補完コンテキスト。</param>
-        /// <returns>補完候補。</returns>
+        /// <param name="context">補完コンテキスト</param>
+        /// <returns>補完候補</returns>
         public IEnumerable<string> GetCompletions(CompletionContext context)
         {
             // 補完はレジストリを使用してCompletionEngineで処理される
