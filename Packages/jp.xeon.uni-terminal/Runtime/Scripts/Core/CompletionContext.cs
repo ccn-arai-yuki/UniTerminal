@@ -30,6 +30,14 @@ namespace Xeon.UniTerminal
         /// </summary>
         public string HomeDirectory { get; }
 
+        /// <summary>
+        /// 補完処理に必要な情報を初期化します。
+        /// </summary>
+        /// <param name="inputLine">入力行全体。</param>
+        /// <param name="currentToken">補完対象のトークン。</param>
+        /// <param name="tokenIndex">トークンリスト内のインデックス。</param>
+        /// <param name="workingDirectory">現在の作業ディレクトリ。</param>
+        /// <param name="homeDirectory">ホームディレクトリ。</param>
         public CompletionContext(
             string inputLine,
             string currentToken,

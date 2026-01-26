@@ -4,8 +4,17 @@ using System.Collections.Generic;
 
 namespace Xeon.UniTerminal.Common
 {
+    /// <summary>
+    /// TextMeshPro向けのテキスト計測・整形ユーティリティ。
+    /// </summary>
     public static class TextMeshUtility
     {
+        /// <summary>
+        /// 指定文字列を利用して1行に収まる最大文字数を推定します。
+        /// </summary>
+        /// <param name="self">対象のTMP_Text。</param>
+        /// <param name="sampleCharacters">測定に使用するサンプル文字列。</param>
+        /// <returns>1行に収まる最大文字数。</returns>
         public static int GetMaxCharacterCountInOneLine(this TMP_Text self, string sampleCharacters)
         {
             float maxWidth = self.rectTransform.rect.width;

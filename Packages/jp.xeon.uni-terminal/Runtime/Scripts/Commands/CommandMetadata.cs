@@ -32,6 +32,13 @@ namespace Xeon.UniTerminal
         private readonly Dictionary<string, OptionMetadata> longNameMap;
         private readonly Dictionary<string, OptionMetadata> shortNameMap;
 
+        /// <summary>
+        /// コマンドメタデータを初期化します。
+        /// </summary>
+        /// <param name="commandName">コマンド名。</param>
+        /// <param name="description">コマンド説明。</param>
+        /// <param name="commandType">コマンド型。</param>
+        /// <param name="options">オプションメタデータ一覧。</param>
         public CommandMetadata(
             string commandName,
             string description,

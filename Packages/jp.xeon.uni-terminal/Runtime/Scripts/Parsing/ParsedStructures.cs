@@ -32,6 +32,12 @@ namespace Xeon.UniTerminal.Parsing
         /// </summary>
         public RedirectMode StdoutMode { get; }
 
+        /// <summary>
+        /// リダイレクション情報を初期化します。
+        /// </summary>
+        /// <param name="stdinPath">標準入力リダイレクトのパス。</param>
+        /// <param name="stdoutPath">標準出力リダイレクトのパス。</param>
+        /// <param name="stdoutMode">標準出力のリダイレクトモード。</param>
         public ParsedRedirections(string stdinPath, string stdoutPath, RedirectMode stdoutMode)
         {
             StdinPath = stdinPath;
@@ -75,6 +81,15 @@ namespace Xeon.UniTerminal.Parsing
         /// </summary>
         public bool IsValueSpaceSeparated { get; }
 
+        /// <summary>
+        /// パース済みオプション情報を初期化します。
+        /// </summary>
+        /// <param name="name">オプション名。</param>
+        /// <param name="isLong">ロングオプションかどうか。</param>
+        /// <param name="rawValue">生の値。</param>
+        /// <param name="hasValue">値が指定されたかどうか。</param>
+        /// <param name="wasQuoted">値がクォートされていたかどうか。</param>
+        /// <param name="isValueSpaceSeparated">値がスペース区切りで解析されたかどうか。</param>
         public ParsedOptionOccurrence(string name, bool isLong, string rawValue = null, bool hasValue = false, bool wasQuoted = false, bool isValueSpaceSeparated = false)
         {
             Name = name;
@@ -85,6 +100,9 @@ namespace Xeon.UniTerminal.Parsing
             IsValueSpaceSeparated = isValueSpaceSeparated;
         }
 
+        /// <summary>
+        /// 表示用の文字列を生成します。
+        /// </summary>
         public override string ToString()
         {
             var prefix = IsLong ? "--" : "-";

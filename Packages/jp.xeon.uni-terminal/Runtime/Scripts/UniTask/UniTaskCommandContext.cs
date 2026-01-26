@@ -70,6 +70,21 @@ namespace Xeon.UniTerminal.UniTask
         /// </summary>
         public Action<int> DeleteHistoryEntry { get; }
 
+        /// <summary>
+        /// コマンド実行に必要なコンテキスト情報を初期化します。
+        /// </summary>
+        /// <param name="stdin">標準入力リーダー。</param>
+        /// <param name="stdout">標準出力ライター。</param>
+        /// <param name="stderr">標準エラー出力ライター。</param>
+        /// <param name="workingDirectory">作業ディレクトリ。</param>
+        /// <param name="homeDirectory">ホームディレクトリ。</param>
+        /// <param name="positionalArguments">位置引数。</param>
+        /// <param name="registry">コマンドレジストリ。</param>
+        /// <param name="previousWorkingDirectory">前の作業ディレクトリ。</param>
+        /// <param name="changeWorkingDirectory">作業ディレクトリ変更コールバック。</param>
+        /// <param name="commandHistory">コマンド履歴。</param>
+        /// <param name="clearHistory">履歴クリアコールバック。</param>
+        /// <param name="deleteHistoryEntry">履歴削除コールバック。</param>
         public UniTaskCommandContext(
             IUniTaskTextReader stdin,
             IUniTaskTextWriter stdout,

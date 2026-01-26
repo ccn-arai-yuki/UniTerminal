@@ -13,24 +13,52 @@ namespace Xeon.UniTerminal.BuiltInCommands
     [Command("diff", "Compare files line by line")]
     public class DiffCommand : ICommand
     {
+        /// <summary>
+        /// Unified形式のコンテキスト行数。
+        /// </summary>
         [Option("unified", "u", Description = "Output in unified format with N lines of context")]
         public int UnifiedContext = -1;
 
+        /// <summary>
+        /// 大文字小文字を無視するかどうか。
+        /// </summary>
         [Option("ignore-case", "i", Description = "Ignore case differences")]
         public bool IgnoreCase;
 
+        /// <summary>
+        /// 空白の増減を無視するかどうか。
+        /// </summary>
         [Option("ignore-space", "b", Description = "Ignore changes in whitespace amount")]
         public bool IgnoreSpaceChange;
 
+        /// <summary>
+        /// すべての空白を無視するかどうか。
+        /// </summary>
         [Option("ignore-all-space", "w", Description = "Ignore all whitespace")]
         public bool IgnoreAllSpace;
 
+        /// <summary>
+        /// 差分があるかどうかのみを出力するかどうか。
+        /// </summary>
         [Option("brief", "q", Description = "Report only when files differ")]
         public bool Brief;
 
+        /// <summary>
+        /// コマンド名。
+        /// </summary>
         public string CommandName => "diff";
+
+        /// <summary>
+        /// コマンドの説明。
+        /// </summary>
         public string Description => "Compare files line by line";
 
+        /// <summary>
+        /// コマンドを実行します。
+        /// </summary>
+        /// <param name="context">実行コンテキスト。</param>
+        /// <param name="ct">キャンセルトークン。</param>
+        /// <returns>終了コード。</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             if (context.PositionalArguments.Count < 2)

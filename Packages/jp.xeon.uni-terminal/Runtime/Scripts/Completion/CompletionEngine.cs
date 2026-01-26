@@ -13,6 +13,12 @@ namespace Xeon.UniTerminal.Completion
         private readonly string workingDirectory;
         private readonly string homeDirectory;
 
+        /// <summary>
+        /// 補完エンジンを初期化します。
+        /// </summary>
+        /// <param name="registry">コマンドレジストリ。</param>
+        /// <param name="workingDirectory">現在の作業ディレクトリ。</param>
+        /// <param name="homeDirectory">ホームディレクトリ。</param>
         public CompletionEngine(CommandRegistry registry, string workingDirectory, string homeDirectory)
         {
             this.registry = registry ?? throw new ArgumentNullException(nameof(registry));

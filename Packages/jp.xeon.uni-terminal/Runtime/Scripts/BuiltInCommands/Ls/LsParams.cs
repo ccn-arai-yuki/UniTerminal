@@ -10,13 +10,45 @@ namespace Xeon.UniTerminal.BuiltInCommands
     /// </summary>
     public readonly struct LsParams
     {
+        /// <summary>
+        /// 隠しファイルを表示するかどうか。
+        /// </summary>
         public bool ShowAll { get; }
+
+        /// <summary>
+        /// 詳細表示を行うかどうか。
+        /// </summary>
         public bool LongFormat { get; }
+
+        /// <summary>
+        /// サイズを可読形式で表示するかどうか。
+        /// </summary>
         public bool HumanReadable { get; }
+
+        /// <summary>
+        /// 逆順表示するかどうか。
+        /// </summary>
         public bool Reverse { get; }
+
+        /// <summary>
+        /// 再帰的に表示するかどうか。
+        /// </summary>
         public bool Recursive { get; }
+
+        /// <summary>
+        /// ソート方法。
+        /// </summary>
         public LsSortType SortBy { get; }
 
+        /// <summary>
+        /// lsの表示設定を初期化します。
+        /// </summary>
+        /// <param name="showAll">隠しファイルを表示するかどうか。</param>
+        /// <param name="longFormat">詳細表示するかどうか。</param>
+        /// <param name="humanReadable">サイズを可読形式で表示するかどうか。</param>
+        /// <param name="reverse">逆順表示するかどうか。</param>
+        /// <param name="recursive">再帰的に表示するかどうか。</param>
+        /// <param name="sortBy">ソート方法。</param>
         public LsParams(bool showAll, bool longFormat, bool humanReadable, bool reverse, bool recursive, LsSortType sortBy)
         {
             ShowAll = showAll;

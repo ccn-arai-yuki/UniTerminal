@@ -262,11 +262,30 @@ namespace Xeon.UniTerminal.Parsing
             private readonly string input;
             private readonly int length;
 
+            /// <summary>
+            /// 現在の位置。
+            /// </summary>
             public int Position { get; private set; }
+
+            /// <summary>
+            /// まだ読み取り可能な文字が残っているか。
+            /// </summary>
             public bool HasMore => Position < length;
+
+            /// <summary>
+            /// 次の文字が存在するか。
+            /// </summary>
             public bool HasNext => Position + 1 < length;
+
+            /// <summary>
+            /// 現在の文字。
+            /// </summary>
             public char Current => input[Position];
 
+            /// <summary>
+            /// トークナイズ用コンテキストを初期化します。
+            /// </summary>
+            /// <param name="input">入力文字列。</param>
             public TokenizeContext(string input)
             {
                 this.input = input;
@@ -274,8 +293,15 @@ namespace Xeon.UniTerminal.Parsing
                 Position = 0;
             }
 
+            /// <summary>
+            /// 次の文字を取得します。
+            /// </summary>
             public char PeekNext() => input[Position + 1];
 
+            /// <summary>
+            /// 指定数だけ位置を進めます。
+            /// </summary>
+            /// <param name="count">進める文字数。</param>
             public void Advance(int count = 1) => Position += count;
         }
 

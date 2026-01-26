@@ -12,6 +12,10 @@ namespace Xeon.UniTerminal.Binding
         /// </summary>
         public IReadOnlyList<BoundCommand> Commands { get; }
 
+        /// <summary>
+        /// バインド済みコマンドの一覧からパイプラインを作成します。
+        /// </summary>
+        /// <param name="commands">順序通りのバインド済みコマンド。</param>
         public BoundPipeline(List<BoundCommand> commands)
         {
             Commands = commands;

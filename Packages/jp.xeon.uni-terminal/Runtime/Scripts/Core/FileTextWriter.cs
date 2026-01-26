@@ -12,6 +12,11 @@ namespace Xeon.UniTerminal
     {
         private readonly StreamWriter writer;
 
+        /// <summary>
+        /// ファイルライターを初期化します。
+        /// </summary>
+        /// <param name="filePath">出力先ファイルパス。</param>
+        /// <param name="append">追記する場合はtrue。</param>
         public FileTextWriter(string filePath, bool append = false)
         {
             var stream = new FileStream(
@@ -22,6 +27,11 @@ namespace Xeon.UniTerminal
             writer = new StreamWriter(stream, Encoding.UTF8);
         }
 
+        /// <summary>
+        /// 行を書き込みます。
+        /// </summary>
+        /// <param name="line">書き込む行。</param>
+        /// <param name="ct">キャンセルトークン。</param>
         public async Task WriteLineAsync(string line, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -29,6 +39,11 @@ namespace Xeon.UniTerminal
             await writer.FlushAsync();
         }
 
+        /// <summary>
+        /// テキストを書き込みます。
+        /// </summary>
+        /// <param name="text">書き込むテキスト。</param>
+        /// <param name="ct">キャンセルトークン。</param>
         public async Task WriteAsync(string text, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -36,12 +51,18 @@ namespace Xeon.UniTerminal
             await writer.FlushAsync();
         }
 
+        /// <summary>
+        /// ファイルライターではクリアをサポートしません。
+        /// </summary>
         public void Clear()
         {
             // ファイル出力ではクリアはサポートしない
             throw new System.NotSupportedException("Clear operation is not supported for FileTextWriter.");
         }
 
+        /// <summary>
+        /// ライターを破棄します。
+        /// </summary>
         public void Dispose()
         {
             writer?.Dispose();

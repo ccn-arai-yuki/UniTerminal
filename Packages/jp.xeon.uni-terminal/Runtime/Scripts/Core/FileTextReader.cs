@@ -11,11 +11,19 @@ namespace Xeon.UniTerminal
     {
         private readonly string filePath;
 
+        /// <summary>
+        /// 読み取り対象のファイルパスを受け取ります。
+        /// </summary>
+        /// <param name="filePath">読み取り対象のファイルパス。</param>
         public FileTextReader(string filePath)
         {
             this.filePath = filePath;
         }
 
+        /// <summary>
+        /// ファイルから行を順に読み取ります。
+        /// </summary>
+        /// <param name="ct">キャンセルトークン。</param>
         public async IAsyncEnumerable<string> ReadLinesAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
             using var reader = new StreamReader(filePath, System.Text.Encoding.UTF8);

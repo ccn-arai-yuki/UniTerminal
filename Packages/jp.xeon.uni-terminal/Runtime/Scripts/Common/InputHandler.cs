@@ -4,8 +4,14 @@ using UnityEngine.InputSystem;
 
 namespace Xeon.UniTerminal.Common
 {
+    /// <summary>
+    /// 入力システムの差異を吸収するユーティリティ。
+    /// </summary>
     public static class InputHandler
     {
+        /// <summary>
+        /// 上矢印キーが押下されたかを取得します。
+        /// </summary>
         public static bool IsPressedUpArrow()
         {
             var result = false;
@@ -18,6 +24,9 @@ namespace Xeon.UniTerminal.Common
             return result;
         }
 
+        /// <summary>
+        /// 下矢印キーが押下されたかを取得します。
+        /// </summary>
         public static bool IsPressedDownArrow()
         {
             var result = false;
@@ -30,6 +39,9 @@ namespace Xeon.UniTerminal.Common
             return result;
         }
 
+        /// <summary>
+        /// Enterキーが押下されたかを取得します。
+        /// </summary>
         public static bool IsPressedReturn()
         {
             var result = false;
@@ -42,6 +54,9 @@ namespace Xeon.UniTerminal.Common
             return result;
         }
 
+        /// <summary>
+        /// Tabキーが押下されたかを取得します。
+        /// </summary>
         public static bool IsPressedTab()
         {
             var result = false;
@@ -54,6 +69,9 @@ namespace Xeon.UniTerminal.Common
             return result;
         }
 
+        /// <summary>
+        /// Yキーが押下されたかを取得します。
+        /// </summary>
         public static bool IsPressedY()
         {
             var result = false;
@@ -66,6 +84,9 @@ namespace Xeon.UniTerminal.Common
             return result;
         }
 
+        /// <summary>
+        /// Nキーが押下されたかを取得します。
+        /// </summary>
         public static bool IsPressedN()
         {
             var result = false;

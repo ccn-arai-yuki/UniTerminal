@@ -41,16 +41,35 @@ namespace Xeon.UniTerminal.Parsing
     /// </summary>
     public readonly struct SourceSpan
     {
+        /// <summary>
+        /// 開始位置。
+        /// </summary>
         public int Start { get; }
+
+        /// <summary>
+        /// 長さ。
+        /// </summary>
         public int Length { get; }
+
+        /// <summary>
+        /// 終端位置。
+        /// </summary>
         public int End => Start + Length;
 
+        /// <summary>
+        /// ソース範囲を初期化します。
+        /// </summary>
+        /// <param name="start">開始位置。</param>
+        /// <param name="length">長さ。</param>
         public SourceSpan(int start, int length)
         {
             Start = start;
             Length = length;
         }
 
+        /// <summary>
+        /// 表示用文字列を生成します。
+        /// </summary>
         public override string ToString() => $"[{Start}..{End})";
     }
 
@@ -79,6 +98,13 @@ namespace Xeon.UniTerminal.Parsing
         /// </summary>
         public bool WasQuoted { get; }
 
+        /// <summary>
+        /// トークンを初期化します。
+        /// </summary>
+        /// <param name="kind">トークン種別。</param>
+        /// <param name="value">トークン値。</param>
+        /// <param name="span">元の入力内での範囲。</param>
+        /// <param name="wasQuoted">クォートされていたかどうか。</param>
         public Token(TokenKind kind, string value, SourceSpan span, bool wasQuoted = false)
         {
             Kind = kind;
@@ -87,6 +113,9 @@ namespace Xeon.UniTerminal.Parsing
             WasQuoted = wasQuoted;
         }
 
+        /// <summary>
+        /// 表示用文字列を生成します。
+        /// </summary>
         public override string ToString() => $"{Kind}: \"{Value}\" {Span}";
     }
 }

@@ -11,11 +11,19 @@ namespace Xeon.UniTerminal
     {
         private readonly IReadOnlyList<string> lines;
 
+        /// <summary>
+        /// 読み取り対象の行リストを受け取ります。
+        /// </summary>
+        /// <param name="lines">読み取り対象の行リスト。</param>
         public ListTextReader(IReadOnlyList<string> lines)
         {
             this.lines = lines;
         }
 
+        /// <summary>
+        /// 行を順に返します。
+        /// </summary>
+        /// <param name="ct">キャンセルトークン。</param>
         public async IAsyncEnumerable<string> ReadLinesAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
             foreach (var line in lines)

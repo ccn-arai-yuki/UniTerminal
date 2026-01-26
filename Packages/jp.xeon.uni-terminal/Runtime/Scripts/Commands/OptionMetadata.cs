@@ -53,6 +53,15 @@ namespace Xeon.UniTerminal
         /// </summary>
         public Type ListElementType { get; }
 
+        /// <summary>
+        /// オプションメタデータを初期化します。
+        /// </summary>
+        /// <param name="longName">ロングオプション名。</param>
+        /// <param name="shortName">ショートオプション名。</param>
+        /// <param name="isRequired">必須オプションかどうか。</param>
+        /// <param name="description">オプション説明。</param>
+        /// <param name="optionType">オプション型。</param>
+        /// <param name="member">対象のメンバー。</param>
         public OptionMetadata(
             string longName,
             string shortName,
@@ -104,6 +113,9 @@ namespace Xeon.UniTerminal
             }
         }
 
+        /// <summary>
+        /// 表示用文字列を生成します。
+        /// </summary>
         public override string ToString()
         {
             var shortPart = string.IsNullOrEmpty(ShortName) ? "" : $"-{ShortName}, ";

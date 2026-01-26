@@ -351,10 +351,29 @@ namespace Xeon.UniTerminal.Parsing
 
         private class CommandParseContext
         {
+            /// <summary>
+            /// 現在解析中のコマンド。
+            /// </summary>
             public ParsedCommand Command { get; } = new ParsedCommand();
+
+            /// <summary>
+            /// オプション終端（--）以降を解析中かどうか。
+            /// </summary>
             public bool AfterEndOfOptions { get; set; }
+
+            /// <summary>
+            /// 標準入力リダイレクトのパス。
+            /// </summary>
             public string StdinPath { get; set; }
+
+            /// <summary>
+            /// 標準出力リダイレクトのパス。
+            /// </summary>
             public string StdoutPath { get; set; }
+
+            /// <summary>
+            /// 標準出力リダイレクトのモード。
+            /// </summary>
             public RedirectMode StdoutMode { get; set; } = RedirectMode.None;
         }
 

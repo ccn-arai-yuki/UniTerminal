@@ -16,10 +16,23 @@ namespace Xeon.UniTerminal.Assets
     /// </summary>
     public class AssetDatabaseProvider : IAssetProvider
     {
+        /// <summary>
+        /// プロバイダー名。
+        /// </summary>
         public string ProviderName => "AssetDatabase";
 
+        /// <summary>
+        /// 利用可能かどうかを返します。
+        /// </summary>
         public bool IsAvailable => Application.isEditor;
 
+        /// <summary>
+        /// アセットを非同期でロードします。
+        /// </summary>
+        /// <typeparam name="T">アセット型。</typeparam>
+        /// <param name="key">アセットキー。</param>
+        /// <param name="ct">キャンセルトークン。</param>
+        /// <returns>ロード済みアセット。</returns>
         public Task<T> LoadAsync<T>(string key, CancellationToken ct) where T : UnityEngine.Object
         {
             ct.ThrowIfCancellationRequested();
@@ -28,6 +41,13 @@ namespace Xeon.UniTerminal.Assets
             return Task.FromResult(asset);
         }
 
+        /// <summary>
+        /// 型指定でアセットを非同期ロードします。
+        /// </summary>
+        /// <param name="key">アセットキー。</param>
+        /// <param name="assetType">アセット型。</param>
+        /// <param name="ct">キャンセルトークン。</param>
+        /// <returns>ロード済みアセット。</returns>
         public Task<UnityEngine.Object> LoadAsync(string key, Type assetType, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
@@ -36,12 +56,22 @@ namespace Xeon.UniTerminal.Assets
             return Task.FromResult(asset);
         }
 
+        /// <summary>
+        /// AssetDatabase経由でロードしたアセットの解放処理。
+        /// </summary>
+        /// <param name="asset">解放対象アセット。</param>
         public void Release(UnityEngine.Object asset)
         {
             // AssetDatabaseでロードしたアセットは自動管理されるため、
             // 明示的なリリースは不要
         }
 
+        /// <summary>
+        /// パターンに一致するアセット情報を取得します。
+        /// </summary>
+        /// <param name="pattern">検索パターン。</param>
+        /// <param name="assetType">アセット型。</param>
+        /// <returns>アセット情報列挙。</returns>
         public IEnumerable<AssetInfo> Find(string pattern, Type assetType = null)
         {
             // AssetDatabase.FindAssetsを使用して検索
@@ -68,6 +98,12 @@ namespace Xeon.UniTerminal.Assets
             }
         }
 
+        /// <summary>
+        /// 指定パス配下のアセット情報を列挙します。
+        /// </summary>
+        /// <param name="path">検索パス。</param>
+        /// <param name="assetType">アセット型。</param>
+        /// <returns>アセット情報列挙。</returns>
         public IEnumerable<AssetInfo> List(string path = null, Type assetType = null)
         {
             string[] searchFolders = null;

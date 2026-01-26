@@ -24,6 +24,17 @@ namespace Xeon.UniTerminal.UniTask
         private readonly Action clearHistoryCallback;
         private readonly Action<int> deleteHistoryEntryCallback;
 
+        /// <summary>
+        /// UniTask版パイプライン実行に必要な環境情報を初期化します。
+        /// </summary>
+        /// <param name="workingDirectory">作業ディレクトリ。</param>
+        /// <param name="homeDirectory">ホームディレクトリ。</param>
+        /// <param name="registry">コマンドレジストリ。</param>
+        /// <param name="previousWorkingDirectory">前の作業ディレクトリ。</param>
+        /// <param name="changeWorkingDirectoryCallback">作業ディレクトリ変更コールバック。</param>
+        /// <param name="commandHistory">コマンド履歴。</param>
+        /// <param name="clearHistoryCallback">履歴クリアコールバック。</param>
+        /// <param name="deleteHistoryEntryCallback">履歴削除コールバック。</param>
         public UniTaskPipelineExecutor(
             string workingDirectory,
             string homeDirectory,
@@ -252,8 +263,19 @@ namespace Xeon.UniTerminal.UniTask
 
         private readonly struct StdinResolutionResult
         {
+            /// <summary>
+            /// 解決が成功したかどうか。
+            /// </summary>
             public bool Success { get; }
+
+            /// <summary>
+            /// 解決された入力リーダー。
+            /// </summary>
             public IUniTaskTextReader Reader { get; }
+
+            /// <summary>
+            /// エラーメッセージ。
+            /// </summary>
             public string ErrorMessage { get; }
 
             private StdinResolutionResult(bool success, IUniTaskTextReader reader, string errorMessage)
@@ -263,16 +285,31 @@ namespace Xeon.UniTerminal.UniTask
                 ErrorMessage = errorMessage;
             }
 
+            /// <summary>
+            /// 成功結果を生成します。
+            /// </summary>
+            /// <param name="reader">入力リーダー。</param>
             public static StdinResolutionResult FromReader(IUniTaskTextReader reader)
                 => new StdinResolutionResult(true, reader, null);
 
+            /// <summary>
+            /// 失敗結果を生成します。
+            /// </summary>
+            /// <param name="message">エラーメッセージ。</param>
             public static StdinResolutionResult FromError(string message)
                 => new StdinResolutionResult(false, null, message);
         }
 
         private readonly struct StdoutResolutionResult
         {
+            /// <summary>
+            /// 解決された出力ライター。
+            /// </summary>
             public IUniTaskTextWriter Writer { get; }
+
+            /// <summary>
+            /// パイプ用のバッファ。
+            /// </summary>
             public UniTaskListTextWriter PipeBuffer { get; }
 
             private StdoutResolutionResult(IUniTaskTextWriter writer, UniTaskListTextWriter pipeBuffer)
@@ -281,17 +318,36 @@ namespace Xeon.UniTerminal.UniTask
                 PipeBuffer = pipeBuffer;
             }
 
+            /// <summary>
+            /// 出力ライターの結果を生成します。
+            /// </summary>
+            /// <param name="writer">出力ライター。</param>
             public static StdoutResolutionResult FromWriter(IUniTaskTextWriter writer)
                 => new StdoutResolutionResult(writer, null);
 
+            /// <summary>
+            /// パイプ用の結果を生成します。
+            /// </summary>
+            /// <param name="pipeBuffer">パイプバッファ。</param>
             public static StdoutResolutionResult FromPipe(UniTaskListTextWriter pipeBuffer)
                 => new StdoutResolutionResult(pipeBuffer, pipeBuffer);
         }
 
         private readonly struct CommandExecutionResult
         {
+            /// <summary>
+            /// 実行が成功したかどうか。
+            /// </summary>
             public bool Success { get; }
+
+            /// <summary>
+            /// 終了コード。
+            /// </summary>
             public ExitCode ExitCode { get; }
+
+            /// <summary>
+            /// エラーメッセージ。
+            /// </summary>
             public string ErrorMessage { get; }
 
             private CommandExecutionResult(bool success, ExitCode exitCode, string errorMessage)
@@ -301,9 +357,17 @@ namespace Xeon.UniTerminal.UniTask
                 ErrorMessage = errorMessage;
             }
 
+            /// <summary>
+            /// 成功結果を生成します。
+            /// </summary>
+            /// <param name="exitCode">終了コード。</param>
             public static CommandExecutionResult FromSuccess(ExitCode exitCode)
                 => new CommandExecutionResult(true, exitCode, null);
 
+            /// <summary>
+            /// 失敗結果を生成します。
+            /// </summary>
+            /// <param name="message">エラーメッセージ。</param>
             public static CommandExecutionResult FromError(string message)
                 => new CommandExecutionResult(false, ExitCode.RuntimeError, message);
         }

@@ -14,21 +14,46 @@ namespace Xeon.UniTerminal.BuiltInCommands
     [Command("less", "View file contents page by page")]
     public class LessCommand : ICommand
     {
+        /// <summary>
+        /// 1ページあたりに表示する行数。
+        /// </summary>
         [Option("lines", "n", Description = "Number of lines to display at once (0 = all)")]
         public int LinesPerPage = 0;
 
+        /// <summary>
+        /// 表示開始行（1ベース）。
+        /// </summary>
         [Option("from-line", "f", Description = "Start from specified line (1-based)")]
         public int FromLine = 1;
 
+        /// <summary>
+        /// 行番号を表示するかどうか。
+        /// </summary>
         [Option("line-numbers", "N", Description = "Show line numbers")]
         public bool ShowLineNumbers;
 
+        /// <summary>
+        /// 長い行を切り詰めるかどうか。
+        /// </summary>
         [Option("chop-long-lines", "S", Description = "Chop long lines at 80 characters")]
         public bool ChopLongLines;
 
+        /// <summary>
+        /// コマンド名。
+        /// </summary>
         public string CommandName => "less";
+
+        /// <summary>
+        /// コマンドの説明。
+        /// </summary>
         public string Description => "View file contents page by page";
 
+        /// <summary>
+        /// コマンドを実行します。
+        /// </summary>
+        /// <param name="context">実行コンテキスト。</param>
+        /// <param name="ct">キャンセルトークン。</param>
+        /// <returns>終了コード。</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             var result = await ReadInputAsync(context, ct);

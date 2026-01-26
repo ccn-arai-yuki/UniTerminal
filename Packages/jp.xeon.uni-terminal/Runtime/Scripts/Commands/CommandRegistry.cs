@@ -12,8 +12,14 @@ namespace Xeon.UniTerminal
     {
         private readonly Dictionary<string, CommandMetadata> commands;
 
+        /// <summary>
+        /// 登録済みのコマンドメタデータ。
+        /// </summary>
         public IReadOnlyDictionary<string, CommandMetadata> Commands => commands;
 
+        /// <summary>
+        /// コマンドレジストリを初期化します。
+        /// </summary>
         public CommandRegistry()
         {
             commands = new Dictionary<string, CommandMetadata>(StringComparer.OrdinalIgnoreCase);

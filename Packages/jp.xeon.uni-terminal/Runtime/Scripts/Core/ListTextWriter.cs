@@ -13,8 +13,16 @@ namespace Xeon.UniTerminal
         private readonly List<string> lines = new List<string>();
         private string partial = "";
 
+        /// <summary>
+        /// 収集した行の一覧を取得します。
+        /// </summary>
         public IReadOnlyList<string> Lines => lines;
 
+        /// <summary>
+        /// 行を追加します。
+        /// </summary>
+        /// <param name="line">書き込む行。</param>
+        /// <param name="ct">キャンセルトークン。</param>
         public Task WriteLineAsync(string line, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -23,6 +31,11 @@ namespace Xeon.UniTerminal
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// テキストを追加します。
+        /// </summary>
+        /// <param name="text">書き込むテキスト。</param>
+        /// <param name="ct">キャンセルトークン。</param>
         public Task WriteAsync(string text, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -42,6 +55,9 @@ namespace Xeon.UniTerminal
             }
         }
 
+        /// <summary>
+        /// バッファと収集済みの行をクリアします。
+        /// </summary>
         public void Clear()
         {
             lines.Clear();

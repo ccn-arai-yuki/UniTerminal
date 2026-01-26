@@ -23,24 +23,52 @@ namespace Xeon.UniTerminal.BuiltInCommands
     [Command("find", "Search for files in a directory hierarchy")]
     public class FindCommand : ICommand
     {
+        /// <summary>
+        /// ファイル名の検索パターン。
+        /// </summary>
         [Option("name", "n", Description = "File name pattern (supports wildcards)")]
         public string NamePattern;
 
+        /// <summary>
+        /// 大文字小文字を無視する検索パターン。
+        /// </summary>
         [Option("iname", "i", Description = "Case-insensitive file name pattern")]
         public string INamePattern;
 
+        /// <summary>
+        /// 検索対象のファイル種別。
+        /// </summary>
         [Option("type", "t", Description = "File type: f (file), d (directory)")]
         public string FileType;
 
+        /// <summary>
+        /// 探索の最大深さ。
+        /// </summary>
         [Option("maxdepth", "d", Description = "Maximum search depth (-1 = unlimited)")]
         public int MaxDepth = -1;
 
+        /// <summary>
+        /// 探索の最小深さ。
+        /// </summary>
         [Option("mindepth", "", Description = "Minimum search depth")]
         public int MinDepth = 0;
 
+        /// <summary>
+        /// コマンド名。
+        /// </summary>
         public string CommandName => "find";
+
+        /// <summary>
+        /// コマンドの説明。
+        /// </summary>
         public string Description => "Search for files in a directory hierarchy";
 
+        /// <summary>
+        /// コマンドを実行します。
+        /// </summary>
+        /// <param name="context">実行コンテキスト。</param>
+        /// <param name="ct">キャンセルトークン。</param>
+        /// <returns>終了コード。</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             try

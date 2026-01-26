@@ -39,6 +39,9 @@ namespace Xeon.UniTerminal.UniTask
             return inner.WriteAsync(text, ct).AsTask();
         }
 
+        /// <summary>
+        /// 内部ライターのバッファをクリアします。
+        /// </summary>
         public void Clear() => inner.Clear();
     }
 }

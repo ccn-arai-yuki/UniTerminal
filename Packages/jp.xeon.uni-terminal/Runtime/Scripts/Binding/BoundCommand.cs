@@ -28,6 +28,13 @@ namespace Xeon.UniTerminal.Binding
         /// </summary>
         public ParsedRedirections Redirections { get; }
 
+        /// <summary>
+        /// バインド済みコマンドを生成します。
+        /// </summary>
+        /// <param name="command">オプションが設定されたコマンドインスタンス。</param>
+        /// <param name="metadata">コマンドのメタデータ。</param>
+        /// <param name="positionalArguments">位置引数。</param>
+        /// <param name="redirections">リダイレクション情報。</param>
         public BoundCommand(
             ICommand command,
             CommandMetadata metadata,
