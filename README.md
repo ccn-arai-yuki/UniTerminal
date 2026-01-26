@@ -117,48 +117,48 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `pwd` | 現在の作業ディレクトリを表示 | `-L`, `-P` |
-| `cd` | 作業ディレクトリを変更 | `-L`, `-P` |
-| `ls` | ディレクトリ内容を一覧表示 | `-a`, `-l`, `-h`, `-r`, `-R`, `-S` |
+| `pwd` | 現在の作業ディレクトリを表示 | `-L, --logical`, `-P, --physical` |
+| `cd` | 作業ディレクトリを変更 | `-L, --logical`, `-P, --physical` |
+| `ls` | ディレクトリ内容を一覧表示 | `-a, --all`, `-l, --long`, `-h, --human-readable`, `-r, --reverse`, `-R, --recursive`, `-S, --sort` |
 | `cat` | ファイル内容を表示 | - |
-| `find` | ファイルを検索 | `-n`, `-i`, `-t`, `-d` |
-| `less` | ファイルをページ単位で表示 | `-n`, `-f`, `-N`, `-S` |
-| `diff` | ファイルの差分を比較 | `-u`, `-i`, `-b`, `-w`, `-q` |
+| `find` | ファイルを検索 | `-n, --name`, `-i, --iname`, `-t, --type`, `-d, --maxdepth`, `--mindepth` |
+| `less` | ファイルをページ単位で表示 | `-n, --lines`, `-f, --from-line`, `-N, --line-numbers`, `-S, --chop-long-lines` |
+| `diff` | ファイルの差分を比較 | `-u, --unified`, `-i, --ignore-case`, `-b, --ignore-space`, `-w, --ignore-all-space`, `-q, --brief` |
 
 ### テキスト処理コマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `echo` | テキストを出力 | `-n` |
-| `grep` | パターンマッチング検索 | `--pattern`, `-i`, `-v`, `-c` |
+| `echo` | テキストを出力 | `-n, --newline` |
+| `grep` | パターンマッチング検索 | `-p, --pattern`, `-i, --ignorecase`, `-v, --invert`, `-c, --count` |
 
 ### ユーティリティコマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
 | `help` | ヘルプを表示 | - |
-| `history` | コマンド履歴を管理 | `-c`, `-d`, `-n`, `-r` |
+| `history` | コマンド履歴を管理 | `-c, --clear`, `-d, --delete`, `-n, --number`, `-r, --reverse` |
 | `clear` | 画面表示をクリア | - |
 
 ### Unity固有コマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y`, `-i` |
-| `go` | GameObjectを操作 | `--primitive`, `--parent`, `--position`, `--rotation`, `-t`, `-n`, `-c`, `-i`, `-s`, `--toggle`, `--immediate`, `--children`, `--count` |
-| `transform` | Transformを操作 | `-p`, `-P`, `-r`, `-R`, `-s`, `--parent`, `-w` |
-| `component` | コンポーネントを管理 | `-a`, `-v`, `-i`, `-n` |
-| `property` | プロパティ値を操作 | `-a`, `-s`, `-n` |
-| `scene` | シーンを管理 | `-a`, `-l`, `--additive`, `--async`, `-s` |
+| `hierarchy` | シーンヒエラルキーを表示 | `-r, --recursive`, `-d, --depth`, `-a, --all`, `-l, --long`, `-s, --scene`, `-n, --name`, `-c, --component`, `-t, --tag`, `-y, --layer`, `-i, --id` |
+| `go` | GameObjectを操作 | `-p, --primitive`, `--parent`, `--position`, `--rotation`, `-t, --tag`, `-n, --name`, `-c, --component`, `-i, --inactive`, `-s, --set`, `--toggle`, `--immediate`, `--children`, `--count` |
+| `transform` | Transformを操作 | `-p, --position`, `-P, --local-position`, `-r, --rotation`, `-R, --local-rotation`, `-s, --scale`, `--parent`, `-w, --world` |
+| `component` | コンポーネントを管理 | `-a, --all`, `-v, --verbose`, `-i, --immediate`, `-n, --namespace` |
+| `property` | プロパティ値を操作 | `-a, --all`, `-s, --serialized`, `-n, --namespace` |
+| `scene` | シーンを管理 | `-a, --all`, `-l, --long`, `--additive`, `--async`, `-s, --setup` |
 
 ### アセット管理コマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `asset` | ロード済みアセットを管理 | `-t`, `-n`, `-l` |
-| `assetdb` | AssetDatabase経由でロード（エディタ専用） | `-t`, `-l` |
-| `adr` | Addressables経由でロード | `-t`, `-l` |
-| `res` | Resources経由でロード（非推奨） | `-t`, `-l` |
+| `asset` | ロード済みアセットを管理 | `-t, --type`, `-n, --name`, `-l, --long` |
+| `assetdb` | AssetDatabase経由でロード（エディタ専用） | `-t, --type`, `-l, --long` |
+| `adr` | Addressables経由でロード | `-t, --type`, `-l, --long` |
+| `res` | Resources経由でロード（非推奨） | `-t, --type`, `-l, --long` |
 
 ## コマンド詳細
 
