@@ -36,6 +36,12 @@ namespace Xeon.UniTerminal
             await writer.FlushAsync();
         }
 
+        public void Clear()
+        {
+            // ファイル出力ではクリアはサポートしない
+            throw new System.NotSupportedException("Clear operation is not supported for FileTextWriter.");
+        }
+
         public void Dispose()
         {
             writer?.Dispose();

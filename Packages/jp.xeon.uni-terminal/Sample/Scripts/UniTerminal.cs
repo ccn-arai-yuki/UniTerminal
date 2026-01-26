@@ -216,27 +216,8 @@ namespace Xeon.UniTerminal.Sample
 
             var sample = scrollViewController.GetSample();
 
-            buffer.PushFront(new OutputData($"> {input.text}", false));
-
-            var displayText = string.Empty;
-            for (var index = 0; index < displayTexts.Count; index++)
-            {
-                var tmp = displayText;
-                if (index > 0) tmp += " ";
-                tmp += displayTexts[index];
-                if (tmp.Length >= maxCharsPerLine)
-                {
-                    buffer.PushFront(new OutputData(displayText, false));
-                    displayText = displayTexts[index];
-                    continue;
-                }
-                displayText = tmp;
-            }
-
-            // 最後の行を追加
-            if (!string.IsNullOrEmpty(displayText))
-                buffer.PushFront(new OutputData(displayText, false));
-
+            normalOutput.WriteAsync($"> {input.text}");
+            normalOutput.WriteAsync(string.Join(" ", displayTexts));
             ScrollToBottom();
         }
 
@@ -313,7 +294,7 @@ namespace Xeon.UniTerminal.Sample
             try
             {
                 input.interactable = false;
-                buffer.PushFront(new OutputData($"> {command}", false));
+                await normalOutput.WriteAsync($"> {command}");
                 ScrollToBottom();
                 input.DeactivateInputField();
 #if UNI_TERMINAL_UNI_TASK_SUPPORT

@@ -17,5 +17,7 @@ namespace Xeon.UniTerminal
         /// 改行なしでテキストを非同期で書き込みます。
         /// </summary>
         Task WriteAsync(string text, CancellationToken ct = default);
+
+        void Clear();
     }
 }

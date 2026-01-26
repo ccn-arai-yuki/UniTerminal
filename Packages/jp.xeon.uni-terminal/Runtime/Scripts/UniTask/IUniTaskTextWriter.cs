@@ -23,6 +23,8 @@ namespace Xeon.UniTerminal.UniTask
         /// <param name="text">書き込むテキスト。</param>
         /// <param name="ct">キャンセルトークン。</param>
         UniTask WriteAsync(string text, CancellationToken ct = default);
+
+        void Clear();
     }
 }
 #endif

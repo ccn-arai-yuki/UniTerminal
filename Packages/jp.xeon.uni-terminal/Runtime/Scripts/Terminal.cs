@@ -106,6 +106,8 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<LessCommand>();
             registry.RegisterCommand<DiffCommand>();
 
+            registry.RegisterCommand<ClearCommand>();
+
             // Unity固有コマンド
             registry.RegisterCommand<HierarchyCommand>();
             registry.RegisterCommand<GoCommand>();

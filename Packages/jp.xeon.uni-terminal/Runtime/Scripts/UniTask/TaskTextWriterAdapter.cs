@@ -37,6 +37,8 @@ namespace Xeon.UniTerminal.UniTask
         {
             return inner.WriteAsync(text, ct).AsUniTask();
         }
+
+        public void Clear() => inner.Clear();
     }
 }
 #endif

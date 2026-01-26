@@ -73,6 +73,11 @@ namespace Xeon.UniTerminal.Sample
             return UniTask.CompletedTask;
         }
 
+        public void Clear()
+        {
+            buffer.Clear();
+        }
+
         /// <summary>
         /// ワードラップを適用して行を書き込む
         /// </summary>
