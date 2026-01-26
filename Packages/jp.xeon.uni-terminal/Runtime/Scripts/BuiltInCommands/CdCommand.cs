@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -80,8 +81,36 @@ namespace Xeon.UniTerminal.BuiltInCommands
                 return (context.PreviousWorkingDirectory, true, null);
             }
 
+            // ドライブレター指定のチェック（Windows: "C:", "D:" など）
+            var driveResolution = TryResolveDrive(arg);
+            if (driveResolution.isValid)
+            {
+                return (driveResolution.path, false, driveResolution.error);
+            }
+
             var resolved = PathUtility.ResolvePath(arg, context.WorkingDirectory, context.HomeDirectory);
             return (resolved, false, null);
+        }
+
+        private (bool isValid, string path, string error) TryResolveDrive(string arg)
+        {
+            // Windowsのドライブレター指定をチェック（例：C: D: など）
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return (false, null, null);
+
+            // ドライブレター形式は X: （大文字小文字問わず）
+            if (arg.Length != 2 || arg[1] != ':')
+                return (false, null, null);
+
+            char driveLetter = arg[0];
+            if (!char.IsLetter(driveLetter))
+                return (false, null, null);
+
+            // ドライブパスを構築
+            var drivePath = $"{driveLetter}:\\";
+            var normalizedPath = PathUtility.NormalizeToSlash(drivePath);
+
+            return (true, normalizedPath, null);
         }
 
         private (string path, string error) ConvertToPhysicalPath(string targetPath)
