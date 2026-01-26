@@ -48,7 +48,7 @@ UniTaskがプロジェクトにインストールされている場合、自動�
 https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ```
 
-2. UniTerminalがUniTaskを検出すると、`UNITERMINAL_UNITASK_SUPPORT` シンボルが自動定義されます
+2. UniTerminalがUniTaskを検出すると、`UNI_TERMINAL_UNI_TASK_SUPPORT` シンボルが自動定義されます
 
 ## 基本的な使い方
 
@@ -68,11 +68,11 @@ var terminal = new Terminal(
 ### コマンドの実行
 
 ```csharp
-using System.IO;
+using Xeon.UniTerminal;
 
-// 出力用のTextWriter
-var stdout = new StringWriter();
-var stderr = new StringWriter();
+// 出力用のIAsyncTextWriter
+var stdout = new StringBuilderTextWriter();
+var stderr = new StringBuilderTextWriter();
 
 // コマンドを実行
 var exitCode = await terminal.ExecuteAsync("echo Hello, World!", stdout, stderr);
@@ -138,16 +138,18 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 |---------|------|---------------|
 | `help` | ヘルプを表示 | - |
 | `history` | コマンド履歴を管理 | `-c`, `-d`, `-n`, `-r` |
+| `clear` | 画面表示をクリア | - |
 
 ### Unity固有コマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
 | `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y`, `-i` |
-| `go` | GameObjectを操作 | `--primitive`, `-P`, `-t`, `-n`, `-c`, `-i`, `-s` |
+| `go` | GameObjectを操作 | `--primitive`, `--parent`, `--position`, `--rotation`, `-t`, `-n`, `-c`, `-i`, `-s`, `--toggle`, `--immediate`, `--children`, `--count` |
 | `transform` | Transformを操作 | `-p`, `-P`, `-r`, `-R`, `-s`, `--parent`, `-w` |
 | `component` | コンポーネントを管理 | `-a`, `-v`, `-i`, `-n` |
 | `property` | プロパティ値を操作 | `-a`, `-s`, `-n` |
+| `scene` | シーンを管理 | `-a`, `-l`, `--additive`, `--async`, `-s` |
 
 ### アセット管理コマンド
 
@@ -205,13 +207,16 @@ go create MyObject
 go create Cube --primitive=Cube
 
 # 親を指定して作成
-go create Child -P /Parent
+go create Child --parent /Parent
+
+# 位置/回転を指定して作成
+go create Player --position 0,1,0 --rotation 0,90,0
 
 # GameObjectを削除
 go delete /MyObject
 
-# GameObjectを検索
-go find -n "Enemy*"
+# GameObjectを検索（部分一致）
+go find -n "Enemy"
 go find -t Player
 go find -c Rigidbody
 
@@ -219,7 +224,7 @@ go find -c Rigidbody
 go info /Player
 
 # 名前を変更
-go rename /OldName -n NewName
+go rename /OldName NewName
 
 # アクティブ状態を変更
 go active /MyObject -s false
@@ -227,6 +232,33 @@ go active /MyObject --toggle
 
 # 複製
 go clone /Original -n Clone --count 5
+```
+
+### scene - シーン管理
+
+```bash
+# ロード済みシーン一覧
+scene list
+
+# Build Settingsの全シーン一覧（ロード状態も表示）
+scene list -a
+
+# シーンを読み込み（追加ロード + 非同期）
+scene load GameScene --additive --async
+
+# シーンをアンロード
+scene unload GameScene
+
+# アクティブシーンの取得/変更
+scene active
+scene active GameScene
+
+# シーン情報
+scene info
+scene info GameScene
+
+# シーン作成（エディタのみ）
+scene create NewScene --setup
 ```
 
 ### transform - Transform操作
@@ -603,7 +635,9 @@ logBuffer.Add("New log entry");
 
 ## ライセンス
 
-MIT License
+MIT OR Apache-2.0（デュアルライセンス）
+
+詳細は [LICENSE.md](Packages/jp.xeon.uni-terminal/LICENSE.md) を参照してください。
 
 ## 作者
 
