@@ -8,12 +8,12 @@ using Xeon.UniTerminal.UnityCommands;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// 文字列からUnity/C#の型への変換を行うユーティリティ。
+    /// 文字列からUnity/C#の型への変換を行うユーティリティ
     /// </summary>
     public static class ValueConverter
     {
         /// <summary>
-        /// 文字列を指定された型に変換します。
+        /// 文字列を指定された型に変換します
         /// </summary>
         /// <param name="value">変換する文字列</param>
         /// <param name="targetType">変換先の型</param>
@@ -59,7 +59,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 基本型への変換を試みます。
+        /// 基本型への変換を試みます
         /// </summary>
         private static bool TryConvertPrimitive(string value, Type targetType, out object result)
         {
@@ -88,7 +88,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// Unity構造体型への変換を試みます。
+        /// Unity構造体型への変換を試みます
         /// </summary>
         private static bool TryConvertUnityStruct(string value, Type targetType, out object result)
         {
@@ -121,7 +121,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// Unity Object参照型への変換を試みます。
+        /// Unity Object参照型への変換を試みます
         /// </summary>
         private static bool TryConvertUnityObject(string value, Type targetType, out object result)
         {
@@ -144,7 +144,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 文字列を指定された型に変換を試みます。
+        /// 文字列を指定された型に変換を試みます
         /// </summary>
         public static bool TryConvert(string value, Type targetType, out object result)
         {
@@ -171,7 +171,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 値がnullまたはnone指定かどうかを判定します。
+        /// 値がnullまたはnone指定かどうかを判定します
         /// </summary>
         private static bool IsNullOrNone(string value)
         {
@@ -180,7 +180,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// インスタンスID形式（#12345）のパースを試みます。
+        /// インスタンスID形式（#12345）のパースを試みます
         /// </summary>
         private static bool TryParseInstanceId(string value, out int instanceId)
         {
@@ -370,7 +370,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// パスからGameObject参照を解決します。
+        /// パスからGameObject参照を解決します
         /// </summary>
         private static GameObject ParseGameObjectReference(string value)
         {
@@ -392,7 +392,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// パスからComponent参照を解決します。
+        /// パスからComponent参照を解決します
         /// </summary>
         private static Component ParseComponentReference(string value, Type componentType)
         {
@@ -453,7 +453,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// Material参照を解決します。
+        /// Material参照を解決します
         /// </summary>
         private static Material ParseMaterialReference(string value)
         {
@@ -552,7 +552,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 値を表示用文字列にフォーマットします。
+        /// 値を表示用文字列にフォーマットします
         /// </summary>
         public static string Format(object value)
         {
@@ -593,7 +593,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 配列を表示用文字列にフォーマットします。
+        /// 配列を表示用文字列にフォーマットします
         /// </summary>
         private static string FormatArray(Array array)
         {
@@ -615,7 +615,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// リストを表示用文字列にフォーマットします。
+        /// リストを表示用文字列にフォーマットします
         /// </summary>
         private static string FormatList(IList list)
         {
@@ -641,7 +641,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// インスタンスIDからオブジェクトを検索します。
+        /// インスタンスIDからオブジェクトを検索します
         /// </summary>
         /// <typeparam name="T">検索対象の型（GameObjectまたはComponent）</typeparam>
         /// <param name="instanceId">検索するインスタンスID</param>
@@ -674,7 +674,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// アセット参照を解決します（Texture, Mesh, Sprite, AudioClip等）。
+        /// アセット参照を解決します（Texture, Mesh, Sprite, AudioClip等）
         /// </summary>
         /// <param name="value">参照文字列（#instanceId, 名前, またはキー）</param>
         /// <param name="assetType">アセットの型</param>
@@ -747,7 +747,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// Shader参照を解決します。
+        /// Shader参照を解決します
         /// </summary>
         private static Shader ParseShaderReference(string value)
         {

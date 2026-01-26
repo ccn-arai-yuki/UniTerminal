@@ -7,29 +7,29 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Assets
 {
     /// <summary>
-    /// アセット管理の中央クラス。
+    /// アセット管理の中央クラス
     /// </summary>
     public class AssetManager
     {
         private static AssetManager instance;
 
         /// <summary>
-        /// シングルトンインスタンス。
+        /// シングルトンインスタンス
         /// </summary>
         public static AssetManager Instance => instance ??= new AssetManager();
 
         /// <summary>
-        /// ロード済みアセットのレジストリ。
+        /// ロード済みアセットのレジストリ
         /// </summary>
         public LoadedAssetRegistry Registry { get; } = new();
 
         /// <summary>
-        /// 登録されているプロバイダー。
+        /// 登録されているプロバイダー
         /// </summary>
         private readonly Dictionary<string, IAssetProvider> providers = new();
 
         /// <summary>
-        /// プロバイダーを登録します。
+        /// プロバイダーを登録します
         /// </summary>
         /// <param name="provider">登録するプロバイダー</param>
         public void RegisterProvider(IAssetProvider provider)
@@ -41,7 +41,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// プロバイダーを取得します。
+        /// プロバイダーを取得します
         /// </summary>
         /// <param name="name">プロバイダー名</param>
         /// <returns>プロバイダー、見つからない場合はnull</returns>
@@ -52,7 +52,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 利用可能なプロバイダー一覧を取得します。
+        /// 利用可能なプロバイダー一覧を取得します
         /// </summary>
         /// <returns>プロバイダーのリスト</returns>
         public IEnumerable<IAssetProvider> GetAvailableProviders()
@@ -65,7 +65,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 指定子でアセットを解決します。
+        /// 指定子でアセットを解決します
         /// </summary>
         /// <typeparam name="T">アセットの型</typeparam>
         /// <param name="specifier">指定子（#instanceId, 名前, またはキー）</param>
@@ -81,7 +81,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 指定子でアセットを解決します（型指定版）。
+        /// 指定子でアセットを解決します（型指定版）
         /// </summary>
         /// <param name="specifier">指定子</param>
         /// <param name="assetType">アセットの型</param>
@@ -97,7 +97,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// アセットをロードしてレジストリに登録します。
+        /// アセットをロードしてレジストリに登録します
         /// </summary>
         /// <typeparam name="T">アセットの型</typeparam>
         /// <param name="provider">使用するプロバイダー</param>
@@ -112,7 +112,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// アセットをロードしてレジストリに登録します（型指定版）。
+        /// アセットをロードしてレジストリに登録します（型指定版）
         /// </summary>
         /// <param name="provider">使用するプロバイダー</param>
         /// <param name="key">アセットのキー</param>
@@ -126,7 +126,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// アセットをアンロードしてレジストリから削除します。
+        /// アセットをアンロードしてレジストリから削除します
         /// </summary>
         /// <param name="specifier">指定子</param>
         /// <returns>アンロードできた場合true</returns>
@@ -142,7 +142,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// インスタンスをリセットします（テスト用）。
+        /// インスタンスをリセットします（テスト用）
         /// </summary>
         public static void ResetInstance()
         {

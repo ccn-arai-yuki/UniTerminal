@@ -88,6 +88,13 @@ namespace Xeon.Common.FlyweightScrollView
         // Public Methods
         // ====================================================================================================
 
+        /// <summary>
+        /// スクロールビューの初期設定を行います
+        /// </summary>
+        /// <param name="scrollView">対象のScrollRect</param>
+        /// <param name="param">スクロールビューのパラメータ</param>
+        /// <param name="container">アイテム配置用のコンテナ</param>
+        /// <param name="alignment">水平方向の配置</param>
         public override void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
         {
             base.Setup(scrollView, param, container, alignment);

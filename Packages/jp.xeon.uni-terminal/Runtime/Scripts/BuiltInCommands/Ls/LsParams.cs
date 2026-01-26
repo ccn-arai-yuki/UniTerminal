@@ -6,17 +6,49 @@ using System.Linq;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// lsコマンドの表示パラメータを保持する構造体。
+    /// lsコマンドの表示パラメータを保持する構造体
     /// </summary>
     public readonly struct LsParams
     {
+        /// <summary>
+        /// 隠しファイルを表示するかどうか
+        /// </summary>
         public bool ShowAll { get; }
+
+        /// <summary>
+        /// 詳細表示を行うかどうか
+        /// </summary>
         public bool LongFormat { get; }
+
+        /// <summary>
+        /// サイズを可読形式で表示するかどうか
+        /// </summary>
         public bool HumanReadable { get; }
+
+        /// <summary>
+        /// 逆順表示するかどうか
+        /// </summary>
         public bool Reverse { get; }
+
+        /// <summary>
+        /// 再帰的に表示するかどうか
+        /// </summary>
         public bool Recursive { get; }
+
+        /// <summary>
+        /// ソート方法
+        /// </summary>
         public LsSortType SortBy { get; }
 
+        /// <summary>
+        /// lsの表示設定を初期化します
+        /// </summary>
+        /// <param name="showAll">隠しファイルを表示するかどうか</param>
+        /// <param name="longFormat">詳細表示するかどうか</param>
+        /// <param name="humanReadable">サイズを可読形式で表示するかどうか</param>
+        /// <param name="reverse">逆順表示するかどうか</param>
+        /// <param name="recursive">再帰的に表示するかどうか</param>
+        /// <param name="sortBy">ソート方法</param>
         public LsParams(bool showAll, bool longFormat, bool humanReadable, bool reverse, bool recursive, LsSortType sortBy)
         {
             ShowAll = showAll;
@@ -28,7 +60,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ソートされたエントリを取得します。
+        /// ソートされたエントリを取得します
         /// </summary>
         public List<FileSystemInfo> GetSortedEntries(string directoryPath)
         {
@@ -53,7 +85,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 隠しファイルを除外した子ディレクトリを取得します。
+        /// 隠しファイルを除外した子ディレクトリを取得します
         /// </summary>
         public IEnumerable<string> GetSubDirectories(string directoryPath)
         {

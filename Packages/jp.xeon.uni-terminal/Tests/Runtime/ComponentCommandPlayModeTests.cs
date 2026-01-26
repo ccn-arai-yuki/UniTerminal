@@ -7,7 +7,7 @@ using UnityEngine.TestTools;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// componentコマンドのPlayModeテスト。
+    /// componentコマンドのPlayModeテスト
     /// </summary>
     public class ComponentCommandPlayModeTests
     {

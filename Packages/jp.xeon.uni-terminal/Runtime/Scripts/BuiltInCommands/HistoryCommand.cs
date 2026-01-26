@@ -6,26 +6,51 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// コマンド履歴を表示・管理します。
+    /// コマンド履歴を表示・管理します
     /// </summary>
     [Command("history", "Display or manage command history")]
     public class HistoryCommand : ICommand
     {
+        /// <summary>
+        /// 履歴をクリアするかどうか
+        /// </summary>
         [Option("clear", "c", Description = "Clear all history")]
         public bool Clear;
 
+        /// <summary>
+        /// 削除対象の履歴番号
+        /// </summary>
         [Option("delete", "d", Description = "Delete entry at specified position")]
         public int DeletePosition = -1;
 
+        /// <summary>
+        /// 表示する最大件数
+        /// </summary>
         [Option("number", "n", Description = "Display only last N entries")]
         public int Number = -1;
 
+        /// <summary>
+        /// 逆順表示するかどうか
+        /// </summary>
         [Option("reverse", "r", Description = "Display history in reverse order")]
         public bool Reverse;
 
+        /// <summary>
+        /// コマンド名
+        /// </summary>
         public string CommandName => "history";
+
+        /// <summary>
+        /// コマンドの説明
+        /// </summary>
         public string Description => "Display or manage command history";
 
+        /// <summary>
+        /// コマンドを実行します
+        /// </summary>
+        /// <param name="context">実行コンテキスト</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             try

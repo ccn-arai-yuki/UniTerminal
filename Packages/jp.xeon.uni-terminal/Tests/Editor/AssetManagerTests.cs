@@ -7,7 +7,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// AssetManagerのテスト。
+    /// AssetManagerのテスト
     /// </summary>
     public class AssetManagerTests
     {
@@ -241,7 +241,7 @@ namespace Xeon.UniTerminal.Tests
         }
 
         /// <summary>
-        /// テスト用のモックプロバイダー。
+        /// テスト用のモックプロバイダー
         /// </summary>
         private class MockAssetProvider : IAssetProvider
         {

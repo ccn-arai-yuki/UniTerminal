@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// lessコマンドのテスト。
+    /// lessコマンドのテスト
     /// </summary>
     public class LessCommandTests
     {

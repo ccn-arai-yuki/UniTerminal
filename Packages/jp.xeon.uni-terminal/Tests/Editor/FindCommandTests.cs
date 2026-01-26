@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// findコマンドのテスト。
+    /// findコマンドのテスト
     /// </summary>
     public class FindCommandTests
     {

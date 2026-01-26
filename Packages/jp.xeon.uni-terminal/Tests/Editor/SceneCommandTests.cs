@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Xeon.UniTerminal.Tests.Editor
 {
     /// <summary>
-    /// sceneコマンドのEditorテスト。
+    /// sceneコマンドのEditorテスト
     /// </summary>
     public class SceneCommandTests
     {

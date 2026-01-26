@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// propertyコマンドのテスト。
+    /// propertyコマンドのテスト
     /// </summary>
     public class PropertyCommandTests
     {

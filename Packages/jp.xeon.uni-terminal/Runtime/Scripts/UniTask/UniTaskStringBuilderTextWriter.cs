@@ -6,15 +6,15 @@ namespace Xeon.UniTerminal.UniTask
 {
     using Cysharp.Threading.Tasks;
     /// <summary>
-    /// UniTask版のStringBuilderテキストライター。
-    /// アロケーションを最小限に抑えた実装です。
+    /// UniTask版のStringBuilderテキストライター
+    /// アロケーションを最小限に抑えた実装です
     /// </summary>
     public class UniTaskStringBuilderTextWriter : IUniTaskTextWriter
     {
         private readonly StringBuilder builder;
 
         /// <summary>
-        /// 新しいStringBuilderを使用してインスタンスを作成します。
+        /// 新しいStringBuilderを使用してインスタンスを作成します
         /// </summary>
         public UniTaskStringBuilderTextWriter()
         {
@@ -22,9 +22,9 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// 既存のStringBuilderを使用してインスタンスを作成します。
+        /// 既存のStringBuilderを使用してインスタンスを作成します
         /// </summary>
-        /// <param name="builder">使用するStringBuilder。</param>
+        /// <param name="builder">使用するStringBuilder</param>
         public UniTaskStringBuilderTextWriter(StringBuilder builder)
         {
             this.builder = builder;
@@ -47,7 +47,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// 書き込まれた内容を文字列として取得します。
+        /// 書き込まれた内容を文字列として取得します
         /// </summary>
         public override string ToString()
         {
@@ -55,7 +55,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// バッファをクリアします。
+        /// バッファをクリアします
         /// </summary>
         public void Clear()
         {
@@ -63,7 +63,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// 現在の長さを取得します。
+        /// 現在の長さを取得します
         /// </summary>
         public int Length => builder.Length;
     }

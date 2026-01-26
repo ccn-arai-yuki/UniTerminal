@@ -7,7 +7,7 @@ using UnityEngine.TestTools;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// transformコマンドのPlayModeテスト。
+    /// transformコマンドのPlayModeテスト
     /// </summary>
     public class TransformCommandPlayModeTests
     {

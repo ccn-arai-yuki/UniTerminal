@@ -7,7 +7,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// ValueConverterのアセット参照変換機能のテスト。
+    /// ValueConverterのアセット参照変換機能のテスト
     /// </summary>
     public class ValueConverterAssetTests
     {

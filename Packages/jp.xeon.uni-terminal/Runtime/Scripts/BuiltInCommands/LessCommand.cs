@@ -8,27 +8,52 @@ using Xeon.UniTerminal.BuiltInCommands.Less;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// ファイルの内容をページ単位で表示するコマンド。
-    /// Unity CLI環境の制約により、非対話モードで動作します。
+    /// ファイルの内容をページ単位で表示するコマンド
+    /// Unity CLI環境の制約により、非対話モードで動作します
     /// </summary>
     [Command("less", "View file contents page by page")]
     public class LessCommand : ICommand
     {
+        /// <summary>
+        /// 1ページあたりに表示する行数
+        /// </summary>
         [Option("lines", "n", Description = "Number of lines to display at once (0 = all)")]
         public int LinesPerPage = 0;
 
+        /// <summary>
+        /// 表示開始行（1ベース）
+        /// </summary>
         [Option("from-line", "f", Description = "Start from specified line (1-based)")]
         public int FromLine = 1;
 
+        /// <summary>
+        /// 行番号を表示するかどうか
+        /// </summary>
         [Option("line-numbers", "N", Description = "Show line numbers")]
         public bool ShowLineNumbers;
 
+        /// <summary>
+        /// 長い行を切り詰めるかどうか
+        /// </summary>
         [Option("chop-long-lines", "S", Description = "Chop long lines at 80 characters")]
         public bool ChopLongLines;
 
+        /// <summary>
+        /// コマンド名
+        /// </summary>
         public string CommandName => "less";
+
+        /// <summary>
+        /// コマンドの説明
+        /// </summary>
         public string Description => "View file contents page by page";
 
+        /// <summary>
+        /// コマンドを実行します
+        /// </summary>
+        /// <param name="context">実行コンテキスト</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             var result = await ReadInputAsync(context, ct);
@@ -47,7 +72,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 入力ソースから全行を読み取ります。
+        /// 入力ソースから全行を読み取ります
         /// </summary>
         private async Task<ReadResult> ReadInputAsync(CommandContext context, CancellationToken ct)
         {
@@ -64,7 +89,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 開始行を検証して正規化します。
+        /// 開始行を検証して正規化します
         /// </summary>
         private int NormalizeFromLine(int totalLines)
         {
@@ -76,7 +101,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 標準入力から全行を読み取ります。
+        /// 標準入力から全行を読み取ります
         /// </summary>
         private async Task<List<string>> ReadStdinAsync(CommandContext context, CancellationToken ct)
         {
@@ -94,9 +119,9 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// ファイルから全行を読み取ります。
+        /// ファイルから全行を読み取ります
         /// </summary>
-        /// <returns>成功時は(lines, fileName, null)、エラー時は(null, null, errorMessage)を返します。</returns>
+        /// <returns>成功時は(lines, fileName, null)、エラー時は(null, null, errorMessage)を返します</returns>
         private async Task<ReadResult> ReadFileAsync(string filePath, CommandContext context, CancellationToken ct)
         {
             var resolvedPath = PathUtility.ResolvePath(filePath, context.WorkingDirectory, context.HomeDirectory);
@@ -124,7 +149,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 内容を表示します。
+        /// 内容を表示します
         /// </summary>
         private async Task<ExitCode> DisplayAsync(CommandContext context, int startLine, ReadResult result, CancellationToken ct)
         {
@@ -161,7 +186,7 @@ namespace Xeon.UniTerminal.BuiltInCommands
         }
 
         /// <summary>
-        /// 行を処理します（行番号追加、長い行の切り詰め）。
+        /// 行を処理します（行番号追加、長い行の切り詰め）
         /// </summary>
         private string ProcessLine(string line, int lineNumber)
         {

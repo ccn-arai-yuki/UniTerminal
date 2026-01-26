@@ -8,9 +8,9 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// Resources経由でアセットを管理するコマンド。
-    /// 注意: Resources APIはUnityが非推奨としています。
-    /// 可能であればAddressablesの使用を推奨します。
+    /// Resources経由でアセットを管理するコマンド
+    /// 注意: Resources APIはUnityが非推奨としています
+    /// 可能であればAddressablesの使用を推奨します
     /// </summary>
     [Command("res", "Load assets via Resources (DEPRECATED - prefer Addressables)")]
     public class ResourcesCommand : ICommand

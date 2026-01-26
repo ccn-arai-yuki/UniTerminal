@@ -7,7 +7,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// assetコマンドのテスト。
+    /// assetコマンドのテスト
     /// </summary>
     public class AssetCommandTests
     {

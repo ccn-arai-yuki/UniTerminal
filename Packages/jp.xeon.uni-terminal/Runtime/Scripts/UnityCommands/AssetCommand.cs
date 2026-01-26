@@ -8,7 +8,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// ロード済みアセットを管理するコマンド。
+    /// ロード済みアセットを管理するコマンド
     /// </summary>
     [Command("asset", "Manage loaded assets (list, info, unload)")]
     public class AssetCommand : ICommand

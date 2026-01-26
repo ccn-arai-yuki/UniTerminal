@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// シーン管理コマンド。
+    /// シーン管理コマンド
     /// </summary>
     [Command("scene", "Manage scenes (list, load, unload, active, info, create)")]
     public class SceneCommand : ICommand

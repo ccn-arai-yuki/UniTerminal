@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// GameObjectの作成・削除・管理を行うコマンド。
+    /// GameObjectの作成・削除・管理を行うコマンド
     /// </summary>
     [Command("go", "Manage GameObjects (create, delete, find, rename, active, clone, info)")]
     public class GoCommand : ICommand

@@ -4,17 +4,17 @@ using System.Text;
 namespace XDebugger.Editor.Scripts
 {
     /// <summary>
-    /// 文字コード判定・変換のヘルパークラス。
-    /// 主に日本語ファイルの文字コード判定に利用。
+    /// 文字コード判定・変換のヘルパークラス
+    /// 主に日本語ファイルの文字コード判定に利用
     /// </summary>
     public static class EncodeHelper
     {
         /// <summary>
-        /// 指定ファイルの日本語文字コードを判定して取得します。
+        /// 指定ファイルの日本語文字コードを判定して取得します
         /// </summary>
         /// <param name="file">判定対象のファイルパス</param>
         /// <param name="maxSize">最大読み取りバイト数</param>
-        /// <returns>判定されたEncoding。失敗時はnull。</returns>
+        /// <returns>判定されたEncoding。失敗時はnull</returns>
         public static Encoding GetJpEncoding(string file, long maxSize = 50 * 1024)
         {
             try
@@ -52,12 +52,12 @@ namespace XDebugger.Editor.Scripts
         }
 
         /// <summary>
-        /// バイト配列から日本語文字コードを判定します。
-        /// BOMや各種日本語コード（Shift_JIS, UTF-8, EUC-JP等）を判定。
+        /// バイト配列から日本語文字コードを判定します
+        /// BOMや各種日本語コード（Shift_JIS, UTF-8, EUC-JP等）を判定
         /// </summary>
         /// <param name="bytes">判定対象のバイト配列</param>
         /// <param name="readAll">全データ読み込み済みか</param>
-        /// <returns>判定されたEncoding。失敗時はnull。</returns>
+        /// <returns>判定されたEncoding。失敗時はnull</returns>
         private static Encoding GetJpEncoding(byte[] bytes, bool readAll = false)
         {
             int len = bytes.Length;

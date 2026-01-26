@@ -7,21 +7,26 @@ using Xeon.UniTerminal.Parsing;
 namespace Xeon.UniTerminal.Binding
 {
     /// <summary>
-    /// パースされたコマンドを型変換されたオプションを持つコマンドインスタンスにバインドします。
+    /// パースされたコマンドを型変換されたオプションを持つコマンドインスタンスにバインドします
     /// </summary>
     public class Binder
     {
         private readonly CommandRegistry registry;
 
+        /// <summary>
+        /// コマンドレジストリを受け取りバインダーを初期化します
+        /// </summary>
+        /// <param name="registry">コマンドレジストリ</param>
         public Binder(CommandRegistry registry)
         {
             this.registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
 
         /// <summary>
-        /// パースされたパイプラインをバインドされたコマンドにバインドします。
+        /// パースされたパイプラインをバインド済みコマンドに変換します
         /// </summary>
-        /// <exception cref="BindException">バインドエラー時にスローされます。</exception>
+        /// <param name="pipeline">パース済みパイプライン</param>
+        /// <exception cref="BindException">バインドエラー時にスローされます</exception>
         public BoundPipeline Bind(ParsedPipeline pipeline)
         {
             var boundCommands = new List<BoundCommand>();
@@ -36,8 +41,9 @@ namespace Xeon.UniTerminal.Binding
         }
 
         /// <summary>
-        /// 単一のパースされたコマンドをバインドします。
+        /// 単一のパースされたコマンドをバインドします
         /// </summary>
+        /// <param name="parsedCmd">パース済みコマンド</param>
         public BoundCommand BindCommand(ParsedCommand parsedCmd)
         {
             // コマンドを検索

@@ -6,14 +6,27 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// ファイルの内容またはstdinを連結して表示します。
+    /// ファイルの内容またはstdinを連結して表示します
     /// </summary>
     [Command("cat", "Concatenate and display file contents")]
     public class CatCommand : ICommand
     {
+        /// <summary>
+        /// コマンド名
+        /// </summary>
         public string CommandName => "cat";
+
+        /// <summary>
+        /// コマンドの説明
+        /// </summary>
         public string Description => "Concatenate and display file contents";
 
+        /// <summary>
+        /// コマンドを実行します
+        /// </summary>
+        /// <param name="context">実行コンテキスト</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public async Task<ExitCode> ExecuteAsync(CommandContext context, CancellationToken ct)
         {
             // ファイルが指定されていない場合、stdinから読み取る
@@ -57,6 +70,11 @@ namespace Xeon.UniTerminal.BuiltInCommands
             return ExitCode.Success;
         }
 
+        /// <summary>
+        /// 補完候補を返します
+        /// </summary>
+        /// <param name="context">補完コンテキスト</param>
+        /// <returns>補完候補</returns>
         public IEnumerable<string> GetCompletions(CompletionContext context)
         {
             // パス補完はCompletionEngineで処理される

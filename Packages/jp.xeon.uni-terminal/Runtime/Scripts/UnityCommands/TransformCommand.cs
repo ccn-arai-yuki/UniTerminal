@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// GameObjectのTransformを操作するコマンド。
+    /// GameObjectのTransformを操作するコマンド
     /// </summary>
     [Command("transform", "Manipulate GameObject Transform")]
     public class TransformCommand : ICommand
