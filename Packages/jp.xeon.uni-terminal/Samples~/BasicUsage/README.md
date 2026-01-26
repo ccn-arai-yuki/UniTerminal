@@ -28,6 +28,11 @@ var terminal = new Terminal(
     registerBuiltInCommands: true
 );
 
+// Output writers
+var stdout = new StringBuilderTextWriter();
+var stderr = new StringBuilderTextWriter();
+var ct = CancellationToken.None;
+
 // Register custom commands
 terminal.Registry.Register<GreetCommand>();
 terminal.Registry.Register<CountCommand>();

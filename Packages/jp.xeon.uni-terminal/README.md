@@ -48,7 +48,7 @@ UniTaskがプロジェクトにインストールされている場合、自動�
 https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ```
 
-2. UniTerminalがUniTaskを検出すると、`UNITERMINAL_UNITASK_SUPPORT` シンボルが自動定義されます
+2. UniTerminalがUniTaskを検出すると、`UNI_TERMINAL_UNI_TASK_SUPPORT` シンボルが自動定義されます
 
 ## 基本的な使い方
 
@@ -68,11 +68,11 @@ var terminal = new Terminal(
 ### コマンドの実行
 
 ```csharp
-using System.IO;
+using Xeon.UniTerminal;
 
-// 出力用のTextWriter
-var stdout = new StringWriter();
-var stderr = new StringWriter();
+// 出力用のIAsyncTextWriter
+var stdout = new StringBuilderTextWriter();
+var stderr = new StringBuilderTextWriter();
 
 // コマンドを実行
 var exitCode = await terminal.ExecuteAsync("echo Hello, World!", stdout, stderr);
@@ -117,37 +117,39 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `pwd` | 現在の作業ディレクトリを表示 | `-L`, `-P` |
-| `cd` | 作業ディレクトリを変更 | `-L`, `-P` |
-| `ls` | ディレクトリ内容を一覧表示 | `-a`, `-l`, `-h`, `-r`, `-R`, `-S` |
+| `pwd` | 現在の作業ディレクトリを表示 | `-L, --logical`, `-P, --physical` |
+| `cd` | 作業ディレクトリを変更 | `-L, --logical`, `-P, --physical` |
+| `ls` | ディレクトリ内容を一覧表示 | `-a, --all`, `-l, --long`, `-h, --human-readable`, `-r, --reverse`, `-R, --recursive`, `-S, --sort` |
 | `cat` | ファイル内容を表示 | - |
-| `find` | ファイルを検索 | `-n`, `-i`, `-t`, `-d` |
-| `less` | ファイルをページ単位で表示 | `-n`, `-f`, `-N`, `-S` |
-| `diff` | ファイルの差分を比較 | `-u`, `-i`, `-b`, `-w`, `-q` |
+| `find` | ファイルを検索 | `-n, --name`, `-i, --iname`, `-t, --type`, `-d, --maxdepth`, `--mindepth` |
+| `less` | ファイルをページ単位で表示 | `-n, --lines`, `-f, --from-line`, `-N, --line-numbers`, `-S, --chop-long-lines` |
+| `diff` | ファイルの差分を比較 | `-u, --unified`, `-i, --ignore-case`, `-b, --ignore-space`, `-w, --ignore-all-space`, `-q, --brief` |
 
 ### テキスト処理コマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `echo` | テキストを出力 | `-n` |
-| `grep` | パターンマッチング検索 | `--pattern`, `-i`, `-v`, `-c` |
+| `echo` | テキストを出力 | `-n, --newline` |
+| `grep` | パターンマッチング検索 | `-p, --pattern`, `-i, --ignorecase`, `-v, --invert`, `-c, --count` |
 
 ### ユーティリティコマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
 | `help` | ヘルプを表示 | - |
-| `history` | コマンド履歴を管理 | `-c`, `-d`, `-n`, `-r` |
+| `history` | コマンド履歴を管理 | `-c, --clear`, `-d, --delete`, `-n, --number`, `-r, --reverse` |
+| `clear` | 画面表示をクリア | - |
 
 ### Unity固有コマンド
 
 | コマンド | 説明 | 主なオプション |
 |---------|------|---------------|
-| `hierarchy` | シーンヒエラルキーを表示 | `-r`, `-d`, `-a`, `-l`, `-s`, `-n`, `-c`, `-t`, `-y` |
-| `go` | GameObjectを操作 | `--primitive`, `-P`, `-t`, `-n`, `-c`, `-i`, `-s` |
-| `transform` | Transformを操作 | `-p`, `-P`, `-r`, `-R`, `-s`, `--parent`, `-w` |
-| `component` | コンポーネントを管理 | `-a`, `-v`, `-i`, `-n` |
-| `property` | プロパティ値を操作 | `-a`, `-s`, `-n` |
+| `hierarchy` | シーンヒエラルキーを表示 | `-r, --recursive`, `-d, --depth`, `-a, --all`, `-l, --long`, `-s, --scene`, `-n, --name`, `-c, --component`, `-t, --tag`, `-y, --layer`, `-i, --id` |
+| `go` | GameObjectを操作 | `-p, --primitive`, `--parent`, `--position`, `--rotation`, `-t, --tag`, `-n, --name`, `-c, --component`, `-i, --inactive`, `-s, --set`, `--toggle`, `--immediate`, `--children`, `--count` |
+| `transform` | Transformを操作 | `-p, --position`, `-P, --local-position`, `-r, --rotation`, `-R, --local-rotation`, `-s, --scale`, `--parent`, `-w, --world` |
+| `component` | コンポーネントを管理 | `-a, --all`, `-v, --verbose`, `-i, --immediate`, `-n, --namespace` |
+| `property` | プロパティ値を操作 | `-a, --all`, `-s, --serialized`, `-n, --namespace` |
+| `scene` | シーンを管理 | `-a, --all`, `-l, --long`, `--additive`, `--async`, `-s, --setup` |
 
 ## コマンド詳細
 
@@ -162,6 +164,13 @@ hierarchy -r
 
 # 詳細情報付きで表示
 hierarchy -l
+
+# インスタンスIDを表示（参照設定に使用）
+hierarchy -i
+# 出力例:
+# ├── Player #12345
+# ├── Enemy #12346
+# └── Camera #12347
 
 # 特定のパス以下を表示
 hierarchy /Canvas/Panel
@@ -189,13 +198,16 @@ go create MyObject
 go create Cube --primitive=Cube
 
 # 親を指定して作成
-go create Child -P /Parent
+go create Child --parent /Parent
+
+# 位置/回転を指定して作成
+go create Player --position 0,1,0 --rotation 0,90,0
 
 # GameObjectを削除
 go delete /MyObject
 
-# GameObjectを検索
-go find -n "Enemy*"
+# GameObjectを検索（部分一致）
+go find -n "Enemy"
 go find -t Player
 go find -c Rigidbody
 
@@ -203,7 +215,7 @@ go find -c Rigidbody
 go info /Player
 
 # 名前を変更
-go rename /OldName -n NewName
+go rename /OldName NewName
 
 # アクティブ状態を変更
 go active /MyObject -s false
@@ -211,6 +223,33 @@ go active /MyObject --toggle
 
 # 複製
 go clone /Original -n Clone --count 5
+```
+
+### scene - シーン管理
+
+```bash
+# ロード済みシーン一覧
+scene list
+
+# Build Settingsの全シーン一覧（ロード状態も表示）
+scene list -a
+
+# シーンを読み込み（追加ロード + 非同期）
+scene load GameScene --additive --async
+
+# シーンをアンロード
+scene unload GameScene
+
+# アクティブシーンの取得/変更
+scene active
+scene active GameScene
+
+# シーン情報
+scene info
+scene info GameScene
+
+# シーン作成（エディタのみ）
+scene create NewScene --setup
 ```
 
 ### transform - Transform操作
