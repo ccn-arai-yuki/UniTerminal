@@ -1,6 +1,8 @@
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Xeon.UniTerminal.Tests
 {
@@ -51,6 +53,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_Warning_ShowsWarning()
         {
+            LogAssert.Expect(LogType.Warning, "Test Warning Message");
             Debug.LogWarning("Test Warning Message");
             await Task.Yield();
 
@@ -66,6 +69,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_Error_ShowsError()
         {
+            LogAssert.Expect(LogType.Error, "Test Error Message");
             Debug.LogError("Test Error Message");
             await Task.Yield();
 
@@ -85,6 +89,9 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_InfoFilter_ShowsOnlyInfo()
         {
+            LogAssert.Expect(LogType.Warning, "Warning Message");
+            LogAssert.Expect(LogType.Error, "Error Message");
+
             Debug.Log("Info Message");
             Debug.LogWarning("Warning Message");
             Debug.LogError("Error Message");
@@ -103,6 +110,9 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_WarnFilter_ShowsOnlyWarning()
         {
+            LogAssert.Expect(LogType.Warning, "Warning Message");
+            LogAssert.Expect(LogType.Error, "Error Message");
+
             Debug.Log("Info Message");
             Debug.LogWarning("Warning Message");
             Debug.LogError("Error Message");
@@ -121,6 +131,9 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_ErrorFilter_ShowsOnlyErrors()
         {
+            LogAssert.Expect(LogType.Warning, "Warning Message");
+            LogAssert.Expect(LogType.Error, "Error Message");
+
             Debug.Log("Info Message");
             Debug.LogWarning("Warning Message");
             Debug.LogError("Error Message");
@@ -139,6 +152,9 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_MultipleFilters_ShowsMatching()
         {
+            LogAssert.Expect(LogType.Warning, "Warning Message");
+            LogAssert.Expect(LogType.Error, "Error Message");
+
             Debug.Log("Info Message");
             Debug.LogWarning("Warning Message");
             Debug.LogError("Error Message");
@@ -211,6 +227,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_StackTraceOption_ShowsStackTrace()
         {
+            LogAssert.Expect(LogType.Error, "Error with stack trace");
             Debug.LogError("Error with stack trace");
             await Task.Yield();
 
@@ -245,6 +262,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_WarningColor_UsesYellow()
         {
+            LogAssert.Expect(LogType.Warning, "Warning Message");
             Debug.LogWarning("Warning Message");
             await Task.Yield();
 
@@ -259,6 +277,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_ErrorColor_UsesRed()
         {
+            LogAssert.Expect(LogType.Error, "Error Message");
             Debug.LogError("Error Message");
             await Task.Yield();
 

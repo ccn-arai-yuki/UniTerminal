@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Xeon.UniTerminal.Tests
 {
@@ -42,6 +43,9 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task LogBuffer_LogTypes_PreservesType()
         {
+            LogAssert.Expect(LogType.Warning, "Warning");
+            LogAssert.Expect(LogType.Error, "Error");
+
             Debug.Log("Info");
             Debug.LogWarning("Warning");
             Debug.LogError("Error");
