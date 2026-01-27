@@ -2,6 +2,14 @@
 
 This section contains the API documentation generated from source code comments.
 
+## Core Classes
+
+| Class | Description |
+|-------|-------------|
+| [Terminal](Xeon.UniTerminal.Terminal.html) | Main entry point for CLI execution |
+| [CommandRegistry](Xeon.UniTerminal.CommandRegistry.html) | Command registration and lookup |
+| [CommandContext](Xeon.UniTerminal.CommandContext.html) | Execution context for commands |
+
 ## Interfaces
 
 | Interface | Description |
@@ -23,4 +31,21 @@ This section contains the API documentation generated from source code comments.
 |------|-------------|
 | [ExitCode](Xeon.UniTerminal.ExitCode.html) | Command exit codes |
 
-> **Note:** Some classes that depend on Unity-specific assemblies (UnityEngine, TMPro) are not included in the API documentation. These include `Terminal`, `CommandRegistry`, `CommandContext`, `UniTask` support classes, and `FlyweightScrollView` components. Please refer to the source code for details on these classes.
+## UniTask Support
+
+When UniTask is installed, these additional types are available:
+
+| Type | Description |
+|------|-------------|
+| [IUniTaskCommand](Xeon.UniTerminal.IUniTaskCommand.html) | UniTask-based command interface |
+| [UniTaskCommandContext](Xeon.UniTerminal.UniTaskCommandContext.html) | UniTask execution context |
+| [IUniTaskTextReader](Xeon.UniTerminal.IUniTaskTextReader.html) | UniTask text input stream |
+| [IUniTaskTextWriter](Xeon.UniTerminal.IUniTaskTextWriter.html) | UniTask text output stream |
+
+## FlyweightScrollView
+
+| Type | Description |
+|------|-------------|
+| [CircularBuffer&lt;T&gt;](Xeon.Common.FlyweightScrollView.Model.CircularBuffer-1.html) | Fixed-size circular buffer |
+| [FlyweightVerticalScrollView](Xeon.Common.FlyweightScrollView.FlyweightVerticalScrollView.html) | Vertical virtual scroll view |
+| [FlyweightHorizontalScrollView](Xeon.Common.FlyweightScrollView.FlyweightHorizontalScrollView.html) | Horizontal virtual scroll view |

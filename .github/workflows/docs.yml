@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - 'docs/**'
       - 'Packages/jp.xeon.uni-terminal/Runtime/Scripts/**'
@@ -25,14 +26,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Packages/manifest.json', 'Packages/packages-lock.json') }}
+          restore-keys: |
+            Library-
+
+      - name: Compile Unity Project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: 6000.3.2f1
+          targetPlatform: StandaloneLinux64
+          buildMethod: ''
+          buildName: ''
+          buildsPath: ''
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       - name: Install DocFX
         run: dotnet tool install -g docfx
+
+      - name: List compiled assemblies
+        run: ls -la Library/ScriptAssemblies/ || echo "No assemblies found"
 
       - name: Build Documentation
         run: docfx docs/docfx.json
