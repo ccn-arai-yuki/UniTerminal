@@ -4,6 +4,21 @@
       "src": [
         {
           "files": ["**/*.cs"],
+          "exclude": [
+            "FlyweightScrollView/**",
+            "Common/**",
+            "UI/**",
+            "UnityCommands/**",
+            "Assets/**",
+            "UniTask/**",
+            "Terminal.cs",
+            "BuiltInCommands/ClearCommand.cs",
+            "Core/ValueConverter.cs",
+            "Core/TypeResolver.cs",
+            "Core/GameObjectPath.cs",
+            "Core/CommandContext.cs",
+            "Commands/CommandRegistry.cs"
+          ],
           "src": "../Packages/jp.xeon.uni-terminal/Runtime/Scripts"
         }
       ],
