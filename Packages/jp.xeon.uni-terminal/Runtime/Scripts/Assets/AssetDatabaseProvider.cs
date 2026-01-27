@@ -155,7 +155,11 @@ namespace Xeon.UniTerminal.Assets
         /// <returns>アセットパス</returns>
         public string GetAssetPathFromInstanceId(int instanceId)
         {
+#if UNITY_6000_3_OR_NEWER
             var obj = EditorUtility.EntityIdToObject(instanceId);
+#else
+            var obj = EditorUtility.InstanceIDToObject(instanceId);
+#endif
             return obj == null ? null : AssetDatabase.GetAssetPath(obj);
         }
 
