@@ -1,6 +1,9 @@
 ﻿#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#else
+using UnityEngine;
 #endif
+
 
 namespace Xeon.UniTerminal.Common
 {
