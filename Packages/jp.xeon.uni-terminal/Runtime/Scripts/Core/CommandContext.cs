@@ -69,6 +69,11 @@ namespace Xeon.UniTerminal
         /// </summary>
         public Action<int> DeleteHistoryEntry { get; }
 
+        /// <summary>
+        /// Unityログバッファ。
+        /// </summary>
+        public LogBuffer LogBuffer { get; }
+
         public CommandContext(
             IAsyncTextReader stdin,
             IAsyncTextWriter stdout,
@@ -81,7 +86,8 @@ namespace Xeon.UniTerminal
             Action<string> changeWorkingDirectory = null,
             IReadOnlyList<string> commandHistory = null,
             Action clearHistory = null,
-            Action<int> deleteHistoryEntry = null)
+            Action<int> deleteHistoryEntry = null,
+            LogBuffer logBuffer = null)
         {
             Stdin = stdin;
             Stdout = stdout;
@@ -95,6 +101,7 @@ namespace Xeon.UniTerminal
             CommandHistory = commandHistory ?? new List<string>();
             ClearHistory = clearHistory;
             DeleteHistoryEntry = deleteHistoryEntry;
+            LogBuffer = logBuffer;
         }
     }
 }

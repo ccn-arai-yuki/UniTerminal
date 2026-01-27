@@ -15,7 +15,7 @@ namespace Xeon.UniTerminal
     /// <summary>
     /// ターミナルCLIのメインエントリポイント。
     /// </summary>
-    public class Terminal
+    public class Terminal : IDisposable
     {
         private readonly CommandRegistry registry;
         private readonly Parser parser;
@@ -25,6 +25,11 @@ namespace Xeon.UniTerminal
         private readonly string homeDirectory;
         private readonly List<string> commandHistory;
         private readonly int maxHistorySize;
+
+        /// <summary>
+        /// Unityログバッファ。
+        /// </summary>
+        public LogBuffer LogBuffer { get; }
 
         /// <summary>
         /// コマンドレジストリ。
@@ -81,11 +86,20 @@ namespace Xeon.UniTerminal
             registry = new CommandRegistry();
             parser = new Parser();
             binder = new Binder(registry);
+            LogBuffer = new LogBuffer();
 
             if (registerBuiltInCommands)
             {
                 RegisterBuiltInCommands();
             }
+        }
+
+        /// <summary>
+        /// リソースを解放します。
+        /// </summary>
+        public void Dispose()
+        {
+            LogBuffer?.Dispose();
         }
 
         /// <summary>
@@ -105,6 +119,9 @@ namespace Xeon.UniTerminal
             registry.RegisterCommand<FindCommand>();
             registry.RegisterCommand<LessCommand>();
             registry.RegisterCommand<DiffCommand>();
+            registry.RegisterCommand<HeadCommand>();
+            registry.RegisterCommand<TailCommand>();
+            registry.RegisterCommand<LogCommand>();
 
             registry.RegisterCommand<ClearCommand>();
 
@@ -227,7 +244,8 @@ namespace Xeon.UniTerminal
                     path => WorkingDirectory = path,
                     commandHistory,
                     ClearHistory,
-                    DeleteHistoryEntry);
+                    DeleteHistoryEntry,
+                    LogBuffer);
                 var result = await executor.ExecuteAsync(bound, stdin, stdout, stderr, ct);
 
                 return result.ExitCode;

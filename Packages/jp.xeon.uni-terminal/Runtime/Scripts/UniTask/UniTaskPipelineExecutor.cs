@@ -23,6 +23,7 @@ namespace Xeon.UniTerminal.UniTask
         private readonly IReadOnlyList<string> commandHistory;
         private readonly Action clearHistoryCallback;
         private readonly Action<int> deleteHistoryEntryCallback;
+        private readonly LogBuffer logBuffer;
 
         public UniTaskPipelineExecutor(
             string workingDirectory,
@@ -32,7 +33,8 @@ namespace Xeon.UniTerminal.UniTask
             Action<string> changeWorkingDirectoryCallback = null,
             IReadOnlyList<string> commandHistory = null,
             Action clearHistoryCallback = null,
-            Action<int> deleteHistoryEntryCallback = null)
+            Action<int> deleteHistoryEntryCallback = null,
+            LogBuffer logBuffer = null)
         {
             this.workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
             this.homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
@@ -42,6 +44,7 @@ namespace Xeon.UniTerminal.UniTask
             this.commandHistory = commandHistory;
             this.clearHistoryCallback = clearHistoryCallback;
             this.deleteHistoryEntryCallback = deleteHistoryEntryCallback;
+            this.logBuffer = logBuffer;
         }
 
         private void ChangeWorkingDirectory(string newPath)
@@ -228,7 +231,8 @@ namespace Xeon.UniTerminal.UniTask
                 ChangeWorkingDirectory,
                 commandHistory,
                 clearHistoryCallback,
-                deleteHistoryEntryCallback);
+                deleteHistoryEntryCallback,
+                logBuffer);
         }
 
         private static IUniTaskTextReader PrepareNextStdin(UniTaskListTextWriter pipeBuffer, IUniTaskTextReader currentStdin)
