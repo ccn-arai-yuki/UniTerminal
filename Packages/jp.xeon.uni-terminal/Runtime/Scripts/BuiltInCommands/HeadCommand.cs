@@ -87,7 +87,7 @@ namespace Xeon.UniTerminal
             bool isFirst,
             CancellationToken ct)
         {
-            var resolvedPath = PathUtility.ResolvePath(filePath, context.WorkingDirectory);
+            var resolvedPath = PathUtility.ResolvePath(filePath, context.WorkingDirectory, context.HomeDirectory);
 
             if (!File.Exists(resolvedPath))
             {
@@ -219,12 +219,8 @@ namespace Xeon.UniTerminal
             CancellationToken ct)
         {
             var lines = new List<string>();
-            while (true)
+            await foreach (var line in reader.ReadLinesAsync(ct))
             {
-                var line = await reader.ReadLineAsync(ct);
-                if (line == null)
-                    break;
-
                 lines.Add(line);
             }
             return lines;
