@@ -11,6 +11,7 @@ Unity向けのLinuxライクなCLI実行フレームワークです。文字列�
 - **UniTaskサポート**: UniTaskを使用した高パフォーマンスな非同期処理（オプション）
 - **タブ補完**: コマンドやパスの補完機能
 - **FlyweightScrollView**: 大量のログ表示に対応した仮想スクロールビュー
+- **Ctrl+Cキャンセル**: 長時間実行コマンドの中断機能
 
 ## 動作要件
 
@@ -124,6 +125,8 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 | `find` | ファイルを検索 | `-n, --name`, `-i, --iname`, `-t, --type`, `-d, --maxdepth`, `--mindepth` |
 | `less` | ファイルをページ単位で表示 | `-n, --lines`, `-f, --from-line`, `-N, --line-numbers`, `-S, --chop-long-lines` |
 | `diff` | ファイルの差分を比較 | `-u, --unified`, `-i, --ignore-case`, `-b, --ignore-space`, `-w, --ignore-all-space`, `-q, --brief` |
+| `head` | ファイルの先頭を表示 | `-n, --lines`, `-c, --bytes`, `-q, --quiet`, `-v, --verbose` |
+| `tail` | ファイルの末尾を表示 | `-n, --lines`, `-c, --bytes`, `-f, --follow`, `-q, --quiet`, `-v, --verbose` |
 
 ### テキスト処理コマンド
 
@@ -150,6 +153,7 @@ await terminal.ExecuteAsync("grep --pattern=pattern < input.txt", stdout, stderr
 | `component` | コンポーネントを管理 | `-a, --all`, `-v, --verbose`, `-i, --immediate`, `-n, --namespace` |
 | `property` | プロパティ値を操作 | `-a, --all`, `-s, --serialized`, `-n, --namespace` |
 | `scene` | シーンを管理 | `-a, --all`, `-l, --long`, `--additive`, `--async`, `-s, --setup` |
+| `log` | Unityログを表示・監視 | `-i, --info`, `-w, --warn`, `-e, --error`, `-f, --follow`, `-t, --tail`, `-h, --head`, `-s, --stack-trace` |
 
 ### アセット管理コマンド
 
@@ -281,6 +285,87 @@ transform /Child --parent null            # 親を解除
 
 # 複合操作
 transform /MyObject -p 0,0,0 -r 0,0,0 -s 1,1,1
+```
+
+### head - ファイル先頭表示
+
+```bash
+# デフォルト（先頭10行）
+head myfile.txt
+
+# 行数を指定
+head -n 5 myfile.txt
+
+# 末尾を除く全行（末尾2行を除く）
+head -n -2 myfile.txt
+
+# バイト数を指定
+head -c 100 myfile.txt
+
+# 複数ファイル
+head file1.txt file2.txt
+
+# ヘッダーを常に表示
+head -v myfile.txt
+
+# ヘッダーを非表示
+head -q file1.txt file2.txt
+```
+
+### tail - ファイル末尾表示
+
+```bash
+# デフォルト（末尾10行）
+tail myfile.txt
+
+# 行数を指定
+tail -n 5 myfile.txt
+
+# 先頭から（3行目以降を表示）
+tail -n +3 myfile.txt
+
+# バイト数を指定
+tail -c 100 myfile.txt
+
+# リアルタイム監視（Ctrl+Cで停止）
+tail -f logfile.txt
+
+# 複数ファイル
+tail file1.txt file2.txt
+```
+
+### log - Unityログ表示・監視
+
+```bash
+# 全ログを表示
+log
+
+# Infoのみ表示
+log -i
+
+# Warningのみ表示
+log -w
+
+# Errorのみ表示（Exception, Assertを含む）
+log -e
+
+# 複合フィルタ
+log -i -w
+
+# 末尾N件を表示
+log -t 20
+
+# 先頭N件を表示
+log -h 10
+
+# スタックトレースを表示
+log -s
+
+# リアルタイム監視（Ctrl+Cで停止）
+log -f
+
+# フィルタ付きリアルタイム監視
+log -f -e
 ```
 
 ### component - コンポーネント管理
