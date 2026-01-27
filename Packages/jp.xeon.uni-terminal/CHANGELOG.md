@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-01-27
+
+### Fixed
+
+- **Unity 6000.3+ Compatibility**
+  - Added preprocessor directive to use `EditorUtility.EntityIdToObject` on Unity 6000.3.0+ and `EditorUtility.InstanceIDToObject` on earlier versions
+  - Resolves deprecation warning in Unity 6.3 LTS
+
 ## [0.1.0] - 2025-01-15
 
 ### Added
@@ -57,4 +65,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assembly definition files for proper code separation
 - Comprehensive unit tests and PlayMode tests
 
+[0.1.1]: https://github.com/AraiYuhki/UniTerminal/releases/tag/v0.1.1
 [0.1.0]: https://github.com/AraiYuhki/UniTerminal/releases/tag/v0.1.0
