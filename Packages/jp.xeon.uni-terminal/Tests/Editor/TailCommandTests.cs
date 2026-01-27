@@ -72,7 +72,7 @@ namespace Xeon.UniTerminal.Tests
         {
             CreateFile("test.txt", "line1", "line2", "line3", "line4", "line5");
 
-            var exitCode = await terminal.ExecuteAsync("tail -n 3 test.txt", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("tail -n=3 test.txt", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             var output = stdout.ToString();
@@ -88,7 +88,7 @@ namespace Xeon.UniTerminal.Tests
         {
             CreateFile("test.txt", "line1", "line2", "line3", "line4", "line5");
 
-            var exitCode = await terminal.ExecuteAsync("tail -n +3 test.txt", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("tail -n=+3 test.txt", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             var output = stdout.ToString();
@@ -105,7 +105,7 @@ namespace Xeon.UniTerminal.Tests
         {
             CreateFileWithContent("test.txt", "Hello, World!");
 
-            var exitCode = await terminal.ExecuteAsync("tail -c 6 test.txt", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("tail -c=6 test.txt", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             Assert.AreEqual("World!", stdout.ToString());
@@ -195,7 +195,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Tail_PipeInput_ProcessesStdin()
         {
-            var exitCode = await terminal.ExecuteAsync("echo line1 | tail -n 1", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("echo line1 | tail -n=1", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             Assert.IsTrue(stdout.ToString().Contains("line1"));
@@ -221,7 +221,7 @@ namespace Xeon.UniTerminal.Tests
         {
             CreateFile("test.txt", "content");
 
-            var exitCode = await terminal.ExecuteAsync("tail -n 5 -c 10 test.txt", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("tail -n=5 -c=10 test.txt", stdout, stderr);
 
             Assert.AreEqual(ExitCode.UsageError, exitCode);
             Assert.IsTrue(stderr.ToString().Contains("cannot specify both"));

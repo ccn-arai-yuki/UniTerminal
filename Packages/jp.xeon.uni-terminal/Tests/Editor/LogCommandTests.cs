@@ -182,7 +182,7 @@ namespace Xeon.UniTerminal.Tests
 
             await Task.Yield();
 
-            var exitCode = await terminal.ExecuteAsync("log -t 2", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("log -t=2", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             var output = stdout.ToString();
@@ -200,7 +200,7 @@ namespace Xeon.UniTerminal.Tests
 
             await Task.Yield();
 
-            var exitCode = await terminal.ExecuteAsync("log -h 2", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("log -h=2", stdout, stderr);
 
             Assert.AreEqual(ExitCode.Success, exitCode);
             var output = stdout.ToString();
@@ -213,7 +213,7 @@ namespace Xeon.UniTerminal.Tests
         [Test]
         public async Task Log_BothHeadAndTail_ReturnsError()
         {
-            var exitCode = await terminal.ExecuteAsync("log -h 5 -t 5", stdout, stderr);
+            var exitCode = await terminal.ExecuteAsync("log -h=5 -t=5", stdout, stderr);
 
             Assert.AreEqual(ExitCode.UsageError, exitCode);
             Assert.IsTrue(stderr.ToString().Contains("cannot specify both"));
