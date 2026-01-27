@@ -70,10 +70,11 @@ namespace Xeon.UniTerminal
         public Action<int> DeleteHistoryEntry { get; }
 
         /// <summary>
-        /// Unityログバッファ。
+        /// Unityログバッファ
         /// </summary>
         public LogBuffer LogBuffer { get; }
 
+        /// <summary>
         /// コマンド実行に必要なコンテキスト情報を初期化します
         /// </summary>
         /// <param name="stdin">標準入力リーダー</param>
