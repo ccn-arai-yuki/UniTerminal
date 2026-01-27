@@ -5,33 +5,40 @@ using System.Reflection;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// CommandAttributeとOptionAttributesから抽出されたコマンドのメタデータ。
+    /// CommandAttributeとOptionAttributesから抽出されたコマンドのメタデータ
     /// </summary>
     public class CommandMetadata
     {
         /// <summary>
-        /// コマンド名。
+        /// コマンド名
         /// </summary>
         public string CommandName { get; }
 
         /// <summary>
-        /// コマンドの説明。
+        /// コマンドの説明
         /// </summary>
         public string Description { get; }
 
         /// <summary>
-        /// ICommandを実装する型。
+        /// ICommandを実装する型
         /// </summary>
         public Type CommandType { get; }
 
         /// <summary>
-        /// このコマンドのオプションメタデータ。
+        /// このコマンドのオプションメタデータ
         /// </summary>
         public IReadOnlyList<OptionMetadata> Options { get; }
 
         private readonly Dictionary<string, OptionMetadata> longNameMap;
         private readonly Dictionary<string, OptionMetadata> shortNameMap;
 
+        /// <summary>
+        /// コマンドメタデータを初期化します
+        /// </summary>
+        /// <param name="commandName">コマンド名</param>
+        /// <param name="description">コマンド説明</param>
+        /// <param name="commandType">コマンド型</param>
+        /// <param name="options">オプションメタデータ一覧</param>
         public CommandMetadata(
             string commandName,
             string description,
@@ -57,7 +64,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// ロング名でオプションを検索します。
+        /// ロング名でオプションを検索します
         /// </summary>
         public bool TryGetOptionByLongName(string longName, out OptionMetadata option)
         {
@@ -65,7 +72,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// ショート名でオプションを検索します。
+        /// ショート名でオプションを検索します
         /// </summary>
         public bool TryGetOptionByShortName(string shortName, out OptionMetadata option)
         {
@@ -73,7 +80,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンドの新しいインスタンスを作成します。
+        /// コマンドの新しいインスタンスを作成します
         /// </summary>
         public ICommand CreateInstance()
         {
@@ -81,7 +88,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// このコマンドのヘルプテキストを生成します。
+        /// このコマンドのヘルプテキストを生成します
         /// </summary>
         public string GenerateHelp()
         {

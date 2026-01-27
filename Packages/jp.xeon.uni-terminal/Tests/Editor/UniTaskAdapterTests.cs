@@ -12,7 +12,7 @@ namespace Xeon.UniTerminal.Tests
     using Cysharp.Threading.Tasks;
 
     /// <summary>
-    /// UniTaskアダプターのテスト。
+    /// UniTaskアダプターのテスト
     /// </summary>
     [TestFixture]
     public class UniTaskAdapterTests

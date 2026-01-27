@@ -6,23 +6,29 @@ using UnityEngine;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// コマンドの検出と検索のためのレジストリ。
+    /// コマンドの検出と検索のためのレジストリ
     /// </summary>
     public class CommandRegistry
     {
         private readonly Dictionary<string, CommandMetadata> commands;
 
+        /// <summary>
+        /// 登録済みのコマンドメタデータ
+        /// </summary>
         public IReadOnlyDictionary<string, CommandMetadata> Commands => commands;
 
+        /// <summary>
+        /// コマンドレジストリを初期化します
+        /// </summary>
         public CommandRegistry()
         {
             commands = new Dictionary<string, CommandMetadata>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
-        /// 指定されたアセンブリからコマンドをスキャンします。
+        /// 指定されたアセンブリからコマンドをスキャンします
         /// </summary>
-        /// <param name="assemblies">スキャンするアセンブリ。</param>
+        /// <param name="assemblies">スキャンするアセンブリ</param>
         public void ScanAssemblies(params Assembly[] assemblies)
         {
             foreach (var assembly in assemblies)
@@ -32,7 +38,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 単一のアセンブリからコマンドをスキャンします。
+        /// 単一のアセンブリからコマンドをスキャンします
         /// </summary>
         public void ScanAssembly(Assembly assembly)
         {
@@ -60,7 +66,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンド型を手動で登録します。
+        /// コマンド型を手動で登録します
         /// </summary>
         public void RegisterCommand<T>() where T : ICommand
         {
@@ -68,7 +74,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// コマンド型を手動で登録します。
+        /// コマンド型を手動で登録します
         /// </summary>
         public void RegisterCommand(Type type)
         {
@@ -141,7 +147,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 名前でコマンドを取得しようとします。
+        /// 名前でコマンドを取得しようとします
         /// </summary>
         public bool TryGetCommand(string commandName, out CommandMetadata metadata)
         {
@@ -149,7 +155,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 登録されているすべてのコマンド名を取得します。
+        /// 登録されているすべてのコマンド名を取得します
         /// </summary>
         public IEnumerable<string> GetCommandNames()
         {
@@ -157,7 +163,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// グローバルヘルプテキストを生成します（すべてのコマンドのリスト）。
+        /// グローバルヘルプテキストを生成します（すべてのコマンドのリスト）
         /// </summary>
         public string GenerateGlobalHelp()
         {

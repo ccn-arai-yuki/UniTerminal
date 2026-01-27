@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// GameObjectのコンポーネントを管理するコマンド。
+    /// GameObjectのコンポーネントを管理するコマンド
     /// </summary>
     [Command("component", "Manage GameObject components (list, add, remove, info, enable, disable)")]
     public class ComponentCommand : ICommand

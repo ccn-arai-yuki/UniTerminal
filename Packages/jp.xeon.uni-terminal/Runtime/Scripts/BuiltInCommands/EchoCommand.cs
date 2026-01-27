@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace Xeon.UniTerminal.BuiltInCommands
 {
     /// <summary>
-    /// 引数を標準出力にエコーします。
+    /// 引数を標準出力にエコーします
     /// </summary>
     [Command("echo", "Echo arguments to stdout")]
     public class EchoCommand : ICommand

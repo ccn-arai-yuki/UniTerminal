@@ -8,21 +8,21 @@ namespace Xeon.UniTerminal.UniTask
     using Cysharp.Threading.Tasks;
 
     /// <summary>
-    /// UniTask版のIUniTaskTextReaderをTask版のIAsyncTextReaderに変換するアダプター。
+    /// UniTask版のIUniTaskTextReaderをTask版のIAsyncTextReaderに変換するアダプター
     /// </summary>
     public class UniTaskTextReaderAdapter : IAsyncTextReader
     {
         private readonly IUniTaskTextReader inner;
 
         /// <summary>
-        /// 内部のUniTask版リーダー。
+        /// 内部のUniTask版リーダー
         /// </summary>
         public IUniTaskTextReader Inner => inner;
 
         /// <summary>
-        /// UniTask版リーダーをラップしてTask版として使用できるようにします。
+        /// UniTask版リーダーをラップしてTask版として使用できるようにします
         /// </summary>
-        /// <param name="inner">ラップするUniTask版リーダー。</param>
+        /// <param name="inner">ラップするUniTask版リーダー</param>
         public UniTaskTextReaderAdapter(IUniTaskTextReader inner)
         {
             this.inner = inner;

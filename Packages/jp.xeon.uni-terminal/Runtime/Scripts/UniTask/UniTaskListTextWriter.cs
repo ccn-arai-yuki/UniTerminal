@@ -7,8 +7,8 @@ namespace Xeon.UniTerminal.UniTask
     using Cysharp.Threading.Tasks;
     
     /// <summary>
-    /// UniTask版のリストテキストライター。
-    /// 行をリストに収集し、パイプライン接続に使用します。
+    /// UniTask版のリストテキストライター
+    /// 行をリストに収集し、パイプライン接続に使用します
     /// </summary>
     public class UniTaskListTextWriter : IUniTaskTextWriter
     {
@@ -16,7 +16,7 @@ namespace Xeon.UniTerminal.UniTask
         private string partial = "";
 
         /// <summary>
-        /// 収集された行のリスト。
+        /// 収集された行のリスト
         /// </summary>
         public IReadOnlyList<string> Lines => lines;
 
@@ -38,7 +38,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// 未完了の行を完全な行としてフラッシュします。
+        /// 未完了の行を完全な行としてフラッシュします
         /// </summary>
         public void Flush()
         {
@@ -50,7 +50,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// バッファをクリアします。
+        /// バッファをクリアします
         /// </summary>
         public void Clear()
         {
@@ -59,7 +59,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// 収集された行数を取得します。
+        /// 収集された行数を取得します
         /// </summary>
         public int Count => lines.Count;
     }

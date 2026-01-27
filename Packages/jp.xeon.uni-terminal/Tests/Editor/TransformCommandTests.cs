@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// transformコマンドのテスト。
+    /// transformコマンドのテスト
     /// </summary>
     public class TransformCommandTests
     {

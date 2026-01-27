@@ -6,7 +6,7 @@ using Xeon.UniTerminal;
 namespace Xeon.UniTerminal.Samples
 {
     /// <summary>
-    /// Basic example demonstrating how to use UniTerminal.
+    /// Basic example demonstrating how to use UniTerminal
     /// </summary>
     public class TerminalExample : MonoBehaviour
     {
@@ -34,7 +34,7 @@ namespace Xeon.UniTerminal.Samples
         }
 
         /// <summary>
-        /// Execute a command and log the results.
+        /// Execute a command and log the results
         /// </summary>
         public async void ExecuteCommand(string command)
         {
@@ -66,7 +66,7 @@ namespace Xeon.UniTerminal.Samples
         }
 
         /// <summary>
-        /// Example: List files in current directory.
+        /// Example: List files in current directory
         /// </summary>
         [ContextMenu("Run: ls -la")]
         public void RunListCommand()
@@ -75,7 +75,7 @@ namespace Xeon.UniTerminal.Samples
         }
 
         /// <summary>
-        /// Example: Show scene hierarchy.
+        /// Example: Show scene hierarchy
         /// </summary>
         [ContextMenu("Run: hierarchy -r")]
         public void RunHierarchyCommand()
@@ -84,7 +84,7 @@ namespace Xeon.UniTerminal.Samples
         }
 
         /// <summary>
-        /// Example: Find GameObjects with specific tag.
+        /// Example: Find GameObjects with specific tag
         /// </summary>
         [ContextMenu("Run: go find -t MainCamera")]
         public void RunFindCommand()
@@ -93,7 +93,7 @@ namespace Xeon.UniTerminal.Samples
         }
 
         /// <summary>
-        /// Example: Pipeline command.
+        /// Example: Pipeline command
         /// </summary>
         [ContextMenu("Run: hierarchy -r | grep Camera")]
         public void RunPipelineCommand()

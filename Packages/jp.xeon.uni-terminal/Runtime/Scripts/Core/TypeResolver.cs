@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal
 {
     /// <summary>
-    /// 文字列からComponent型を解決するユーティリティ。
+    /// 文字列からComponent型を解決するユーティリティ
     /// </summary>
     public static class TypeResolver
     {
@@ -19,7 +19,7 @@ namespace Xeon.UniTerminal
         };
 
         /// <summary>
-        /// 型名からComponent型を解決します。
+        /// 型名からComponent型を解決します
         /// </summary>
         /// <param name="typeName">型名（例: "Rigidbody", "MyGame.MyComponent"）</param>
         /// <param name="customNamespace">カスタム名前空間（オプション）</param>
@@ -75,7 +75,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// フルネームで全アセンブリから型を検索します。
+        /// フルネームで全アセンブリから型を検索します
         /// </summary>
         private static Type FindTypeInAllAssemblies(string fullName)
         {
@@ -97,7 +97,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 一般的なコンポーネント型名のリストを取得します（補完用）。
+        /// 一般的なコンポーネント型名のリストを取得します（補完用）
         /// </summary>
         public static string[] GetCommonComponentNames()
         {
@@ -135,7 +135,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 型名からアセット型を解決します。
+        /// 型名からアセット型を解決します
         /// </summary>
         /// <param name="typeName">型名（例: "Texture2D", "Material"）</param>
         /// <returns>解決されたType、見つからない場合はnull</returns>
@@ -198,7 +198,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// フルネームで全アセンブリからアセット型を検索します。
+        /// フルネームで全アセンブリからアセット型を検索します
         /// </summary>
         private static Type FindAssetTypeInAllAssemblies(string fullName)
         {
@@ -219,7 +219,7 @@ namespace Xeon.UniTerminal
         }
 
         /// <summary>
-        /// 一般的なアセット型名のリストを取得します（補完用）。
+        /// 一般的なアセット型名のリストを取得します（補完用）
         /// </summary>
         public static string[] GetCommonAssetTypeNames()
         {

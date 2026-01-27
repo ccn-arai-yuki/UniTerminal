@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// コンポーネントのプロパティを取得・設定するコマンド。
+    /// コンポーネントのプロパティを取得・設定するコマンド
     /// </summary>
     [Command("property", "Get or set component properties (list, get, set)")]
     public class PropertyCommand : ICommand

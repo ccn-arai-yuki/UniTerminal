@@ -6,18 +6,30 @@ using UnityEngine;
 
 namespace Xeon.UniTerminal.Sample
 {
+    /// <summary>
+    /// CanvasGroupのフェードアニメーションを制御します
+    /// </summary>
     public class AnimationController
     {
         private const float AnimationDuration = 0.2f;
         private CanvasGroup canvasGroup;
         private MonoBehaviour taskRunner;
 
+        /// <summary>
+        /// アニメーション制御用のコンストラクタ
+        /// </summary>
+        /// <param name="canvasGroup">対象のCanvasGroup</param>
+        /// <param name="taskRunner">コルーチン実行用のMonoBehaviour</param>
         public AnimationController(CanvasGroup canvasGroup, MonoBehaviour taskRunner)
         {
             this.canvasGroup = canvasGroup;
             this.taskRunner = taskRunner;
         }
 
+        /// <summary>
+        /// フェードインを実行します
+        /// </summary>
+        /// <param name="token">キャンセルトークン</param>
         public async Task OpenAsync(CancellationToken token = default)
         {
             var completionSource = new TaskCompletionSource<bool>();
@@ -25,6 +37,10 @@ namespace Xeon.UniTerminal.Sample
             await completionSource.Task;
         }
 
+        /// <summary>
+        /// フェードアウトを実行します
+        /// </summary>
+        /// <param name="token">キャンセルトークン</param>
         public async Task CloseAsync(CancellationToken token = default)
         {
             var completionSource = new TaskCompletionSource<bool>();

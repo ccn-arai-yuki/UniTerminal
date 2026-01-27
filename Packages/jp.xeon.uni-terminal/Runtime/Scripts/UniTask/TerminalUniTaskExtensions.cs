@@ -9,20 +9,20 @@ namespace Xeon.UniTerminal.UniTask
     using Cysharp.Threading.Tasks;
 
     /// <summary>
-    /// Terminal用のUniTask拡張メソッド。
+    /// Terminal用のUniTask拡張メソッド
     /// </summary>
     public static class TerminalUniTaskExtensions
     {
         /// <summary>
-        /// UniTaskを使用してコマンドを実行します。
+        /// UniTaskを使用してコマンドを実行します
         /// </summary>
-        /// <param name="terminal">ターミナルインスタンス。</param>
-        /// <param name="input">コマンドライン入力。</param>
-        /// <param name="stdout">標準出力ライター。</param>
-        /// <param name="stderr">標準エラー出力ライター。</param>
-        /// <param name="stdin">標準入力リーダー（オプション）。</param>
-        /// <param name="ct">キャンセルトークン。</param>
-        /// <returns>終了コード。</returns>
+        /// <param name="terminal">ターミナルインスタンス</param>
+        /// <param name="input">コマンドライン入力</param>
+        /// <param name="stdout">標準出力ライター</param>
+        /// <param name="stderr">標準エラー出力ライター</param>
+        /// <param name="stdin">標準入力リーダー（オプション）</param>
+        /// <param name="ct">キャンセルトークン</param>
+        /// <returns>終了コード</returns>
         public static async UniTask<ExitCode> ExecuteUniTaskAsync(
             this Terminal terminal,
             string input,
@@ -99,7 +99,7 @@ namespace Xeon.UniTerminal.UniTask
         }
 
         /// <summary>
-        /// Task版のライター/リーダーをUniTask版に変換して実行します。
+        /// Task版のライター/リーダーをUniTask版に変換して実行します
         /// </summary>
         public static UniTask<ExitCode> ExecuteUniTaskAsync(
             this Terminal terminal,

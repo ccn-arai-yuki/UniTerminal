@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 namespace Xeon.UniTerminal.Assets
 {
     /// <summary>
-    /// ロード済みアセットを管理するレジストリ。
+    /// ロード済みアセットを管理するレジストリ
     /// </summary>
     public class LoadedAssetRegistry
     {
@@ -15,12 +15,12 @@ namespace Xeon.UniTerminal.Assets
         private readonly Dictionary<string, List<LoadedAssetEntry>> entriesByName = new();
 
         /// <summary>
-        /// ロード済みアセット数。
+        /// ロード済みアセット数
         /// </summary>
         public int Count => entriesByInstanceId.Count;
 
         /// <summary>
-        /// アセットを登録します。
+        /// アセットを登録します
         /// </summary>
         /// <param name="asset">登録するアセット</param>
         /// <param name="key">アセットのキー（パス、アドレス等）</param>
@@ -61,7 +61,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// アセットを登録解除します。
+        /// アセットを登録解除します
         /// </summary>
         /// <param name="asset">登録解除するアセット</param>
         /// <returns>登録解除されたらtrue</returns>
@@ -74,7 +74,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// インスタンスIDでアセットを登録解除します。
+        /// インスタンスIDでアセットを登録解除します
         /// </summary>
         /// <param name="instanceId">インスタンスID</param>
         /// <returns>登録解除されたらtrue</returns>
@@ -96,7 +96,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// インスタンスIDでアセットを取得します。
+        /// インスタンスIDでアセットを取得します
         /// </summary>
         /// <param name="instanceId">インスタンスID</param>
         /// <returns>アセットエントリ、見つからない場合はnull</returns>
@@ -107,7 +107,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 名前でアセットを取得します（同名が1つの場合のみ成功）。
+        /// 名前でアセットを取得します（同名が1つの場合のみ成功）
         /// </summary>
         /// <param name="name">アセット名</param>
         /// <param name="entry">取得されたエントリ</param>
@@ -127,7 +127,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 名前でアセットを取得します（複数可）。
+        /// 名前でアセットを取得します（複数可）
         /// </summary>
         /// <param name="name">アセット名</param>
         /// <returns>アセットエントリのリスト</returns>
@@ -139,7 +139,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 指定子でアセットを解決します。
+        /// 指定子でアセットを解決します
         /// </summary>
         /// <param name="specifier">指定子（#instanceId, 名前, またはキー）</param>
         /// <param name="entry">解決されたエントリ</param>
@@ -168,7 +168,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 型でフィルタリングしたアセット一覧を取得します。
+        /// 型でフィルタリングしたアセット一覧を取得します
         /// </summary>
         /// <param name="assetType">アセットの型（nullで全て）</param>
         /// <returns>アセットエントリのリスト</returns>
@@ -183,7 +183,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// パターンで検索します。
+        /// パターンで検索します
         /// </summary>
         /// <param name="pattern">検索パターン（ワイルドカード対応）</param>
         /// <param name="assetType">アセットの型（nullで全て）</param>
@@ -206,7 +206,7 @@ namespace Xeon.UniTerminal.Assets
         }
 
         /// <summary>
-        /// 全てのエントリをクリアします。
+        /// 全てのエントリをクリアします
         /// </summary>
         public void Clear()
         {

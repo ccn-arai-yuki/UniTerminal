@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// historyコマンドのテスト。
+    /// historyコマンドのテスト
     /// </summary>
     public class HistoryCommandTests
     {

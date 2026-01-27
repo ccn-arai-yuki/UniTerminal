@@ -7,7 +7,7 @@ using UnityEngine.TestTools;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// sceneコマンドのPlayModeテスト。
+    /// sceneコマンドのPlayModeテスト
     /// </summary>
     public class SceneCommandPlayModeTests
     {

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// componentコマンドのテスト。
+    /// componentコマンドのテスト
     /// </summary>
     public class ComponentCommandTests
     {

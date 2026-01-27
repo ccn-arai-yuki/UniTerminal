@@ -349,6 +349,10 @@ namespace Xeon.Common.FlyweightScrollView
             itemList.Clear();
         }
 
+        /// <summary>
+        /// ビューポートに収まるアイテムサイズを取得します
+        /// </summary>
+        /// <returns>表示に適したアイテムサイズ</returns>
         public Vector2 GetFitItemSize() => layouter.GetFitItemSize();
 
 

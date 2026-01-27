@@ -8,7 +8,7 @@ using Xeon.UniTerminal.Assets;
 namespace Xeon.UniTerminal.Tests.Runtime
 {
     /// <summary>
-    /// assetコマンドのPlayModeテスト。
+    /// assetコマンドのPlayModeテスト
     /// </summary>
     public class AssetCommandPlayModeTests
     {

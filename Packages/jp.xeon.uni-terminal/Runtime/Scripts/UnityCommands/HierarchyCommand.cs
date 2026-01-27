@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 namespace Xeon.UniTerminal.UnityCommands
 {
     /// <summary>
-    /// シーンのヒエラルキー構造を表示するコマンド。
+    /// シーンのヒエラルキー構造を表示するコマンド
     /// </summary>
     [Command("hierarchy", "Display scene hierarchy")]
     public class HierarchyCommand : ICommand
@@ -96,7 +96,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// ロード済みシーン一覧を表示します。
+        /// ロード済みシーン一覧を表示します
         /// </summary>
         private async Task<ExitCode> ListScenesAsync(CommandContext context, CancellationToken ct)
         {
@@ -112,7 +112,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// シーン全体のヒエラルキーを表示します。
+        /// シーン全体のヒエラルキーを表示します
         /// </summary>
         private async Task<ExitCode> DisplaySceneAsync(CommandContext context, Scene scene, CancellationToken ct)
         {
@@ -142,7 +142,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// 指定パスからヒエラルキーを表示します。
+        /// 指定パスからヒエラルキーを表示します
         /// </summary>
         private async Task<ExitCode> DisplayFromPathAsync(
             CommandContext context,
@@ -182,7 +182,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// ツリーノードを出力します。
+        /// ツリーノードを出力します
         /// </summary>
         private async Task PrintTreeNodeAsync(
             CommandContext context,
@@ -244,7 +244,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// オブジェクト行を構築します。
+        /// オブジェクト行を構築します
         /// </summary>
         private string BuildObjectLine(GameObject go, bool highlight = false)
         {
@@ -263,7 +263,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// 可視の子オブジェクト数を取得します。
+        /// 可視の子オブジェクト数を取得します
         /// </summary>
         private int GetVisibleChildCount(Transform transform)
         {
@@ -280,7 +280,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// 可視の子オブジェクトを取得します。
+        /// 可視の子オブジェクトを取得します
         /// </summary>
         private IEnumerable<Transform> GetVisibleChildren(Transform transform)
         {
@@ -358,7 +358,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// 入力行が指定オプションの直後かどうかを判定します。
+        /// 入力行が指定オプションの直後かどうかを判定します
         /// </summary>
         private bool IsAfterOption(string inputLine, string shortOpt, string longOpt)
         {
@@ -371,7 +371,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// フィルターを初期化します。
+        /// フィルターを初期化します
         /// </summary>
         private bool InitializeFilters(CommandContext context, out string errorMessage)
         {
@@ -433,7 +433,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// フィルターが有効かどうかを確認します。
+        /// フィルターが有効かどうかを確認します
         /// </summary>
         private bool HasFilters()
         {
@@ -444,7 +444,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// GameObjectがフィルター条件に一致するかどうかを確認します。
+        /// GameObjectがフィルター条件に一致するかどうかを確認します
         /// </summary>
         private bool MatchesFilter(GameObject go)
         {
@@ -476,7 +476,7 @@ namespace Xeon.UniTerminal.UnityCommands
         }
 
         /// <summary>
-        /// オブジェクトまたはその子孫がフィルター条件に一致するかどうかを確認します。
+        /// オブジェクトまたはその子孫がフィルター条件に一致するかどうかを確認します
         /// </summary>
         private bool MatchesFilterRecursive(GameObject go)
         {

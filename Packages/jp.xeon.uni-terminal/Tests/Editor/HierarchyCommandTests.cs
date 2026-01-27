@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.UniTerminal.Tests
 {
     /// <summary>
-    /// hierarchyコマンドのテスト。
+    /// hierarchyコマンドのテスト
     /// </summary>
     public class HierarchyCommandTests
     {
@@ -39,7 +39,7 @@ namespace Xeon.UniTerminal.Tests
         }
 
         /// <summary>
-        /// テスト用GameObjectを作成します。
+        /// テスト用GameObjectを作成します
         /// </summary>
         private GameObject CreateTestObject(string name, Transform parent = null)
         {
@@ -531,7 +531,7 @@ namespace Xeon.UniTerminal.Tests
     }
 
     /// <summary>
-    /// GameObjectPathユーティリティのテスト。
+    /// GameObjectPathユーティリティのテスト
     /// </summary>
     public class GameObjectPathTests
     {

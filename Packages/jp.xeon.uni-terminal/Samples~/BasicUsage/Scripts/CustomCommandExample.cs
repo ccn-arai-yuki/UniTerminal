@@ -6,7 +6,7 @@ using Xeon.UniTerminal;
 namespace Xeon.UniTerminal.Samples
 {
     /// <summary>
-    /// Example of creating a custom command for UniTerminal.
+    /// Example of creating a custom command for UniTerminal
     /// </summary>
     [Command("greet", "A sample greeting command")]
     public class GreetCommand : ICommand
@@ -53,7 +53,7 @@ namespace Xeon.UniTerminal.Samples
     }
 
     /// <summary>
-    /// Example of a command that reads from stdin (for pipeline usage).
+    /// Example of a command that reads from stdin (for pipeline usage)
     /// </summary>
     [Command("count", "Count lines from input")]
     public class CountCommand : ICommand
