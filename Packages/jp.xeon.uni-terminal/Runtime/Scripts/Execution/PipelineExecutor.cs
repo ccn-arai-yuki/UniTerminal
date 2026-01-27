@@ -20,6 +20,7 @@ namespace Xeon.UniTerminal.Execution
         private readonly IReadOnlyList<string> commandHistory;
         private readonly Action clearHistoryCallback;
         private readonly Action<int> deleteHistoryEntryCallback;
+        private readonly LogBuffer logBuffer;
 
         /// <summary>
         /// パイプライン実行に必要な環境情報を初期化します
@@ -40,7 +41,8 @@ namespace Xeon.UniTerminal.Execution
             Action<string> changeWorkingDirectoryCallback = null,
             IReadOnlyList<string> commandHistory = null,
             Action clearHistoryCallback = null,
-            Action<int> deleteHistoryEntryCallback = null)
+            Action<int> deleteHistoryEntryCallback = null,
+            LogBuffer logBuffer = null)
         {
             this.workingDirectory = workingDirectory ?? throw new ArgumentNullException(nameof(workingDirectory));
             this.homeDirectory = homeDirectory ?? throw new ArgumentNullException(nameof(homeDirectory));
@@ -50,6 +52,7 @@ namespace Xeon.UniTerminal.Execution
             this.commandHistory = commandHistory;
             this.clearHistoryCallback = clearHistoryCallback;
             this.deleteHistoryEntryCallback = deleteHistoryEntryCallback;
+            this.logBuffer = logBuffer;
         }
 
         /// <summary>
@@ -237,7 +240,8 @@ namespace Xeon.UniTerminal.Execution
                 ChangeWorkingDirectory,
                 commandHistory,
                 clearHistoryCallback,
-                deleteHistoryEntryCallback);
+                deleteHistoryEntryCallback,
+                logBuffer);
         }
 
         private static IAsyncTextReader PrepareNextStdin(ListTextWriter pipeBuffer, IAsyncTextReader currentStdin)

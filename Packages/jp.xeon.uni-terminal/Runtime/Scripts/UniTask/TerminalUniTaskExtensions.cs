@@ -65,7 +65,8 @@ namespace Xeon.UniTerminal.UniTask
                     path => terminal.WorkingDirectory = path,
                     terminal.CommandHistory,
                     () => terminal.ClearHistory(),
-                    terminal.DeleteHistoryEntry);
+                    terminal.DeleteHistoryEntry,
+                    terminal.LogBuffer);
 
                 var result = await executor.ExecuteAsync(bound, stdin, stdout, stderr, ct);
 

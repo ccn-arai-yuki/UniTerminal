@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -69,6 +70,11 @@ namespace Xeon.UniTerminal.Sample
 
         private int maxCharsPerLine = -1;
 
+        /// <summary>
+        /// コマンド実行用のCancellationTokenSource（Ctrl+Cでキャンセル）
+        /// </summary>
+        private CancellationTokenSource commandCancellationTokenSource;
+
         private void Awake()
         {
             terminal = new Terminal(Application.persistentDataPath, Application.persistentDataPath, maxHistorySize: BufferSize);
@@ -97,6 +103,13 @@ namespace Xeon.UniTerminal.Sample
             {
                 var sample = scrollViewController.GetSample();
                 maxCharsPerLine = GetMaxCharsPerLine(sample);
+            }
+
+            // Ctrl+C: コマンド実行中のキャンセル
+            if (InputHandler.IsPressedCtrlC() && commandCancellationTokenSource != null)
+            {
+                commandCancellationTokenSource.Cancel();
+                return;
             }
 
             // 入力フィールドがアクティブでない場合は無視
@@ -297,18 +310,33 @@ namespace Xeon.UniTerminal.Sample
                 await normalOutput.WriteAsync($"> {command}");
                 ScrollToBottom();
                 input.DeactivateInputField();
+
+                // コマンド実行用のCancellationTokenSourceを作成
+                commandCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+
+                try
+                {
 #if UNI_TERMINAL_UNI_TASK_SUPPORT
-                await terminal.ExecuteUniTaskAsync(command, normalOutput, errorOutput, ct: destroyCancellationToken);
+                    await terminal.ExecuteUniTaskAsync(command, normalOutput, errorOutput, ct: commandCancellationTokenSource.Token);
 #else
-                await terminal.ExecuteAsync(command, normalOutput, errorOutput, ct: destroyCancellationToken);
+                    await terminal.ExecuteAsync(command, normalOutput, errorOutput, ct: commandCancellationTokenSource.Token);
 #endif
+                }
+                catch (OperationCanceledException) when (!destroyCancellationToken.IsCancellationRequested)
+                {
+                    // Ctrl+Cによるキャンセル
+                    await normalOutput.WriteAsync("^C");
+                }
             }
             catch (OperationCanceledException)
             {
-                // キャンセルは正常終了として扱う
+                // destroyCancellationTokenによるキャンセル（アプリ終了時など）
             }
             finally
             {
+                commandCancellationTokenSource?.Dispose();
+                commandCancellationTokenSource = null;
+
                 ScrollToBottom();
                 input.text = string.Empty;
                 input.interactable = true;

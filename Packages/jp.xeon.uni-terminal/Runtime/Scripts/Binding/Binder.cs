@@ -96,6 +96,16 @@ namespace Xeon.UniTerminal.Binding
 
         private object ConvertScalar(string rawValue, Type type)
         {
+            // Nullable型の処理
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if (underlyingType != null)
+            {
+                if (string.IsNullOrEmpty(rawValue))
+                    return null;
+
+                return ConvertScalar(rawValue, underlyingType);
+            }
+
             if (type == typeof(string))
             {
                 return rawValue;

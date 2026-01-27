@@ -70,6 +70,10 @@ namespace Xeon.UniTerminal
         public Action<int> DeleteHistoryEntry { get; }
 
         /// <summary>
+        /// Unityログバッファ。
+        /// </summary>
+        public LogBuffer LogBuffer { get; }
+
         /// コマンド実行に必要なコンテキスト情報を初期化します
         /// </summary>
         /// <param name="stdin">標準入力リーダー</param>
@@ -96,7 +100,8 @@ namespace Xeon.UniTerminal
             Action<string> changeWorkingDirectory = null,
             IReadOnlyList<string> commandHistory = null,
             Action clearHistory = null,
-            Action<int> deleteHistoryEntry = null)
+            Action<int> deleteHistoryEntry = null,
+            LogBuffer logBuffer = null)
         {
             Stdin = stdin;
             Stdout = stdout;
@@ -110,6 +115,7 @@ namespace Xeon.UniTerminal
             CommandHistory = commandHistory ?? new List<string>();
             ClearHistory = clearHistory;
             DeleteHistoryEntry = deleteHistoryEntry;
+            LogBuffer = logBuffer;
         }
     }
 }

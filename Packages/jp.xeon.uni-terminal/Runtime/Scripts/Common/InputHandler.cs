@@ -98,5 +98,51 @@ namespace Xeon.UniTerminal.Common
 #endif
             return result;
         }
+
+        /// <summary>
+        /// Ctrlキーが押されているかを判定する。
+        /// </summary>
+        /// <returns>左右いずれかのCtrlキーが押されている場合true。</returns>
+        public static bool IsHeldCtrl()
+        {
+            var result = false;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null)
+                result = keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            result |= UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftControl) ||
+                      UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightControl);
+#endif
+            return result;
+        }
+
+        /// <summary>
+        /// Cキーがこのフレームで押されたかを判定する。
+        /// </summary>
+        /// <returns>Cキーが押された場合true。</returns>
+        public static bool IsPressedC()
+        {
+            var result = false;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null)
+                result = keyboard.cKey.wasPressedThisFrame;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            result |= UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.C);
+#endif
+            return result;
+        }
+
+        /// <summary>
+        /// Ctrl+Cが押されたかを判定する。
+        /// </summary>
+        /// <returns>Ctrlを押しながらCを押した場合true。</returns>
+        public static bool IsPressedCtrlC()
+        {
+            return IsHeldCtrl() && IsPressedC();
+        }
     }
 }
