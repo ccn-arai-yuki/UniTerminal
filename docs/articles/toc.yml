@@ -11,11 +11,3 @@
       href: commands/text-processing.md
     - name: Unity Commands
       href: commands/unity-commands.md
-- name: Custom Commands
-  href: custom-commands.md
-- name: Pipeline & Redirects
-  href: pipeline-redirects.md
-- name: UniTask Support
-  href: unitask-support.md
-- name: FlyweightScrollView
-  href: flyweight-scrollview.md

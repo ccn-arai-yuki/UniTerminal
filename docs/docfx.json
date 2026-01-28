@@ -1,23 +1,6 @@
 {
-  "metadata": [
-    {
-      "src": [
-        {
-          "files": ["jp.xeon.uni-terminal.runtime.dll"],
-          "src": "../Library/ScriptAssemblies"
-        }
-      ],
-      "dest": "api",
-      "disableGitFeatures": false,
-      "disableDefaultFilter": false,
-      "filter": "filterConfig.yml"
-    }
-  ],
   "build": {
     "content": [
-      {
-        "files": ["api/**.yml", "api/index.md"]
-      },
       {
         "files": ["articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md"]
       }
@@ -39,11 +22,6 @@
       "_gitContribute": {
         "repo": "https://github.com/AraiYuhki/UniTerminal",
         "branch": "main"
-      }
-    },
-    "fileMetadata": {
-      "_disableContribution": {
-        "api/*": true
       }
     },
     "sitemap": {
