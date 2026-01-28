@@ -2,7 +2,14 @@
   "build": {
     "content": [
       {
-        "files": ["articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md"]
+        "files": [
+          "articles/**.md",
+          "articles/**/toc.yml",
+          "ja/**.md",
+          "ja/**/toc.yml",
+          "toc.yml",
+          "*.md"
+        ]
       }
     ],
     "resource": [
@@ -25,7 +32,7 @@
       }
     },
     "sitemap": {
-      "baseUrl": "https://araiyuhki.github.io/UniTerminal"
+      "baseUrl": "https://araiyuhki.github.io/UniTerminal_Reference"
     },
     "xref": [
       "https://learn.microsoft.com/en-us/dotnet/.xrefmap.json"

@@ -1,2 +1,4 @@
 - name: Articles
   href: articles/
+- name: 日本語
+  href: ja/

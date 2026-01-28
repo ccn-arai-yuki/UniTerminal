@@ -16,6 +16,7 @@ This documentation focuses on the built-in commands and how to use the `Terminal
 
 - [Getting Started](articles/getting-started.md)
 - [Built-in Commands](articles/commands/index.md)
+- [日本語ドキュメント](ja/index.md)
 
 ## Installation
 

@@ -18,6 +18,10 @@ Unity向けのLinuxライクなCLI実行フレームワークです。文字列�
 - Unity 6000.0 以上
 - （オプション）UniTask 2.0 以上
 
+## ドキュメント
+
+- リファレンス: https://araiyuhki.github.io/UniTerminal_Reference/index.html
+
 ## ドキュメント公開（外部リポジトリ）
 
 GitHub Pages を別リポジトリで公開するため、`docs.yml` はビルド成果物を外部リポジトリに push します。公開用リポジトリでは `gh-pages` ブランチを Pages の配信元に設定してください。
