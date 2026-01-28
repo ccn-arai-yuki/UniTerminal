@@ -13,12 +13,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -64,18 +58,11 @@ jobs:
       - name: Build Documentation
         run: docfx docs/docfx.json
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to external Pages repository
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: docs/_site
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          deploy_key: ${{ secrets.PAGES_DEPLOY_KEY }}
+          external_repository: AraiYuhki/UniTerminal_Reference
+          publish_branch: gh-pages
+          publish_dir: docs/_site
+          force_orphan: true
