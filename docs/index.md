@@ -2,6 +2,8 @@
 
 A string-based CLI execution framework for Unity with Linux-like behavior.
 
+This documentation focuses on the built-in commands and how to use the `Terminal` class in Unity projects.
+
 ## Features
 
 - **Linux-like Syntax** - Pipes (`|`), redirects (`>`, `>>`, `<`)
@@ -14,8 +16,7 @@ A string-based CLI execution framework for Unity with Linux-like behavior.
 
 - [Getting Started](articles/getting-started.md)
 - [Built-in Commands](articles/commands/index.md)
-- [Custom Commands](articles/custom-commands.md)
-- [API Reference](api/index.md)
+- [日本語ドキュメント](ja/index.md)
 
 ## Installation
 
