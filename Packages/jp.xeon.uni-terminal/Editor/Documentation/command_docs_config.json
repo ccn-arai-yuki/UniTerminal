@@ -1,0 +1,104 @@
+{
+    "categories": [
+        {
+            "id": "file-operations",
+            "nameJa": "ファイル操作",
+            "nameEn": "File Operations",
+            "descriptionJa": "ファイルとディレクトリを操作するためのコマンドです。",
+            "descriptionEn": "Commands for navigating and manipulating files and directories."
+        },
+        {
+            "id": "text-processing",
+            "nameJa": "テキスト処理",
+            "nameEn": "Text Processing",
+            "descriptionJa": "テキスト出力の処理とフィルタリングのためのコマンドです。",
+            "descriptionEn": "Commands for processing and filtering text output."
+        },
+        {
+            "id": "unity-commands",
+            "nameJa": "Unityコマンド",
+            "nameEn": "Unity Commands",
+            "descriptionJa": "Unity GameObjects、Transform、Componentsを操作するためのコマンドです。",
+            "descriptionEn": "Commands for manipulating Unity GameObjects, Transforms, and Components."
+        },
+        {
+            "id": "utilities",
+            "nameJa": "ユーティリティ",
+            "nameEn": "Utilities",
+            "descriptionJa": "一般的なユーティリティコマンドです。",
+            "descriptionEn": "General utility commands."
+        }
+    ],
+    "commands": [
+        {
+            "name": "ls",
+            "synopsis": "ls [-a] [-l] [-h] [-r] [-R] [-S <sort>] [path...]",
+            "descriptionJa": "ディレクトリの内容を一覧表示します。",
+            "longDescriptionJa": "ファイルとディレクトリの情報を一覧表示します。デフォルトでは現在のディレクトリの内容を表示します。",
+            "longDescriptionEn": "Lists information about files and directories. By default, lists the current directory contents.",
+            "examplesJa": "# 現在のディレクトリを表示\nls\n\n# 詳細情報付きで表示\nls -l\n\n# 隠しファイルを含めて表示\nls -a\n\n# 人間が読みやすいサイズで表示\nls -lh\n\n# 再帰的に表示\nls -R",
+            "examplesEn": "# List current directory\nls\n\n# List with details\nls -l\n\n# List all files including hidden\nls -a\n\n# List with human-readable sizes\nls -lh\n\n# List recursively\nls -R",
+            "exitCodes": "| 0 | 成功 |\n| 2 | ファイルまたはディレクトリが見つからない |"
+        },
+        {
+            "name": "cd",
+            "synopsis": "cd [-L|-P] [directory]",
+            "descriptionJa": "作業ディレクトリを変更します。",
+            "longDescriptionJa": "現在の作業ディレクトリを指定されたパスに変更します。引数なしの場合、ホームディレクトリに移動します。",
+            "longDescriptionEn": "Changes the current working directory to the specified path. Without arguments, changes to the home directory.",
+            "examplesJa": "# ホームディレクトリに移動\ncd\n\n# 特定のディレクトリに移動\ncd /Users/player/Projects\n\n# 親ディレクトリに移動\ncd ..\n\n# 前のディレクトリに移動\ncd -",
+            "examplesEn": "# Change to home directory\ncd\n\n# Change to specific directory\ncd /Users/player/Projects\n\n# Change to parent directory\ncd ..\n\n# Change to previous directory\ncd -",
+            "exitCodes": "| 0 | 成功 |\n| 1 | 引数が多すぎる |\n| 2 | ディレクトリが見つからない |"
+        },
+        {
+            "name": "hierarchy",
+            "synopsis": "hierarchy [-r] [-d depth] [-a] [-l] [-i] [-s scene] [-n pattern] [-c component] [-t tag] [-y layer] [path]",
+            "descriptionJa": "シーンヒエラルキーをツリー構造で表示します。",
+            "longDescriptionJa": "現在のシーンのGameObjectsをツリー構造で表示します。名前、コンポーネント、タグ、レイヤーでフィルタリングできます。",
+            "longDescriptionEn": "Displays GameObjects in the current scene as a tree structure. Can filter by name, component, tag, or layer.",
+            "examplesJa": "# シーン全体のルートオブジェクトを表示\nhierarchy\n\n# 再帰的に表示\nhierarchy -r\n\n# 詳細情報付きで表示\nhierarchy -l\n\n# インスタンスIDを表示\nhierarchy -i\n\n# 名前でフィルタ\nhierarchy -n \"Player*\"\n\n# コンポーネントでフィルタ\nhierarchy -c Rigidbody",
+            "examplesEn": "# Show root objects in active scene\nhierarchy\n\n# Recursive display\nhierarchy -r\n\n# Show with details\nhierarchy -l\n\n# Show instance IDs\nhierarchy -i\n\n# Filter by name\nhierarchy -n \"Player*\"\n\n# Filter by component\nhierarchy -c Rigidbody",
+            "exitCodes": "| 0 | 成功 |\n| 1 | 無効なフィルタパターン |\n| 2 | GameObjectまたはシーンが見つからない |"
+        },
+        {
+            "name": "echo",
+            "synopsis": "echo [-n] [string...]",
+            "descriptionJa": "テキストを標準出力に出力します。",
+            "longDescriptionJa": "指定された文字列をスペースで区切って標準出力に出力し、末尾に改行を追加します。",
+            "longDescriptionEn": "Outputs the specified strings to standard output, separated by spaces, followed by a newline.",
+            "examplesJa": "# シンプルな出力\necho Hello, World!\n\n# 末尾の改行なしで出力\necho -n \"No newline\"\n\n# ファイルにリダイレクト\necho \"data\" > file.txt",
+            "examplesEn": "# Simple output\necho Hello, World!\n\n# Output without trailing newline\necho -n \"No newline\"\n\n# Redirect to file\necho \"data\" > file.txt",
+            "exitCodes": "| 0 | 常に成功 |"
+        },
+        {
+            "name": "grep",
+            "synopsis": "grep -p <pattern> [-i] [-v] [-c]",
+            "descriptionJa": "パターンに一致する行を検索します。",
+            "longDescriptionJa": "入力行をフィルタリングし、指定された正規表現パターンに一致する行のみを出力します。",
+            "longDescriptionEn": "Filters input lines, outputting only those that match the specified regular expression pattern.",
+            "examplesJa": "# 基本的なパターン検索\ncat file.txt | grep -p \"error\"\n\n# 大文字小文字を区別しない検索\ncat log.txt | grep -p \"warning\" -i\n\n# マッチを反転\nls -la | grep -p \".meta\" -v\n\n# 一致数のみカウント\nhierarchy -r | grep -p \"Enemy\" -c",
+            "examplesEn": "# Basic pattern search\ncat file.txt | grep -p \"error\"\n\n# Case-insensitive search\ncat log.txt | grep -p \"warning\" -i\n\n# Invert match\nls -la | grep -p \".meta\" -v\n\n# Count matches only\nhierarchy -r | grep -p \"Enemy\" -c",
+            "exitCodes": "| 0 | 1行以上が一致 |\n| 1 | 無効なパターン |\n| 2 | 一致する行なし |"
+        },
+        {
+            "name": "help",
+            "synopsis": "help [command]",
+            "descriptionJa": "コマンドのヘルプ情報を表示します。",
+            "longDescriptionJa": "引数なしの場合、利用可能なすべてのコマンドを一覧表示します。コマンド名を指定すると、そのコマンドの詳細なヘルプを表示します。",
+            "longDescriptionEn": "Without arguments, lists all available commands. With a command name, displays detailed help for that command.",
+            "examplesJa": "# すべてのコマンドを一覧表示\nhelp\n\n# 特定のコマンドのヘルプを表示\nhelp ls\nhelp hierarchy",
+            "examplesEn": "# List all commands\nhelp\n\n# Get help for specific command\nhelp ls\nhelp hierarchy",
+            "exitCodes": "| 0 | 成功 |\n| 1 | 指定されたコマンドが見つからない |"
+        },
+        {
+            "name": "log",
+            "synopsis": "log [-i] [-w] [-e] [-f] [-t N] [-h N] [-s]",
+            "descriptionJa": "Unityログを表示・監視します。",
+            "longDescriptionJa": "Unity Debug.Logで出力されたログを表示します。ログタイプでフィルタリングしたり、リアルタイムで監視したりできます。",
+            "longDescriptionEn": "Displays Unity Debug.Log output. Can filter by log type or monitor in real-time.",
+            "examplesJa": "# 全ログを表示\nlog\n\n# Errorのみ表示\nlog -e\n\n# 末尾20件を表示\nlog -t 20\n\n# リアルタイム監視\nlog -f\n\n# スタックトレースを表示\nlog -s",
+            "examplesEn": "# Show all logs\nlog\n\n# Show errors only\nlog -e\n\n# Show last 20 entries\nlog -t 20\n\n# Real-time monitoring\nlog -f\n\n# Show stack traces\nlog -s",
+            "exitCodes": "| 0 | 成功 |"
+        }
+    ]
+}

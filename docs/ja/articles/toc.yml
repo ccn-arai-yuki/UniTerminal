@@ -1,2 +1,23 @@
-- name: Terminal の使い方とコマンド一覧
-  href: terminal-and-commands.md
+- name: はじめに
+  href: getting-started.md
+- name: コマンド
+  href: commands/
+  items:
+    - name: 概要
+      href: commands/index.md
+    - name: ファイル操作
+      href: commands/file-operations.md
+    - name: テキスト処理
+      href: commands/text-processing.md
+    - name: Unityコマンド
+      href: commands/unity-commands.md
+    - name: ユーティリティ
+      href: commands/utilities.md
+- name: カスタムコマンド
+  href: custom-commands.md
+- name: パイプラインとリダイレクト
+  href: pipeline-redirects.md
+- name: UniTaskサポート
+  href: unitask-support.md
+- name: FlyweightScrollView
+  href: flyweight-scrollview.md
