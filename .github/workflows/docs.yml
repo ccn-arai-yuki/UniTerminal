@@ -59,6 +59,7 @@ jobs:
         run: docfx docs/docfx.json
 
       - name: Deploy to external Pages repository
+        if: vars.DEPLOY_REFERENCE_DOCS != 'false'
         uses: peaceiris/actions-gh-pages@v4
         with:
           deploy_key: ${{ secrets.PAGES_DEPLOY_KEY }}
